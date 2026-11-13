@@ -50,6 +50,19 @@ const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 /** An illustration is an image beside its card, with the card's name: sensors/test-runner.svg, loops/x/card.png. */
 const IMAGE = /\.(svg|png|jpe?g|webp)$/;
+
+/**
+ * What an SVG illustration may not carry: it is served from the site's own origin, and an SVG opened on its own runs
+ * its scripts there. A guard against the plain ways in, not a sanitizer; the site also serves illustrations with a
+ * sandboxing Content-Security-Policy (site/public/_headers).
+ */
+const SVG_SCRIPTING = [
+  [/<([\w-]+:)?script\b/i, 'a <script> element'],
+  [/\son[a-z]+\s*=/i, 'an on… event handler'],
+  [/\b(xlink:)?href\s*=(?!\s*["']?#)/i, 'a link that is not to #an-element-of-the-svg'],
+  [/<([\w-]+:)?(foreignObject|iframe|embed|object)\b/i, 'embedded HTML or objects'],
+  [/<([\w-]+:)?(set|animate)\b[^>]*attributeName\s*=\s*["']?(xlink:)?href/i, 'an animated link'],
+];
 const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 export class CatalogError extends Error {
@@ -187,6 +200,14 @@ function illustrationOf(cardFile, root, problems) {
     .sort();
   if (found.length > 1) {
     problems.push(`${path.relative(root, cardFile)}: more than one illustration (${found.join(', ')}); keep one`);
+  }
+  for (const name of found.filter((n) => n.endsWith('.svg'))) {
+    const svg = fs.readFileSync(path.join(dir, name), 'utf8');
+    for (const [pattern, what] of SVG_SCRIPTING) {
+      if (pattern.test(svg)) {
+        problems.push(`${path.relative(root, path.join(dir, name))}: an SVG illustration may not carry ${what}`);
+      }
+    }
   }
   return found.length > 0 ? path.relative(root, path.join(dir, found[0])) : null;
 }
