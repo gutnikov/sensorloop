@@ -27,13 +27,15 @@ Examples:
 
 ## Tool
 
-A tool is the concrete program or service a sensor is built with. The sensor is what is measured; the tool is how. One sensor can be built with different tools, and one tool can serve several sensors. Choosing the sensors is a design decision. Choosing the tools depends on the project's stack.
+A tool is what a sensor is built with. The sensor is what is measured; the tool is how. One sensor can be built with different tools, and one tool can serve several sensors. Choosing the sensors is a design decision; finding the tools is not.
+
+A tool is described by the role it plays, so that its description holds in any project, whatever its stack. When the program behind the role depends on the stack, it is found in the project itself (its CI, its task file, its README) and never assumed.
 
 Examples:
 
-- The test-runner sensor is pytest in a Python project, Jest in a TypeScript one, and go test in Go.
-- Playwright serves two sensors: it drives a browser through a user flow, and it takes screenshots of the result.
-- Production logs are read with LogQL in Loki, and the errors users actually hit come from Sentry.
+- The project's test command builds the test-runner sensor. It is pytest in one project, Jest in another and go test in a third; the role, and how to find it, stay the same.
+- A browser driver such as Playwright serves two sensors: it drives a browser through a user flow, and it takes screenshots of the result.
+- The project's log store, such as Loki, answers the queries of the logs sensor, and its error tracker, such as Sentry, reports the errors users actually hit.
 
 ## Loop
 
