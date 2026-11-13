@@ -1,0 +1,12 @@
+{
+  "name": "sensorloop",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "site"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "check": "npm run check -w @sensorloop/catalog && npm test -w @sensorloop/catalog",
+    "dev": "npm run dev -w site",
+    "build": "npm run build -w site"
+  }
+}

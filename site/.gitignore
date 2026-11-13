@@ -2,3 +2,5 @@ node_modules/
 dist/
 # Astro's generated types and cache (the rest of its cache is in node_modules/.astro and node_modules/.vite)
 .astro/
+# wrangler dev's local state
+.wrangler/

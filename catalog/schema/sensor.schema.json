@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sensor card",
+  "description": "The front matter of catalog/sensors/<id>.md. The id is the file name.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "type", "summary", "signal"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "type": {
+      "description": "How the sensor judges: a program, a model, or a person.",
+      "enum": ["computational", "inferential", "human"]
+    },
+    "summary": { "type": "string", "minLength": 1, "description": "One sentence: what it observes." },
+    "signal": { "type": "string", "minLength": 1, "description": "What it reports: pass or fail, a score, findings." }
+  }
+}

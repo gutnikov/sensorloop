@@ -1,9 +1,26 @@
 ---
+// The home page: docs/metamodel.md, with Figure 1 where the text marks it. The text lives only in that file.
 import Page from '../layouts/Page.astro';
+import ChangePath from '../components/ChangePath.astro';
+import { metamodel } from '../lib/content.js';
+
+const { intro, rest } = metamodel();
 ---
 
-<Page title="superloops" description="superloops">
-  <header class="title-block">
-    <h1>superloops</h1>
-  </header>
+<Page
+  title="sensorloop: the metamodel"
+  description="Every change path designed as a set of validation loops: sensors, tools, loops and the metaloop that improves them."
+>
+  <header class="title-block" set:html={intro} />
+
+  <figure class="figure">
+    <ChangePath />
+    <figcaption>
+      <span class="figure-number">Figure 1.</span> A change path with its loops. Each loop reads its
+      sensor at one point on the path and sends a failure back to the work; the later the point, the longer the loop
+      and the more the failure costs.
+    </figcaption>
+  </figure>
+
+  <div class="prose" set:html={rest} />
 </Page>

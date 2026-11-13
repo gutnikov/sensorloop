@@ -1,0 +1,65 @@
+---
+// A card's page: /sensors/<id>/, /tools/<id>/, /loops/<id>/, beside its kind's side navigation. Its title and facts,
+// with the cards it is linked to, then its text; its illustration in a column on the right where the page has room,
+// under the facts where it does not.
+import Section from '../../layouts/Section.astro';
+import { catalog, inline, kinds, markdown } from '../../lib/content.js';
+import { KIND, facts, href, illustrationName, illustrationPlace, kicker, source } from '../../lib/present.js';
+
+export function getStaticPaths() {
+  const c = catalog();
+  return kinds.flatMap((kind) => c[kind].map((card) => ({ params: { kind, id: card.id } })));
+}
+
+const { kind, id } = Astro.params;
+const c = catalog();
+const card = c.get(kind, id);
+---
+
+<Section
+  kind={kind}
+  current={id}
+  title={`${card.data.title}: ${KIND[kind].one.toLowerCase()}, sensorloop`}
+  description={card.data.summary}
+>
+  <article class="card">
+    <div class="card-grid">
+      <div class="card-head">
+        <header class="title-block">
+          <p class="kicker">{kicker(card)}</p>
+          <h1>{card.data.title}</h1>
+          <p class="lede" set:html={inline(card.data.summary)} />
+        </header>
+
+        <dl class="facts card-facts">
+          {
+            facts(c, card).map(([label, html]) => (
+              <div class="fact">
+                <dt>{label}</dt>
+                <dd set:html={html} />
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+
+      <figure class:list={['card-figure', { 'is-empty': !card.illustration }]}>
+        {
+          card.illustration ? (
+            <img src={`${href(card)}${illustrationName(card)}`} alt={`Illustration: ${card.data.title}`} />
+          ) : (
+            <div class="card-figure-empty">
+              <span>No illustration yet</span>
+              <code>{illustrationPlace(card)}</code>
+            </div>
+          )
+        }
+      </figure>
+
+      <div class="card-body">
+        {card.body && <div class="prose" set:html={markdown(card.body)} />}
+        <p class="after-note">Built from <a href={source(card)}><code>catalog/{card.file}</code></a>.</p>
+      </div>
+    </div>
+  </article>
+</Section>

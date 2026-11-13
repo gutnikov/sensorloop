@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Loop card",
+  "description": "The front matter of catalog/loops/<id>/card.md. The id is the folder name; the folder will also hold the loop's scripts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "summary", "sensors", "when", "failure", "next"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "sensors": {
+      "description": "The sensors the loop reads. The sensor's card never lists its loops: that is computed from here.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" }
+    },
+    "when": { "type": "string", "minLength": 1, "description": "When the sensor is read." },
+    "failure": { "type": "string", "minLength": 1, "description": "What counts as a failure." },
+    "next": { "type": "string", "minLength": 1, "description": "Who fixes the work, and when to stop and escalate to a person." }
+  }
+}

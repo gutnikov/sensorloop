@@ -1,8 +1,10 @@
-// superloops.dev on Cloudflare: a Worker with no script of its own that serves the built site as
+// sensorloop.dev on Cloudflare: a Worker with no script of its own that serves the built site as
 // static assets (Workers static assets). The release builds the site (npm run build, into dist/), then deploys
 // it from this folder; the build itself never deploys.
 {
-  "name": "superloops-site",
+  "name": "sensorloop-site",
+  // The account that owns sensorloop.dev; the login may see others.
+  "account_id": "3dfacfe1938b10da4a0a7295e940bd33",
   "compatibility_date": "2026-10-01",
   "assets": {
     // The build's output: astro.config.mjs writes it here when SITE_OUT_DIR is unset.
@@ -11,8 +13,8 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "none"
   },
-  // The site is on superloops.dev, and only there: no workers.dev address, no preview addresses.
-  "routes": [{ "pattern": "superloops.dev", "custom_domain": true }],
+  // The site is on sensorloop.dev, and only there: no workers.dev address, no preview addresses.
+  "routes": [{ "pattern": "sensorloop.dev", "custom_domain": true }],
   "workers_dev": false,
   "preview_urls": false
 }

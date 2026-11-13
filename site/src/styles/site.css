@@ -1,42 +1,48 @@
 /*
- * superloops.dev: set like a printed catalogue. One serif with optical sizes, small capitals for labels, hairline
- * rules, one ink colour for links. Light paper by default, a warm dark when the reader's system asks for it.
+ * sensorloop.dev: set like a technical report. IBM Plex Serif for the text, Plex Sans for headings and the small-capital
+ * labels, Plex Mono for code; hairline rules. Black on white by default, white on a soft black when the reader picks
+ * it with the toggle
+ * (data-theme="dark" on <html>, set by the layout).
  */
 
 :root {
-  --paper: #fbf9f4;
-  --ink: #1d1a16;
-  --ink-soft: #4a443b;
-  --muted: #7a7266;
-  --rule: #ddd6c9;
-  --rule-strong: #1d1a16;
-  --accent: #8b2c1b;
-  --accent-soft: rgba(139, 44, 27, 0.09);
-  --code-bg: #f1ede4;
+  /* Black on white: near-black ink (#111, 18.9:1), greys for what is secondary, links told apart by their
+     underline. */
+  --paper: #ffffff;
+  --ink: #111111;
+  --ink-soft: #333333;
+  --muted: #6b6b6b;
+  --rule: #e3e3e3;
+  --rule-strong: #111111;
+  --accent: #111111;
+  --accent-soft: rgba(0, 0, 0, 0.06);
+  --code-bg: #f4f4f4;
 
-  --serif: 'Source Serif 4 Variable', 'Source Serif 4', 'Iowan Old Style', Charter, Georgia, serif;
-  --mono: 'Source Code Pro Variable', 'Source Code Pro', ui-monospace, Menlo, Consolas, monospace;
+  --serif: 'IBM Plex Serif', Georgia, serif;
+  --display: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif; /* headings */
+  --label: var(--display); /* the small-capital labels */
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
 
   --measure: 38rem;
-  --page: 50rem;
+  --page: 56rem; /* the measure, and room for a card's illustration beside it */
   --gutter: clamp(1rem, 4vw, 2.5rem);
 
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #16140f;
-    --ink: #ebe5d8;
-    --ink-soft: #cdc5b6;
-    --muted: #978e7f;
-    --rule: #39342b;
-    --rule-strong: #ebe5d8;
-    --accent: #e3967b;
-    --accent-soft: rgba(227, 150, 123, 0.12);
-    --code-bg: #221f18;
-    color-scheme: dark;
-  }
+/* White on a soft black: #1e1e1e rather than pure black, so light text does not glow (halation) or smear on OLED
+   screens and the page is not a hole in the screen; the text is #e4e4e4 rather than pure white (13:1). */
+:root[data-theme='dark'] {
+  --paper: #1e1e1e;
+  --ink: #e4e4e4;
+  --ink-soft: #c4c4c4;
+  --muted: #949494;
+  --rule: #353535;
+  --rule-strong: #e4e4e4;
+  --accent: #e4e4e4;
+  --accent-soft: rgba(255, 255, 255, 0.08);
+  --code-bg: #2a2a2a;
+  color-scheme: dark;
 }
 
 *,
@@ -46,7 +52,7 @@
 }
 
 html {
-  font-size: 106.25%; /* 17px */
+  font-size: 100%; /* 16px */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -71,6 +77,10 @@ main,
 .colophon {
   width: min(100% - 2 * var(--gutter), var(--page));
   margin-inline: auto;
+}
+
+main {
+  padding-bottom: 4rem;
 }
 
 /* ---------------------------------------------------------------- links, code, small capitals */
@@ -118,6 +128,7 @@ kbd {
 .figure-number,
 .number,
 .wordmark {
+  font-family: var(--label);
   font-variant-caps: all-small-caps;
   letter-spacing: 0.07em;
   font-variant-numeric: lining-nums tabular-nums;
@@ -156,6 +167,58 @@ kbd {
 
 .masthead nav a:hover {
   color: var(--accent);
+}
+
+/* The masthead's right side: the site's links, then the theme toggle. */
+.masthead-end {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  align-self: center;
+}
+
+.masthead nav a[aria-current='page'] {
+  color: var(--ink);
+}
+
+/* The theme toggle: a moon on light paper, a sun on dark. */
+.theme-toggle {
+  align-self: center;
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-toggle svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.theme-toggle .sun,
+:root[data-theme='dark'] .theme-toggle .moon {
+  display: none;
+}
+
+:root[data-theme='dark'] .theme-toggle .sun {
+  display: block;
 }
 
 .colophon {
@@ -204,6 +267,7 @@ kbd {
 
 h1 {
   margin: 0;
+  font-family: var(--display);
   font-size: clamp(2.1rem, 1.4rem + 3vw, 3.2rem);
   font-weight: 500;
   line-height: 1.08;
@@ -278,7 +342,7 @@ figcaption {
 
 .ring-label {
   fill: var(--ink);
-  font-family: var(--serif);
+  font-family: var(--label);
   font-size: 14px;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.07em;
@@ -310,6 +374,280 @@ figcaption {
   font-family: var(--serif);
   font-size: 12.5px;
   font-style: italic;
+}
+
+/* ---------------------------------------------------------------- the change path and its loops */
+
+.change-path {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cp-path,
+.cp-path-head {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cp-loop {
+  stroke: var(--ink-soft);
+}
+
+.cp-arc {
+  fill: none;
+  stroke-width: 1.2;
+}
+
+.cp-head {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cp-work {
+  fill: var(--ink);
+}
+
+.cp-sensor {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+
+.cp-label {
+  fill: var(--ink);
+  font-family: var(--label);
+  font-size: 14px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+}
+
+/* ---------------------------------------------------------------- a kind's pages: side navigation and content */
+
+/* Narrow screens: the navigation folds into a box above the content. */
+.sidenav {
+  margin-top: 1.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.sidenav > summary {
+  padding: 0.6rem 0.9rem;
+  font-family: var(--label);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+}
+
+.sidenav[open] > summary {
+  border-bottom: 1px solid var(--rule);
+}
+
+.sidenav-body {
+  display: block;
+  padding: 0.9rem 0.9rem 1rem;
+}
+
+.sidenav-count {
+  margin-left: 0.25em;
+  color: var(--muted);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.sidenav-title {
+  font-family: var(--display);
+  display: block;
+  margin-bottom: 0.9rem;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sidenav-title:hover {
+  color: var(--accent);
+}
+
+.sidenav-group + .sidenav-group {
+  margin-top: 1.1rem;
+}
+
+.sidenav-label {
+  margin: 0 0 0.35rem;
+  font-family: var(--label);
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+}
+
+.sidenav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sidenav li a {
+  display: block;
+  overflow: hidden;
+  padding: 0.4rem 0 0.4rem 0.75rem; /* taller rows to tap on narrow screens; 0.2rem beside the content */
+  white-space: nowrap; /* one line each; a title longer than the column ends in an ellipsis, whole in its tooltip */
+  text-overflow: ellipsis;
+  border-left: 1px solid var(--rule);
+  color: var(--ink-soft);
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.sidenav li a:hover {
+  color: var(--accent);
+}
+
+.sidenav li a[aria-current='page'] {
+  padding-left: calc(0.75rem - 1px);
+  border-left: 2px solid var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* The masthead and the page keep their width beside the navigation: centred as on every other page when the window
+   has room for the column on their left, moved right of it when it does not. */
+.has-sidenav {
+  --sidenav-width: 24rem; /* the longest title on one line, in bold when it is the current page */
+}
+
+/* Below the folded navigation, the title needs less room than at the top of a page. */
+.section-content > .title-block:first-child,
+.card-head > .title-block {
+  margin-top: 2.25rem;
+}
+
+/* Wide screens (68rem: keep in step with SideNav.astro): the navigation leaves the page's flow for a column at the
+   window's left edge, full height, with its own scroll. */
+@media (min-width: 68rem) {
+  .has-sidenav .masthead,
+  .has-sidenav main {
+    width: min(100% - var(--sidenav-width) - 2 * var(--gutter), var(--page));
+    margin-left: max((100% - var(--page)) / 2, var(--sidenav-width) + var(--gutter));
+    margin-right: auto;
+  }
+
+  .sidenav {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: var(--sidenav-width);
+    overflow-y: auto;
+    margin: 0;
+    padding: 1.6rem 1.25rem 2.5rem 1.5rem;
+    border: 0;
+    border-right: 1px solid var(--rule);
+    border-radius: 0;
+  }
+
+  .sidenav > summary {
+    display: none;
+  }
+
+  .sidenav-body {
+    padding: 0;
+  }
+
+  .sidenav li a {
+    padding-block: 0.2rem;
+  }
+
+  .section-content > .title-block:first-child,
+  .card-head > .title-block {
+    margin-top: 3.25rem;
+  }
+}
+
+/* ---------------------------------------------------------------- a card's page: its illustration */
+
+/* The card lays itself out by the room it has, not by the window's width: beside the side navigation, the page is
+   narrower than the window. */
+.card {
+  container-type: inline-size;
+}
+
+/* Narrow: the illustration comes under the facts, before the text. */
+.card-figure {
+  max-width: 24rem;
+  margin: 2rem 0 0;
+}
+
+.card-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Where a card has no illustration yet: the frame it will fill, and the file that fills it. Shown only in the column
+   beside the text; under the facts it would be an empty screen on a phone. */
+.card-figure.is-empty {
+  display: none;
+}
+
+/* Where a card has no illustration yet: the frame it will fill, and the file that fills it. */
+.card-figure-empty {
+  display: grid;
+  place-content: center;
+  gap: 0.4rem;
+  aspect-ratio: 4 / 3;
+  padding: 1rem;
+  border: 1px dashed var(--rule);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.card-figure-empty code {
+  font-size: 0.72rem;
+  font-style: normal;
+  overflow-wrap: anywhere;
+}
+
+/* With room for a column beside the text at its full measure, the illustration takes it, level with the title. */
+@container (min-width: 51rem) {
+  .card-grid {
+    display: grid;
+    grid-template-columns: minmax(0, var(--measure)) minmax(0, 1fr);
+    grid-template-areas:
+      'head figure'
+      'body figure';
+    column-gap: 2.5rem;
+    align-items: start;
+  }
+
+  .card-head {
+    grid-area: head;
+  }
+
+  .card-body {
+    grid-area: body;
+  }
+
+  .card-figure,
+  .card-figure.is-empty {
+    display: block;
+    grid-area: figure;
+    max-width: none;
+    margin-top: 3.25rem;
+  }
+}
+
+.contents .group + .group {
+  margin-top: 2.75rem;
 }
 
 /* ---------------------------------------------------------------- the contents */
@@ -345,6 +683,7 @@ figcaption {
 }
 
 .part-title {
+  font-family: var(--display);
   display: grid;
   grid-template-columns: 3.25rem 1fr;
   margin: 0;
@@ -396,6 +735,7 @@ figcaption {
 }
 
 .entry-title {
+  font-family: var(--display);
   color: var(--ink);
   font-size: 1.14rem;
   font-weight: 600;
@@ -457,6 +797,21 @@ figcaption {
   .figure-side figcaption {
     margin-inline: 0;
   }
+}
+
+/* A card's facts, under its title. */
+.facts.card-facts {
+  max-width: var(--measure);
+  margin-top: 2rem;
+}
+
+.card-facts + .prose {
+  margin-top: 1.75rem;
+}
+
+.none {
+  color: var(--muted);
+  font-style: italic;
 }
 
 .facts {
@@ -525,8 +880,13 @@ figcaption {
   margin-top: 1rem;
 }
 
+.figure + .prose {
+  margin-top: 2.25rem;
+}
+
 .prose h2,
 .sources h2 {
+  font-family: var(--display);
   margin: 2.75rem 0 0.6rem;
   font-size: 1.45rem;
   font-weight: 550;
@@ -534,6 +894,7 @@ figcaption {
 }
 
 .prose h3 {
+  font-family: var(--display);
   margin: 2rem 0 0.4rem;
   font-size: 1.12rem;
   font-weight: 600;
