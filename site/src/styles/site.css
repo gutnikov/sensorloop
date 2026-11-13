@@ -393,18 +393,8 @@ figcaption {
   stroke-linejoin: round;
 }
 
-.cp-push {
-  stroke: var(--muted);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-}
-
-.cp-loop.is-inner {
-  stroke: var(--accent);
-}
-
-.cp-loop.is-outer {
-  stroke: var(--muted);
+.cp-loop {
+  stroke: var(--ink-soft);
 }
 
 .cp-arc {
@@ -435,19 +425,6 @@ figcaption {
   font-size: 14px;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.07em;
-}
-
-.cp-bracket {
-  fill: none;
-  stroke: var(--muted);
-  stroke-width: 1;
-}
-
-.cp-note {
-  fill: var(--muted);
-  font-family: var(--serif);
-  font-size: 13px;
-  font-style: italic;
 }
 
 /* ---------------------------------------------------------------- a kind's pages: side navigation and content */

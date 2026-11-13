@@ -1,6 +1,6 @@
 # Metamodel
 
-We believe every change path should be designed as a set of validation loops. Some loops are short and fast, like running unit tests on a change. Others take longer, like running end-to-end tests. Inner loops run while the work is being done, before anything is pushed to git. Outer loops run later: in CI, on staging, or even after the code has reached real users, like scanning production logs.
+We believe every change path should be designed as a set of validation loops. Some loops are short and fast, like running unit tests on a change. Others take longer, like running end-to-end tests. Some run while the work is being done, before anything is pushed to git. Others run later: in CI, on staging, or even after the code has reached real users, like scanning production logs.
 
 <!-- figure -->
 
@@ -49,9 +49,9 @@ The loop repeats until the sensor passes, or until it gives up and asks for help
 
 Examples:
 
-- **Green before stop** (inner, local): the agent can't end its turn while the tests or the linter fail. It reads the failure, fixes the code, and runs them again.
+- **Green before stop** (local): the agent can't end its turn while the tests or the linter fail. It reads the failure, fixes the code, and runs them again.
 - **Pull request review** (before merge): an LLM reviewer reads the diff. A blocking finding sends the change back to the agent, and a person settles any dispute.
-- **Production log scan** (outer, after release): after a deploy, the error signatures in the logs are compared with those from before it. A new signature opens an issue or triggers a rollback.
+- **Production log scan** (after release): after a deploy, the error signatures in the logs are compared with those from before it. A new signature opens an issue or triggers a rollback.
 
 ## Metaloop
 
