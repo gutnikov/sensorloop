@@ -1,22 +1,27 @@
 /*
- * superloops.dev: set like a printed catalogue. One serif with optical sizes, small capitals for labels, hairline
- * rules, one ink colour for links. Light paper by default, a warm dark when the reader picks it with the toggle
+ * superloops.dev: set like a technical report. IBM Plex Serif for the text, Plex Sans for headings and the small-capital
+ * labels, Plex Mono for code; hairline rules. Black on white by default, white on a soft black when the reader picks
+ * it with the toggle
  * (data-theme="dark" on <html>, set by the layout).
  */
 
 :root {
-  --paper: #fbf9f4;
-  --ink: #1d1a16;
-  --ink-soft: #4a443b;
-  --muted: #7a7266;
-  --rule: #ddd6c9;
-  --rule-strong: #1d1a16;
-  --accent: #8b2c1b;
-  --accent-soft: rgba(139, 44, 27, 0.09);
-  --code-bg: #f1ede4;
+  /* Black on white: near-black ink (#111, 18.9:1), greys for what is secondary, links told apart by their
+     underline. */
+  --paper: #ffffff;
+  --ink: #111111;
+  --ink-soft: #333333;
+  --muted: #6b6b6b;
+  --rule: #e3e3e3;
+  --rule-strong: #111111;
+  --accent: #111111;
+  --accent-soft: rgba(0, 0, 0, 0.06);
+  --code-bg: #f4f4f4;
 
-  --serif: 'Source Serif 4 Variable', 'Source Serif 4', 'Iowan Old Style', Charter, Georgia, serif;
-  --mono: 'Source Code Pro Variable', 'Source Code Pro', ui-monospace, Menlo, Consolas, monospace;
+  --serif: 'IBM Plex Serif', Georgia, serif;
+  --display: 'IBM Plex Sans Variable', 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif; /* headings */
+  --label: var(--display); /* the small-capital labels */
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
 
   --measure: 38rem;
   --page: 56rem; /* the measure, and room for a card's illustration beside it */
@@ -25,16 +30,18 @@
   color-scheme: light;
 }
 
+/* White on a soft black: #1e1e1e rather than pure black, so light text does not glow (halation) or smear on OLED
+   screens and the page is not a hole in the screen; the text is #e4e4e4 rather than pure white (13:1). */
 :root[data-theme='dark'] {
-  --paper: #16140f;
-  --ink: #ebe5d8;
-  --ink-soft: #cdc5b6;
-  --muted: #978e7f;
-  --rule: #39342b;
-  --rule-strong: #ebe5d8;
-  --accent: #e3967b;
-  --accent-soft: rgba(227, 150, 123, 0.12);
-  --code-bg: #221f18;
+  --paper: #1e1e1e;
+  --ink: #e4e4e4;
+  --ink-soft: #c4c4c4;
+  --muted: #949494;
+  --rule: #353535;
+  --rule-strong: #e4e4e4;
+  --accent: #e4e4e4;
+  --accent-soft: rgba(255, 255, 255, 0.08);
+  --code-bg: #2a2a2a;
   color-scheme: dark;
 }
 
@@ -45,7 +52,7 @@
 }
 
 html {
-  font-size: 106.25%; /* 17px */
+  font-size: 100%; /* 16px */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -121,6 +128,7 @@ kbd {
 .figure-number,
 .number,
 .wordmark {
+  font-family: var(--label);
   font-variant-caps: all-small-caps;
   letter-spacing: 0.07em;
   font-variant-numeric: lining-nums tabular-nums;
@@ -259,6 +267,7 @@ kbd {
 
 h1 {
   margin: 0;
+  font-family: var(--display);
   font-size: clamp(2.1rem, 1.4rem + 3vw, 3.2rem);
   font-weight: 500;
   line-height: 1.08;
@@ -333,7 +342,7 @@ figcaption {
 
 .ring-label {
   fill: var(--ink);
-  font-family: var(--serif);
+  font-family: var(--label);
   font-size: 14px;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.07em;
@@ -422,7 +431,7 @@ figcaption {
 
 .cp-label {
   fill: var(--ink);
-  font-family: var(--serif);
+  font-family: var(--label);
   font-size: 14px;
   font-variant-caps: all-small-caps;
   letter-spacing: 0.07em;
@@ -453,6 +462,7 @@ figcaption {
 
 .sidenav > summary {
   padding: 0.6rem 0.9rem;
+  font-family: var(--label);
   color: var(--ink-soft);
   cursor: pointer;
   font-variant-caps: all-small-caps;
@@ -475,6 +485,7 @@ figcaption {
 }
 
 .sidenav-title {
+  font-family: var(--display);
   display: block;
   margin-bottom: 0.9rem;
   color: var(--ink);
@@ -492,6 +503,7 @@ figcaption {
 
 .sidenav-label {
   margin: 0 0 0.35rem;
+  font-family: var(--label);
   color: var(--muted);
   font-size: 0.9rem;
   font-variant-caps: all-small-caps;
@@ -691,6 +703,7 @@ figcaption {
 }
 
 .part-title {
+  font-family: var(--display);
   display: grid;
   grid-template-columns: 3.25rem 1fr;
   margin: 0;
@@ -742,6 +755,7 @@ figcaption {
 }
 
 .entry-title {
+  font-family: var(--display);
   color: var(--ink);
   font-size: 1.14rem;
   font-weight: 600;
@@ -892,6 +906,7 @@ figcaption {
 
 .prose h2,
 .sources h2 {
+  font-family: var(--display);
   margin: 2.75rem 0 0.6rem;
   font-size: 1.45rem;
   font-weight: 550;
@@ -899,6 +914,7 @@ figcaption {
 }
 
 .prose h3 {
+  font-family: var(--display);
   margin: 2rem 0 0.4rem;
   font-size: 1.12rem;
   font-weight: 600;
