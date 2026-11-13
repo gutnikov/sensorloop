@@ -11,7 +11,7 @@ export const config = {
    * The Cloudflare Web Analytics token of sensorloop.dev, from the site's entry in the Cloudflare
    * dashboard. The build fails while it is empty.
    */
-  analyticsToken: 'a3efcdc85268432aae5594b62ef77d8f',
+  analyticsToken: '9ea954cb30b44575955e2c19ff21a353',
 };
 
 /**
