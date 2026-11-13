@@ -650,6 +650,88 @@ figcaption {
   margin-top: 2.75rem;
 }
 
+/* ---------------------------------------------------------------- recorded sessions (asciinema) */
+
+.prose .cast {
+  margin: 1.75rem 0 0;
+}
+
+.prose .cast figcaption {
+  max-width: none;
+  margin: 0.6rem 0 0;
+}
+
+/* A recording not made yet: the frame it will fill, and the file that fills it. */
+.cast-empty {
+  display: grid;
+  place-content: center;
+  gap: 0.4rem;
+  min-height: 9rem;
+  padding: 1rem;
+  border: 1px dashed var(--rule);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.cast-empty code {
+  font-size: 0.72rem;
+  font-style: normal;
+}
+
+/* The player's terminal in the site's colours: the code background and ink, and sixteen colours readable on each. */
+.asciinema-player-theme-sensorloop {
+  --term-color-foreground: var(--ink);
+  --term-color-background: var(--code-bg);
+  --term-color-0: #111111;
+  --term-color-1: #b3261e;
+  --term-color-2: #2e7d32;
+  --term-color-3: #8a6d00;
+  --term-color-4: #1f4e8c;
+  --term-color-5: #7b3fa0;
+  --term-color-6: #00707a;
+  --term-color-7: #6b6b6b;
+  --term-color-8: #555555;
+  --term-color-9: #d32f2f;
+  --term-color-10: #388e3c;
+  --term-color-11: #a07c00;
+  --term-color-12: #2b6cb0;
+  --term-color-13: #9c4dcc;
+  --term-color-14: #00838f;
+  --term-color-15: #111111;
+}
+
+/* The start button in ink, so it shows on light paper as on dark. */
+.asciinema-player-theme-sensorloop .ap-overlay-start .ap-play-button svg .ap-play-btn-fill {
+  fill: var(--ink);
+  fill-opacity: 0.85;
+}
+
+.asciinema-player-theme-sensorloop .ap-overlay-start .ap-play-button svg .ap-play-btn-stroke {
+  stroke: var(--ink);
+}
+
+:root[data-theme='dark'] .asciinema-player-theme-sensorloop {
+  --term-color-0: #3a3a3a;
+  --term-color-1: #f28b82;
+  --term-color-2: #81c995;
+  --term-color-3: #fdd663;
+  --term-color-4: #8ab4f8;
+  --term-color-5: #d7aefb;
+  --term-color-6: #78d9ec;
+  --term-color-7: #c4c4c4;
+  --term-color-8: #8f8f8f;
+  --term-color-9: #f6aea9;
+  --term-color-10: #a8dab5;
+  --term-color-11: #fde293;
+  --term-color-12: #aecbfa;
+  --term-color-13: #e9d2fd;
+  --term-color-14: #a1e4f2;
+  --term-color-15: #ffffff;
+}
+
 /* ---------------------------------------------------------------- the contents */
 
 .contents {

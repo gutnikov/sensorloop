@@ -14,7 +14,11 @@ The catalog of sensors, tools and loops, the plugins built from it, and the site
 - A relation is written once, on the more specific card: a tool lists the sensors it builds, a loop the sensors it
   reads. A sensor's tools and loops are computed, never written on its card.
 - `packages/catalog`: the only code that parses cards. The site and the plugin builders import it.
-- `docs/metamodel.md`: the metamodel, imported above and rendered on the home page.
+- `docs/metamodel.md`: the metamodel, imported above and rendered on the home page. `docs/get-started.md`: how to
+  install and use the plugin, rendered at /get-started/.
+- A recorded terminal session in a doc is a line `<!-- cast: <name> | <caption> -->` and the file
+  `docs/casts/<name>.cast`, recorded with asciinema (`asciinema rec docs/casts/<name>.cast`, about 90 columns wide);
+  the site plays it in place. Until the file exists, the page shows where it goes.
 - `site/`: renders `docs/` and the catalog. It holds no content of its own.
 - `plugins/claude/`: the Claude Code plugin `sensorloop`, installed from the marketplace in `.claude-plugin/`. Its
   skill (`skills/sensorloop/`) keeps a project's loops; `procedures/` and `wiring/` are written by hand, `catalog/` is

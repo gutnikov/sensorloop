@@ -1,0 +1,34 @@
+---
+// Get started: docs/get-started.md, how to install the plugin and use it. Recorded sessions in it play in place.
+import 'asciinema-player/dist/bundle/asciinema-player.css';
+import Page from '../layouts/Page.astro';
+import { doc } from '../lib/content.js';
+
+const { intro, rest } = doc('get-started');
+---
+
+<Page
+  title="Get started: sensorloop"
+  description="Install the sensorloop plugin for Claude Code, and let it keep your project's validation loops."
+>
+  <header class="title-block" set:html={intro} />
+  <div class="prose" set:html={rest} />
+</Page>
+
+<script>
+  // Each recorded session on the page becomes a player, in the site's faces and colours.
+  import { create } from 'asciinema-player';
+
+  for (const figure of document.querySelectorAll<HTMLElement>('[data-cast]')) {
+    const element = figure.querySelector<HTMLElement>('.cast-player');
+    if (!element || !figure.dataset.cast) continue;
+    create(figure.dataset.cast, element, {
+      fit: 'width',
+      theme: 'sensorloop',
+      terminalFontFamily: "'IBM Plex Mono', ui-monospace, Menlo, monospace",
+      idleTimeLimit: 2,
+      poster: 'npt:0:1',
+      preload: true,
+    });
+  }
+</script>

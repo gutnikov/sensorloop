@@ -24,6 +24,7 @@ const { title, description, bodyClass } = Astro.props;
 const path = Astro.url.pathname;
 const nav = [
   { href: '/', label: 'Metamodel', current: path === '/' },
+  { href: '/get-started/', label: 'Get started', current: path.startsWith('/get-started/') },
   ...kinds.map((kind) => ({ href: kindHref(kind), label: KIND[kind].many, current: path.startsWith(kindHref(kind)) })),
 ];
 ---
