@@ -72,6 +72,10 @@ main,
   margin-inline: auto;
 }
 
+main {
+  padding-bottom: 4rem;
+}
+
 /* ---------------------------------------------------------------- links, code, small capitals */
 
 a {
@@ -155,6 +159,18 @@ kbd {
 
 .masthead nav a:hover {
   color: var(--accent);
+}
+
+/* The masthead's right side: the site's links, then the theme toggle. */
+.masthead-end {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  align-self: center;
+}
+
+.masthead nav a[aria-current='page'] {
+  color: var(--ink);
 }
 
 /* The theme toggle: a moon on light paper, a sun on dark. */
@@ -572,6 +588,21 @@ figcaption {
   }
 }
 
+/* A card's facts, under its title. */
+.facts.card-facts {
+  max-width: var(--measure);
+  margin-top: 2rem;
+}
+
+.card-facts + .prose {
+  margin-top: 1.75rem;
+}
+
+.none {
+  color: var(--muted);
+  font-style: italic;
+}
+
 .facts {
   margin: 0;
   border-top: 1.5px solid var(--rule-strong);
@@ -636,7 +667,6 @@ figcaption {
 .prose {
   max-width: var(--measure);
   margin-top: 1rem;
-  padding-bottom: 4rem;
 }
 
 .figure + .prose {

@@ -1,0 +1,82 @@
+// The loader against small catalogs written to a temporary folder: one that is valid, and one broken in each way
+// the loader must catch.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { CatalogError, loadCatalog } from '../src/index.js';
+
+const SCHEMAS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'catalog', 'schema');
+
+const SENSOR = '---\ntitle: Test runner\ntype: computational\nsummary: Runs tests.\nsignal: Exit code.\n---\nBody.\n';
+const TOOL = '---\ntitle: pytest\nsummary: Python tests.\nsensors: [test-runner]\nstacks: [python]\n---\n';
+const LOOP =
+  '---\ntitle: Red, then green\nsummary: Test first.\nsensors: [test-runner]\nplacement: inner\n' +
+  'when: Before and after.\nfailure: A test fails.\nnext: Fix the code.\n---\n';
+
+/** Writes a catalog with the real schemas and the given cards ({ 'sensors/x.md': text }), and returns its folder. */
+function catalog(cards) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'superloops-catalog-'));
+  fs.cpSync(SCHEMAS, path.join(root, 'schema'), { recursive: true });
+  for (const [file, text] of Object.entries(cards)) {
+    fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    fs.writeFileSync(path.join(root, file), text);
+  }
+  return root;
+}
+
+/** The problems loadCatalog throws for these cards. */
+function problems(cards) {
+  try {
+    loadCatalog(catalog(cards));
+  } catch (error) {
+    if (error instanceof CatalogError) return error.problems;
+    throw error;
+  }
+  assert.fail('the catalog loaded, but it should not have');
+}
+
+test('a valid catalog loads, and a sensor knows its tools and loops without listing them', () => {
+  const c = loadCatalog(
+    catalog({ 'sensors/test-runner.md': SENSOR, 'tools/pytest.md': TOOL, 'loops/red-green-tdd/card.md': LOOP }),
+  );
+  assert.deepEqual(
+    [c.sensors.length, c.tools.length, c.loops.length],
+    [1, 1, 1],
+  );
+  assert.equal(c.get('sensors', 'test-runner').body, 'Body.');
+  assert.deepEqual(c.toolsOf('test-runner').map((t) => t.id), ['pytest']);
+  assert.deepEqual(c.loopsOf('test-runner').map((l) => l.id), ['red-green-tdd']);
+  assert.deepEqual(c.toolsFor(c.get('loops', 'red-green-tdd')).map((t) => t.id), ['pytest']);
+});
+
+test('a card naming a sensor with no card', () => {
+  assert.deepEqual(problems({ 'tools/pytest.md': TOOL }), [
+    'tools/pytest.md: sensors names "test-runner", which has no card (sensors/test-runner.md)',
+  ]);
+});
+
+test('front matter that breaks the schema', () => {
+  const [problem] = problems({ 'sensors/test-runner.md': SENSOR.replace('computational', 'magical') });
+  assert.match(problem, /^sensors\/test-runner\.md: type must be equal to one of the allowed values/);
+});
+
+test('a field the schema does not know', () => {
+  const [problem] = problems({ 'sensors/test-runner.md': SENSOR.replace('---\nBody', 'tools: [pytest]\n---\nBody') });
+  assert.match(problem, /^sensors\/test-runner\.md: front matter must NOT have additional properties/);
+});
+
+test('a loop that is a file instead of a folder', () => {
+  assert.deepEqual(problems({ 'sensors/test-runner.md': SENSOR, 'loops/red-green-tdd.md': LOOP }), [
+    'loops/red-green-tdd.md: not a card; a card here is a folder <id>/ with card.md in it',
+  ]);
+});
+
+test('a card with no front matter, and an id that is not one', () => {
+  assert.deepEqual(problems({ 'sensors/Test_Runner.md': SENSOR, 'sensors/linter.md': 'Just text.\n' }), [
+    'sensors/Test_Runner.md: "Test_Runner" is not an id: lowercase letters and digits, words joined by hyphens',
+    'sensors/linter.md: no front matter: a card starts with a --- line, its YAML, and another --- line',
+  ]);
+});

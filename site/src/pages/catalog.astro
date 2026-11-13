@@ -1,0 +1,53 @@
+---
+// The catalog: every card, by kind.
+import Page from '../layouts/Page.astro';
+import { catalog, inline, kinds } from '../lib/content.js';
+import { KIND, href, meta } from '../lib/present.js';
+
+const c = catalog();
+---
+
+<Page
+  title="superloops: the catalog"
+  description="Sensors, the tools they are built with, and the loops that read them."
+>
+  <header class="title-block">
+    <h1>Catalog</h1>
+    <p class="lede">
+      Sensors, the tools they are built with, and the loops that read them. Each page is built from a card in
+      <code>catalog/</code>.
+    </p>
+  </header>
+
+  <section class="contents" aria-label="Contents">
+    {
+      kinds.map((kind, i) => (
+        <section class="part" id={kind} aria-labelledby={`${kind}-title`}>
+          <h2 id={`${kind}-title`} class="part-title">
+            <span class="number">{i + 1}</span>
+            {KIND[kind].many}
+          </h2>
+          <p class="part-description">{KIND[kind].description}</p>
+          <ol class="entries">
+            {c[kind].map((card, j) => (
+              <li class="entry">
+                <span class="number">{`${i + 1}.${j + 1}`}</span>
+                <div class="entry-body">
+                  <a class="entry-title" href={href(card)}>{card.data.title}</a>
+                  <p class="entry-summary" set:html={inline(card.data.summary)} />
+                  <p class="meta">
+                    {meta(c, card).map(([label, value]) => (
+                      <span class="meta-item">
+                        <span class="meta-label">{label}</span> {value}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))
+    }
+  </section>
+</Page>

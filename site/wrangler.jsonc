@@ -3,6 +3,8 @@
 // it from this folder; the build itself never deploys.
 {
   "name": "superloops-site",
+  // The account that owns superloops.dev; the login may see others.
+  "account_id": "3dfacfe1938b10da4a0a7295e940bd33",
   "compatibility_date": "2026-10-01",
   "assets": {
     // The build's output: astro.config.mjs writes it here when SITE_OUT_DIR is unset.

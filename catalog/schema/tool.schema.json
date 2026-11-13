@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tool card",
+  "description": "The front matter of catalog/tools/<id>.md. The id is the file name.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "summary", "sensors", "stacks"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "sensors": {
+      "description": "The sensors this tool builds. The sensor's card never lists its tools: that is computed from here.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "stacks": {
+      "description": "The stacks it is used in, such as python or typescript; any for a tool that does not depend on one.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "homepage": { "type": "string", "pattern": "^https://" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" }
+  }
+}

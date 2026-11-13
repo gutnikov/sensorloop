@@ -12,6 +12,13 @@ interface Props {
 }
 
 const { title, description } = Astro.props;
+
+// The masthead's links; the one for the page's own section is marked current.
+const path = Astro.url.pathname;
+const nav = [
+  { href: '/', label: 'Metamodel', current: path === '/' },
+  { href: '/catalog/', label: 'Catalog', current: path !== '/' },
+];
 ---
 
 <html lang="en">
@@ -33,15 +40,20 @@ const { title, description } = Astro.props;
   <body>
     <header class="masthead">
       <a class="wordmark" href="/">superloops</a>
-      <button class="theme-toggle" type="button" aria-label="Dark theme" aria-pressed="false">
-        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
-        </svg>
-        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
-        </svg>
-      </button>
+      <div class="masthead-end">
+        <nav aria-label="Site">
+          {nav.map((item) => <a href={item.href} aria-current={item.current ? 'page' : undefined}>{item.label}</a>)}
+        </nav>
+        <button class="theme-toggle" type="button" aria-label="Dark theme" aria-pressed="false">
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+          </svg>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
+          </svg>
+        </button>
+      </div>
     </header>
     <main>
       <slot />
