@@ -2,7 +2,6 @@
 title: Type check and build
 summary: After an edit, the agent runs the type checker and the build, and fixes each error at its file and line until both are clean.
 sensors: [build-and-types]
-placement: inner
 when: After each edit (the type checker, or the language server's diagnostics), and before the turn ends (the build).
 failure: Any type or compile error, and any new suppression of one, such as an ignore comment or a cast to an untyped value.
 next: The agent fixes the code, never the types or the checker's settings, and checks again. After five rounds in which the errors do not fall, or at once when the error is outside the code it may change, it stops and hands back the last output.

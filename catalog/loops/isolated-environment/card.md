@@ -2,7 +2,6 @@
 title: A clean environment for each task
 summary: Each task gets a new environment of its own, which checks its own isolation before the agent starts and is thrown away at the end, so the sensors give the same result for the same code.
 sensors: [isolation-probe]
-placement: inner
 when: At the start of each task, before the agent starts; while it works, on every sandbox process; after teardown; and in CI, on every change to the setup files.
 failure: A host that must be blocked answers, or the allowed one does not; the canary or a secret the sandbox was not given is visible inside it; an escape reaches the host; two environments from the same commit collide or give different test results; or something is left after teardown.
 next: The agent does not fix the environment, and cannot change the setup files during a task. A failed probe, or a sandbox that cannot start, ends the session instead of letting the agent run without the boundary, and a person fixes the setup, which CI checks again. A leftover that cannot be tied to the task is reported to a person, not deleted.

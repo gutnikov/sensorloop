@@ -2,7 +2,6 @@
 title: No known-vulnerable dependencies
 summary: A scanner checks the project's dependencies against vulnerability databases, and the agent moves each vulnerable package to a safe version before the change is merged.
 sensors: [security-scanner]
-placement: outer
 when: On every pull request that changes a manifest or a lockfile, and every night over the SBOMs of the releases in production.
 failure: A dependency with a known HIGH or CRITICAL vulnerability, fixed or not, that no current exception covers; a version on the project's ban list; and a scan that failed or found no packages.
 next: The agent moves the package to a safe version, or replaces it, and scans again. A risk is accepted only by a person, who approves the exception the agent proposes. A new finding in a shipped release becomes maintenance work, not a red pull request.

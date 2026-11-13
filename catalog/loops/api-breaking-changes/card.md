@@ -2,7 +2,6 @@
 title: Keep the API compatible
 summary: When the agent changes a schema, a library's public types or data that released clients read, a check compares the change with what callers already have, and the agent restores compatibility.
 sensors: [api-compatibility]
-placement: inner
 when: Before each commit that changes an interface description, a library's exports or data that released clients read; and again in CI as the final run.
 failure: Any change that breaks an existing caller, or that the check cannot rule out as a break. An addition that callers can ignore passes.
 next: The agent restores compatibility and checks again; it never edits the baseline or silences the check. When the break is wanted, a person decides so, and the agent adds a new version beside the old one and deprecates the old one.

@@ -2,7 +2,6 @@
 title: Stall detector
 summary: A hook that watches every tool call tells the agent to step back when it repeats the same call or cycle five times, stops it for a person on a second stall, and keeps a subagent from starting agents of its own.
 sensors: [agent-activity]
-placement: inner
 when: After every tool call, and before every call that starts a subagent. A new prompt from the person starts the count again.
 failure: The last five calls are the same, or are one cycle of two to five calls repeated five times. Or a subagent that is not an orchestrator starts an agent, or a task starts its eleventh.
 next: After the first stall the agent steps back, changes its approach and goes on. A second stall in the same task, or a second refused spawn, stops it, and the person sees the repeated calls and decides whether to change the task, give a hint or let it go on.

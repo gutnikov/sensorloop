@@ -2,7 +2,6 @@
 title: A correction becomes a rule
 summary: Every correction a person makes is logged at the phase that should have caught it, and the second of the same kind becomes a check, a reviewer's rule or a line in the agent's instructions.
 sensors: [human-review, loop-outcomes]
-placement: outer
 when: Each time a person corrects the agent, in the session, in a review comment or by reverting a change; and on a schedule, when the outcome log is read for kinds that came back.
 failure: A second correction of a kind already logged. It is an escape, a problem that got past the phase meant to catch it after a person had already corrected it once.
 next: Whoever looks after the loops, or an agent, turns the escape into a rule at the earliest phase that can see it, proposed as a change a person approves. Logging asks no one. A person is asked to choose only when two rules would both fix the correction and differ in a trade-off only they can weigh.

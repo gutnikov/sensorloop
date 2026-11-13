@@ -2,7 +2,6 @@
 title: Smoke test after a deploy
 summary: After each deploy to a preview environment or to staging, a job checks that the new version is ready and runs a few smoke checks against it, and a red result stops the release there.
 sensors: [smoke-probe, logs]
-placement: outer
 when: Right after each deploy to a preview environment or to staging, before the release is promoted to the next stage.
 failure: The rollout does not complete, the new version is not ready within the time limit, or a smoke step fails.
 next: The release stops there. The agent reads the new version's startup logs, fixes the cause and deploys again, and the job runs again. When the logs show a cause outside the change, such as a database that is down, it stops and hands a person the failed check and the log lines that show the cause.

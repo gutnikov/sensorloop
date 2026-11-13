@@ -2,7 +2,6 @@
 title: Validate the configuration
 summary: A validator checks every configuration file and profile against its schema, a probe checks that each endpoint it names answers, and a smoke start runs the app with each profile.
 sensors: [structure-check, smoke-probe]
-placement: inner
 when: After each edit of the configuration and at each commit (the schema), on each pull request that changes the configuration (the endpoints and the smoke start), and daily (the endpoints).
 failure: A value that breaks the schema, such as a misspelled key or a port given as a string; an endpoint that is gone or cannot be reached; a profile the app does not start with in time, or starts with on other values.
 next: The agent fixes the configuration, or the schema when the configuration is right and the schema is behind it, and runs the checks again; a change to the schema is reviewed like code. When the cause is outside the project, such as an endpoint that is gone, it stops and hands a person the failing line.

@@ -2,7 +2,6 @@
 title: Read the traces
 summary: After running a scenario, the agent queries the traces of its own run for spans that failed or went over budget, and fixes the cause until the same queries return nothing.
 sensors: [traces]
-placement: inner
 when: After the agent runs a scenario through the services it changed, before it says the work is done; and in CI, against CI's own collector and trace store.
 failure: A span with the status Error, a span over its user journey's budget, a duration that was not captured, or a scenario that left no traces at all.
 next: The agent opens the trace, fixes the cause and runs the scenario again, until the same queries return nothing; when there are no traces, it fixes the instrumentation first. Budgets change only through a person's review. When the failing span is outside the code the agent may change, or the same span still fails after three rounds, it stops and hands a person the spans with their trace ids.

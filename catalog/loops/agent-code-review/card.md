@@ -2,7 +2,6 @@
 title: Fresh-context code review
 summary: Reviewer agents with a fresh context read the committed diff, and the coding agent fixes the confirmed findings for at most five rounds, each re-review checking only the open ones.
 sensors: [llm-reviewer]
-placement: inner
 when: After the agent's tests pass and its work is committed, before it opens a pull request; then once per round of fixes, on the fix diff.
 failure: A high-severity finding that a second pass confirms, or one a re-review marks not addressed. Medium and low findings go to a log, and never enter the loop.
 next: The coding agent fixes the code, and from round four a fresh implementer on a stronger model takes over. After round five each open finding gets a ruling with its reason, and one that leaves every way forward a guess goes to a person. Until the reviewer is calibrated, its findings are advice.

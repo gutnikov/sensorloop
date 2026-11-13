@@ -2,7 +2,6 @@
 title: When a dependency fails
 summary: A test makes a dependency slow, time out or go down through a fault proxy, and the agent fixes retries, timeouts and error handling until the code copes.
 sensors: [input-fault-injection]
-placement: inner
 when: Each time the suite runs, locally while the agent works and again in CI, since the fault tests are part of it.
 failure: A fault test that fails, because under its fault the code does not do what the spec names, such as retry, fall back, give up within its time budget or return the right error.
 next: The agent fixes retries, timeouts and error handling, never the fault tests, and runs them again until they pass. Where the spec names no behaviour for a fault, it asks a person instead of choosing one, and a fault test that has to change goes through a person.

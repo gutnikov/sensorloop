@@ -2,7 +2,6 @@
 title: Fix CI until it is green
 summary: The agent pushes, CI runs the checks on clean machines, and the agent fixes what fails until every required job passes for its latest commit.
 sensors: [ci-results]
-placement: outer
 when: After each push, once CI has finished the run for the branch's latest commit.
 failure: A required job that failed, was cancelled or skipped, or has no run for the latest commit. A skip passes only when the job that decided it succeeded.
 next: The agent reads the failing step's log, reproduces the failure locally, fixes the code and pushes again; removing or weakening a job is not a fix. After the second red CI round, it stops and hands the branch to a person with the log.

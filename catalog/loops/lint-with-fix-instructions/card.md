@@ -2,7 +2,6 @@
 title: Lint with fix instructions
 summary: Every lint violation reaches the agent with a text that says how to fix it, so it fixes the cause instead of silencing the rule.
 sensors: [linter]
-placement: inner
 when: At each commit, and again in CI as the final run.
 failure: Any lint error, and any suppression comment that does not give its reason.
 next: The agent follows the instruction and fixes the code, or suppresses the violation with a comment that says why. Raising a limit or loosening the rules is a change a person approves, not a fix.

@@ -2,7 +2,6 @@
 title: Try it by hand
 summary: The agent runs what it just wrote the way a user of that code would, and turns each defect it finds into a test that fails before the fix and passes after it.
 sensors: [manual-probe]
-placement: inner
 when: After the agent has written a change and before it says it is done, and again after each fix. Before the turn ends, a check reads the defects found.
 failure: What comes back is not what a user of the code should get, such as a wrong value, an error or a broken page. A defect stays a failure until it has a test that failed before the fix and passes after it.
 next: The agent writes the test, fixes the code, not the test, and tries the change again. When it cannot tell whether what it saw is a defect or intended, or no test can catch the defect, it stops and shows a person the commands it ran and their output.

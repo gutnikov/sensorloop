@@ -2,7 +2,6 @@
 title: Evals on every prompt change
 summary: After each change to a prompt, a tool description or the model, the agent runs the feature on a suite of cases several times, and a drop in the pass rate fails the change.
 sensors: [eval-set, llm-judge]
-placement: inner
 when: After each change to a prompt, a tool description, the model or a parameter the feature uses, before the agent says it is done; and in CI, on every pull request that touches one of them.
 failure: The pass rate falls below the threshold, or below the baseline by more than the spread between runs on the base branch. A case that fails on the base branch as well is pre-existing, and a run that errored is missing; neither counts against the change.
 next: The agent reads the failed cases, fixes the feature's prompt or tool descriptions and runs the evals again. A case, the baseline and the threshold change only through a person's review, and a drop that only the judge's grades show is advice until the judge is calibrated. After three rounds in which the pass rate does not recover, the agent stops and hands a person the failed cases with their outputs.

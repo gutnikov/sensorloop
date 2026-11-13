@@ -32,8 +32,8 @@ export const KIND = {
 export const kindHref = (/** @type {string} */ kind) => `/${kind}/`;
 
 /**
- * How a kind's cards are grouped, in its side navigation and on its page: sensors by type, tools by where they are,
- * loops by placement.
+ * How a kind's cards are grouped, in its side navigation and on its page: sensors by type, tools by where they are;
+ * loops in one list.
  */
 const GROUPING = {
   sensors: {
@@ -43,10 +43,6 @@ const GROUPING = {
   tools: {
     field: 'layer',
     labels: { project: 'In the project', system: 'Outside the project', agent: 'In the coding agent' },
-  },
-  loops: {
-    field: 'placement',
-    labels: { inner: 'Inner: before the push', outer: 'Outer: after the push' },
   },
 };
 
@@ -97,7 +93,6 @@ export function kicker(card) {
   const detail = {
     sensors: card.data.type,
     tools: GROUPING.tools.labels[card.data.layer]?.toLowerCase(),
-    loops: card.data.placement,
   }[card.kind];
   return detail ? `${KIND[card.kind].one} · ${detail}` : KIND[card.kind].one;
 }
@@ -110,7 +105,7 @@ export function meta(catalog, card) {
     case 'tools':
       return [['builds', card.data.sensors.map((id) => catalog.get('sensors', id).data.title).join(', ')]];
     case 'loops':
-      return [['reads', card.data.sensors.map((id) => catalog.get('sensors', id).data.title).join(', ')], ['runs', card.data.placement]];
+      return [['reads', card.data.sensors.map((id) => catalog.get('sensors', id).data.title).join(', ')]];
   }
 }
 
@@ -133,7 +128,6 @@ export function facts(catalog, card) {
     case 'loops':
       return [
         ['Reads', sensors()],
-        ['Runs', card.data.placement === 'inner' ? 'inner: before the push' : 'outer: after the push'],
         ['When', inline(card.data.when)],
         ['Failure', inline(card.data.failure)],
         ['Next', inline(card.data.next)],

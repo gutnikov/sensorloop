@@ -13,7 +13,7 @@ const SCHEMAS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const SENSOR = '---\ntitle: Test runner\ntype: computational\nsummary: Runs tests.\nsignal: Exit code.\n---\nBody.\n';
 const TOOL = "---\ntitle: The project's test command\nsummary: Runs the tests.\nsensors: [test-runner]\nlayer: project\n---\n";
 const LOOP =
-  '---\ntitle: Red, then green\nsummary: Test first.\nsensors: [test-runner]\nplacement: inner\n' +
+  '---\ntitle: Red, then green\nsummary: Test first.\nsensors: [test-runner]\n' +
   'when: Before and after.\nfailure: A test fails.\nnext: Fix the code.\n---\n';
 
 /** Writes a catalog with the real schemas and the given cards ({ 'sensors/x.md': text }), and returns its folder. */

@@ -2,7 +2,6 @@
 title: A bug starts with a failing test
 summary: The agent turns a bug into a test that fails for the bug's reason, changes the code until it passes, and runs the whole suite.
 sensors: [test-runner]
-placement: inner
 when: On every bug fix, before the code is changed and again after.
 failure: No test reproduces the bug, the test passes before the fix, the original reproduction still fails after it, or another test breaks.
 next: The agent rewrites a test that does not fail before the fix, and changes the code, never the existing tests, until all of it is green. When no test at a real seam can catch the bug, it says so in the task and shows a person the reproduction instead.

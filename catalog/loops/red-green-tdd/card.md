@@ -2,7 +2,6 @@
 title: Red, then green
 summary: A change in behaviour starts with a test that fails for the right reason, and ends when that test and the rest of the suite pass.
 sensors: [test-runner]
-placement: inner
 when: Before the code for a new behaviour or a fix is written, and again after it.
 failure: The new test passes before the change, fails for a reason other than the missing behaviour, or any test fails after the change.
 next: The agent changes the code, never the new test, and runs the tests again. When the test cannot be made to fail for the right reason, or the same failure keeps coming back, it stops and shows a person the test.

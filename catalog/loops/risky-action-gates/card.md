@@ -2,7 +2,6 @@
 title: Ask before the irreversible
 summary: Before an action that cannot be undone, the agent stops, and a person confirms or refuses it.
 sensors: [human-answer]
-placement: inner
 when: Before an action that cannot be undone, such as a deploy, a migration, deleting data, a push to a protected branch, or a message sent outside the project.
 failure: The person refuses. Or a gated action is not gated after all, which the check of the gates reports.
 next: A refused action is not tried another way. The agent says what it did not do, and goes on with the rest or asks what to do instead. In a run nobody watches, a gated action waits or is refused; it never runs unasked.

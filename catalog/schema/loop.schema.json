@@ -4,7 +4,7 @@
   "description": "The front matter of catalog/loops/<id>/card.md. The id is the folder name; the folder will also hold the loop's scripts.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["title", "summary", "sensors", "placement", "when", "failure", "next"],
+  "required": ["title", "summary", "sensors", "when", "failure", "next"],
   "properties": {
     "title": { "type": "string", "minLength": 1 },
     "summary": { "type": "string", "minLength": 1 },
@@ -14,10 +14,6 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" }
-    },
-    "placement": {
-      "description": "inner: runs while the work is done, before the push. outer: runs later, in CI, on staging or in production.",
-      "enum": ["inner", "outer"]
     },
     "when": { "type": "string", "minLength": 1, "description": "When the sensor is read." },
     "failure": { "type": "string", "minLength": 1, "description": "What counts as a failure." },

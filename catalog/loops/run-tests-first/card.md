@@ -2,7 +2,6 @@
 title: Run the tests first
 summary: Before changing anything, the agent runs the whole suite and keeps the result, so it never takes an old failure for its own regression.
 sensors: [test-runner]
-placement: inner
 when: At the start of a task, before any change; and at its end, compared test by test with that first run.
 failure: A test that passed in the first run fails now. A test that already failed is reported, and not counted against the change.
 next: The agent fixes its regression and compares again. A main branch that is already red is reported to a person before the work starts, as a problem of its own.

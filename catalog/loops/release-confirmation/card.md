@@ -2,7 +2,6 @@
 title: Confirm the release in production
 summary: After a release reaches production, a job judges a window of real traffic, and the change is confirmed only if production runs it, its own signal appeared often enough, and nothing is worse than under the previous version.
 sensors: [logs, metrics, error-tracker]
-placement: outer
 when: After each deploy to production, once a window of real traffic has passed (at least a set time and a set number of events on the changed path, up to a cap).
 failure: Any verdict but confirmed. The new version is not the one running, the change's signal is missing or too rare, something is worse than under the previous version, or the window ended with too few events to judge.
 next: The agent reads the snapshot of a window that did not confirm, names the check that failed, the errors or missing events that show it and the likely cause, and fixes the change, which is judged again after its next release. Rolling back belongs to the pipeline or the canary tool, never to the agent. An inconclusive verdict is reported to a person, not read as a pass.

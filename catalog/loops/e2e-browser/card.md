@@ -2,7 +2,6 @@
 title: Walk the feature in a browser
 summary: The agent starts the app and walks the feature through a real browser as a user would, which shows a feature broken end to end even when the unit tests pass.
 sensors: [browser-run]
-placement: inner
 when: After the unit tests pass on a change to a feature users reach in a browser, before the agent says it is done; and again in CI, on a fresh server.
 failure: A step of the scenario does not reach what a user should see, such as a button with no effect or an error where the result should be. In CI, any failed spec.
 next: The agent fixes the code and walks the scenario again. Done waits on the CI run, not on the agent's own walk, and a spec the agent changes goes through review, as acceptance tests do.
