@@ -20,6 +20,8 @@ import YAML from 'yaml';
  * @property {string} file                  the card's path inside the catalog folder
  * @property {Record<string, any>} data     the front matter, valid against the kind's schema
  * @property {string} body                  the Markdown after the front matter
+ * @property {string | null} illustration   the card's illustration inside the catalog folder, if it has one: the card's
+ *                                          path with an image extension (sensors/x.svg, loops/x/card.png)
  */
 
 /**
@@ -45,6 +47,9 @@ const KINDS = /** @type {const} */ ({
 export const kinds = ['sensors', 'tools', 'loops'];
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/** An illustration is an image beside its card, with the card's name: sensors/test-runner.svg, loops/x/card.png. */
+const IMAGE = /\.(svg|png|jpe?g|webp)$/;
 const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
 
 export class CatalogError extends Error {
@@ -89,7 +94,8 @@ export function loadCatalog(root) {
         }
         continue;
       }
-      cards[kind].push({ kind, id: entry.id, file, data: parsed.data, body: parsed.body });
+      const illustration = illustrationOf(entry.file, root, problems);
+      cards[kind].push({ kind, id: entry.id, file, data: parsed.data, body: parsed.body, illustration });
     }
     cards[kind].sort((a, b) => a.data.title.localeCompare(b.data.title));
   }
@@ -141,6 +147,12 @@ function list(dir, layout, problems, root) {
   for (const dirent of dirents) {
     const where = path.relative(root, path.join(dir, dirent.name));
     if (dirent.name.startsWith('.')) continue;
+    if (layout === 'file' && dirent.isFile() && IMAGE.test(dirent.name)) {
+      // A card's illustration, picked up with its card; one with no card beside it is a problem.
+      const card = dirent.name.replace(IMAGE, '.md');
+      if (!fs.existsSync(path.join(dir, card))) problems.push(`${where}: an illustration with no card (${card})`);
+      continue;
+    }
     if (layout === 'file') {
       if (dirent.isFile() && dirent.name.endsWith('.md')) {
         entries.push({ id: dirent.name.slice(0, -'.md'.length), file: path.join(dir, dirent.name) });
@@ -157,6 +169,26 @@ function list(dir, layout, problems, root) {
     }
   }
   return entries;
+}
+
+/**
+ * The illustration beside a card: its file name with an image extension instead of .md. Two of them is a problem.
+ * @param {string} cardFile  the card's absolute path
+ * @param {string} root
+ * @param {string[]} problems
+ * @returns {string | null}  the illustration's path inside the catalog folder
+ */
+function illustrationOf(cardFile, root, problems) {
+  const dir = path.dirname(cardFile);
+  const stem = path.basename(cardFile, '.md');
+  const found = fs
+    .readdirSync(dir)
+    .filter((name) => IMAGE.test(name) && name.replace(IMAGE, '') === stem)
+    .sort();
+  if (found.length > 1) {
+    problems.push(`${path.relative(root, cardFile)}: more than one illustration (${found.join(', ')}); keep one`);
+  }
+  return found.length > 0 ? path.relative(root, path.join(dir, found[0])) : null;
 }
 
 /**

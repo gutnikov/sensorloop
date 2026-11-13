@@ -1,5 +1,5 @@
 ---
-// A page of one kind (its list, or one of its cards): the side navigation of the kind, and the page beside it.
+// A page of one kind (its list, or one of its cards): the side navigation of the kind, and the page.
 import Page from './Page.astro';
 import SideNav from '../components/SideNav.astro';
 
@@ -13,11 +13,9 @@ interface Props {
 const { kind, current, title, description } = Astro.props;
 ---
 
-<Page title={title} description={description}>
-  <div class="with-sidenav">
-    <SideNav kind={kind} current={current} />
-    <div class="section-content">
-      <slot />
-    </div>
+<Page title={title} description={description} bodyClass="has-sidenav">
+  <SideNav kind={kind} current={current} />
+  <div class="section-content">
+    <slot />
   </div>
 </Page>

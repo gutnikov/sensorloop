@@ -1,6 +1,7 @@
 ---
 // The side navigation of a kind's pages: every card of the kind, in its groups, the current one marked. Wide screens
-// show it as a column beside the content; narrow ones fold it into a disclosure above it, closed until opened.
+// show it as a column at the window's left edge, outside the page; narrow ones fold it into a disclosure above the
+// page, closed until opened.
 import { catalog } from '../lib/content.js';
 import { KIND, groups, href, kindHref } from '../lib/present.js';
 
@@ -43,7 +44,7 @@ const total = c[kind].length;
   // list taller than the screen, the column scrolls to the current card so it is in view.
   (() => {
     const nav = document.currentScript.previousElementSibling;
-    const wide = matchMedia('(min-width: 50rem)');
+    const wide = matchMedia('(min-width: 60rem)'); // as in site.css
     const sync = () => (nav.open = wide.matches);
     sync();
     wide.addEventListener('change', sync);

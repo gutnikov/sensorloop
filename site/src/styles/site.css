@@ -19,7 +19,7 @@
   --mono: 'Source Code Pro Variable', 'Source Code Pro', ui-monospace, Menlo, Consolas, monospace;
 
   --measure: 38rem;
-  --page: 50rem;
+  --page: 56rem; /* the measure, and room for a card's illustration beside it */
   --gutter: clamp(1rem, 4vw, 2.5rem);
 
   color-scheme: light;
@@ -524,26 +524,39 @@ figcaption {
   font-weight: 600;
 }
 
-/* Wide screens: the navigation is a column beside the content, and stays in view while the page scrolls. */
-@media (min-width: 50rem) {
-  .with-sidenav {
-    display: grid;
-    grid-template-columns: 12rem minmax(0, 1fr);
-    gap: 0 2.5rem;
-    align-items: start;
+/* The masthead and the page keep their width beside the navigation: centred as on every other page when the window
+   has room for the column on their left, moved right of it when it does not. */
+.has-sidenav {
+  --sidenav-width: 15rem;
+}
+
+/* Below the folded navigation, the title needs less room than at the top of a page. */
+.section-content > .title-block:first-child,
+.card-head > .title-block {
+  margin-top: 2.25rem;
+}
+
+/* Wide screens (60rem: keep in step with SideNav.astro): the navigation leaves the page's flow for a column at the
+   window's left edge, full height, with its own scroll. */
+@media (min-width: 60rem) {
+  .has-sidenav .masthead,
+  .has-sidenav main {
+    width: min(100% - var(--sidenav-width) - 2 * var(--gutter), var(--page));
+    margin-left: max((100% - var(--page)) / 2, var(--sidenav-width) + var(--gutter));
+    margin-right: auto;
   }
 
-  /* Never taller than the screen below the masthead (about 4.7rem), so its last card can be reached even on a page
-     too short to scroll. */
   .sidenav {
-    position: sticky;
+    position: fixed;
     top: 0;
-    max-height: calc(100vh - 5rem);
-    max-height: calc(100dvh - 5rem);
+    bottom: 0;
+    left: 0;
+    width: var(--sidenav-width);
     overflow-y: auto;
-    margin-top: 0;
-    padding-block: 3.25rem 2rem;
+    margin: 0;
+    padding: 1.6rem 1.25rem 2.5rem 1.5rem;
     border: 0;
+    border-right: 1px solid var(--rule);
     border-radius: 0;
   }
 
@@ -558,19 +571,85 @@ figcaption {
   .sidenav li a {
     padding-block: 0.2rem;
   }
+
+  .section-content > .title-block:first-child,
+  .card-head > .title-block {
+    margin-top: 3.25rem;
+  }
 }
 
-.section-content .contents {
-  margin-top: 3rem;
+/* ---------------------------------------------------------------- a card's page: its illustration */
+
+/* The card lays itself out by the room it has, not by the window's width: beside the side navigation, the page is
+   narrower than the window. */
+.card {
+  container-type: inline-size;
 }
 
-/* Below the folded navigation, the title needs less room than at the top of a page. */
-.section-content > .title-block:first-child {
-  margin-top: 2.25rem;
+/* Narrow: the illustration comes under the facts, before the text. */
+.card-figure {
+  max-width: 24rem;
+  margin: 2rem 0 0;
 }
 
-@media (min-width: 50rem) {
-  .section-content > .title-block:first-child {
+.card-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Where a card has no illustration yet: the frame it will fill, and the file that fills it. Shown only in the column
+   beside the text; under the facts it would be an empty screen on a phone. */
+.card-figure.is-empty {
+  display: none;
+}
+
+/* Where a card has no illustration yet: the frame it will fill, and the file that fills it. */
+.card-figure-empty {
+  display: grid;
+  place-content: center;
+  gap: 0.4rem;
+  aspect-ratio: 4 / 3;
+  padding: 1rem;
+  border: 1px dashed var(--rule);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.card-figure-empty code {
+  font-size: 0.72rem;
+  font-style: normal;
+  overflow-wrap: anywhere;
+}
+
+/* With room for a column beside the text at its full measure, the illustration takes it, level with the title. */
+@container (min-width: 51rem) {
+  .card-grid {
+    display: grid;
+    grid-template-columns: minmax(0, var(--measure)) minmax(0, 1fr);
+    grid-template-areas:
+      'head figure'
+      'body figure';
+    column-gap: 2.5rem;
+    align-items: start;
+  }
+
+  .card-head {
+    grid-area: head;
+  }
+
+  .card-body {
+    grid-area: body;
+  }
+
+  .card-figure,
+  .card-figure.is-empty {
+    display: block;
+    grid-area: figure;
+    max-width: none;
     margin-top: 3.25rem;
   }
 }

@@ -80,3 +80,33 @@ test('a card with no front matter, and an id that is not one', () => {
     'sensors/linter.md: no front matter: a card starts with a --- line, its YAML, and another --- line',
   ]);
 });
+
+test('an illustration beside its card, with the card file name', () => {
+  const c = loadCatalog(
+    catalog({
+      'sensors/test-runner.md': SENSOR,
+      'sensors/test-runner.svg': '<svg xmlns="http://www.w3.org/2000/svg"/>',
+      'tools/project-test-command.md': TOOL,
+      'loops/red-green-tdd/card.md': LOOP,
+      'loops/red-green-tdd/card.png': 'png',
+    }),
+  );
+  assert.equal(c.get('sensors', 'test-runner').illustration, 'sensors/test-runner.svg');
+  assert.equal(c.get('loops', 'red-green-tdd').illustration, 'loops/red-green-tdd/card.png');
+  assert.equal(c.get('tools', 'project-test-command').illustration, null);
+});
+
+test('an illustration with no card, and a card with two', () => {
+  assert.deepEqual(
+    problems({
+      'sensors/test-runner.md': SENSOR,
+      'sensors/test-runner.svg': '<svg/>',
+      'sensors/test-runner.png': 'png',
+      'sensors/linter.svg': '<svg/>',
+    }),
+    [
+      'sensors/linter.svg: an illustration with no card (linter.md)',
+      'sensors/test-runner.md: more than one illustration (test-runner.png, test-runner.svg); keep one',
+    ],
+  );
+});

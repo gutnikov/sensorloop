@@ -11,9 +11,11 @@ import { KIND, kindHref } from '../lib/present.js';
 interface Props {
   title: string;
   description: string;
+  /** A class on <body>, for a layout that changes the page around it (has-sidenav). */
+  bodyClass?: string;
 }
 
-const { title, description } = Astro.props;
+const { title, description, bodyClass } = Astro.props;
 
 // The masthead's links: the metamodel, then a page per kind. The one for the page's own section is marked current.
 const path = Astro.url.pathname;
@@ -39,7 +41,7 @@ const nav = [
     </script>
     <Fragment set:html={analyticsSnippet()} />
   </head>
-  <body>
+  <body class={bodyClass}>
     <header class="masthead">
       <a class="wordmark" href="/">superloops</a>
       <div class="masthead-end">
