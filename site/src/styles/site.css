@@ -518,7 +518,10 @@ figcaption {
 
 .sidenav li a {
   display: block;
+  overflow: hidden;
   padding: 0.4rem 0 0.4rem 0.75rem; /* taller rows to tap on narrow screens; 0.2rem beside the content */
+  white-space: nowrap; /* one line each; a title longer than the column ends in an ellipsis, whole in its tooltip */
+  text-overflow: ellipsis;
   border-left: 1px solid var(--rule);
   color: var(--ink-soft);
   line-height: 1.35;
@@ -539,7 +542,7 @@ figcaption {
 /* The masthead and the page keep their width beside the navigation: centred as on every other page when the window
    has room for the column on their left, moved right of it when it does not. */
 .has-sidenav {
-  --sidenav-width: 15rem;
+  --sidenav-width: 24rem; /* the longest title on one line, in bold when it is the current page */
 }
 
 /* Below the folded navigation, the title needs less room than at the top of a page. */
@@ -548,9 +551,9 @@ figcaption {
   margin-top: 2.25rem;
 }
 
-/* Wide screens (60rem: keep in step with SideNav.astro): the navigation leaves the page's flow for a column at the
+/* Wide screens (68rem: keep in step with SideNav.astro): the navigation leaves the page's flow for a column at the
    window's left edge, full height, with its own scroll. */
-@media (min-width: 60rem) {
+@media (min-width: 68rem) {
   .has-sidenav .masthead,
   .has-sidenav main {
     width: min(100% - var(--sidenav-width) - 2 * var(--gutter), var(--page));
