@@ -28,8 +28,12 @@ npm run dev       # the site at http://localhost:4321, reloading on changes to c
 npm run build     # the site into site/dist
 npm run build:plugin                       # the catalog into the plugin's skill; commit the result
 claude plugin validate plugins/claude      # the plugin; `claude plugin validate .` for the marketplace
-claude plugin eval plugins/claude --tag trigger --tag no-trigger   # whether the skill loads when it should (costs model calls)
+claude plugin eval plugins/claude --tag trigger --tag no-trigger   # whether the skill loads when it should
 claude plugin eval plugins/claude --scaffold --allow-tools Bash Write Edit Agent   # every case, fixtures included
 ```
+
+The plugin's evals call a model, so they do not run in CI: run them in the session that changes the plugin, and at
+review. The trigger cases after any change to the skill's description; every case after a change to its procedures,
+wiring or scripts. Add `--no-publish` to keep the report local.
 
 Deploy (manual): `npm run build && cd site && npx wrangler@4 deploy`. The account is in `site/wrangler.jsonc`.
