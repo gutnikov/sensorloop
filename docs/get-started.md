@@ -18,8 +18,6 @@ claude plugin marketplace add gutnikov/sensorloop
 claude plugin install sensorloop@sensorloop
 ```
 
-<!-- cast: install | Installing the plugin -->
-
 The plugin loads in your next session. To give it to the whole team, add `--scope project` to both commands: the marketplace and the plugin are then declared in the project's `.claude/settings.json`, which you commit, and each teammate's Claude Code offers to install them.
 
 Update with `claude plugin update sensorloop@sensorloop`. The loops need `bash`, and `python3` for the stall detector.
@@ -35,8 +33,6 @@ Ask in plain words. The skill loads when the work calls for it; you do not name 
 3. Proposes a few loops that fit, with the changes each makes.
 4. After your yes, wires them, and makes each one fail once on purpose to prove it fires.
 5. Writes them down.
-
-<!-- cast: setup | Setting up a small project -->
 
 **When the project changes.** "We moved to Vitest and added a type check; make sure the agent's checks still work." It compares the loops with the project, and fixes the wiring that drifted.
 
