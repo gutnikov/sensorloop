@@ -11,7 +11,7 @@ import { CatalogError, loadCatalog } from '../src/index.js';
 const SCHEMAS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'catalog', 'schema');
 
 const SENSOR = '---\ntitle: Test runner\ntype: computational\nsummary: Runs tests.\nsignal: Exit code.\n---\nBody.\n';
-const TOOL = "---\ntitle: The project's test command\nsummary: Runs the tests.\nsensors: [test-runner]\n---\n";
+const TOOL = "---\ntitle: The project's test command\nsummary: Runs the tests.\nsensors: [test-runner]\nlayer: project\n---\n";
 const LOOP =
   '---\ntitle: Red, then green\nsummary: Test first.\nsensors: [test-runner]\nplacement: inner\n' +
   'when: Before and after.\nfailure: A test fails.\nnext: Fix the code.\n---\n';

@@ -32,13 +32,17 @@ export const KIND = {
 export const kindHref = (/** @type {string} */ kind) => `/${kind}/`;
 
 /**
- * How a kind's cards are grouped, in its side navigation and on its page: sensors by type, loops by placement,
- * tools in one list (a tool can build several sensors, so no one sensor is its group).
+ * How a kind's cards are grouped, in its side navigation and on its page: sensors by type, tools by where they are,
+ * loops by placement.
  */
 const GROUPING = {
   sensors: {
     field: 'type',
     labels: { computational: 'Computational', inferential: 'Inferential', human: 'Human' },
+  },
+  tools: {
+    field: 'layer',
+    labels: { project: 'In the project', system: 'Outside the project', agent: 'In the coding agent' },
   },
   loops: {
     field: 'placement',
@@ -90,7 +94,11 @@ const links = (/** @type {any[]} */ cards) =>
 
 /** The line above a card's title. */
 export function kicker(card) {
-  const detail = { sensors: card.data.type, loops: card.data.placement }[card.kind];
+  const detail = {
+    sensors: card.data.type,
+    tools: GROUPING.tools.labels[card.data.layer]?.toLowerCase(),
+    loops: card.data.placement,
+  }[card.kind];
   return detail ? `${KIND[card.kind].one} · ${detail}` : KIND[card.kind].one;
 }
 

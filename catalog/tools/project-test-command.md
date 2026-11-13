@@ -2,6 +2,7 @@
 title: The project's test command
 summary: Whatever runs this project's tests, found in the project itself rather than assumed.
 sensors: [test-runner]
+layer: project
 ---
 
 The project, not the loop, chooses how its tests run. This tool is the command the project already uses, found in

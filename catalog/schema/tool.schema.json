@@ -4,7 +4,7 @@
   "description": "The front matter of catalog/tools/<id>.md. The id is the file name. A tool card is written for any project: one tied to a language describes the role (the project's test command), and names products only as examples from several stacks.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["title", "summary", "sensors"],
+  "required": ["title", "summary", "sensors", "layer"],
   "properties": {
     "title": { "type": "string", "minLength": 1 },
     "summary": { "type": "string", "minLength": 1 },
@@ -14,6 +14,10 @@
       "minItems": 1,
       "uniqueItems": true,
       "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" }
+    },
+    "layer": {
+      "description": "Where the tool is: project (run from the project's checkout: its commands and libraries, and the command-line tools beside them), system (outside it: a service, an environment or a store the project reaches), agent (part of the coding agent itself).",
+      "enum": ["project", "system", "agent"]
     },
     "homepage": { "type": "string", "pattern": "^https://" }
   }

@@ -48,6 +48,9 @@ export const kinds = ['sensors', 'tools', 'loops'];
 
 const ID = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
+/** Cards are listed by title, read without a leading "The" and possessive: "The project's linter" under L. */
+const sortKey = (/** @type {string} */ title) => title.replace(/^the\s+(\S+'s\s+)?/i, '');
+
 /** An illustration is an image beside its card, with the card's name: sensors/test-runner.svg, loops/x/card.png. */
 const IMAGE = /\.(svg|png|jpe?g|webp)$/;
 
@@ -110,7 +113,7 @@ export function loadCatalog(root) {
       const illustration = illustrationOf(entry.file, root, problems);
       cards[kind].push({ kind, id: entry.id, file, data: parsed.data, body: parsed.body, illustration });
     }
-    cards[kind].sort((a, b) => a.data.title.localeCompare(b.data.title));
+    cards[kind].sort((a, b) => sortKey(a.data.title).localeCompare(sortKey(b.data.title)));
   }
 
   const byId = Object.fromEntries(kinds.map((kind) => [kind, new Map(cards[kind].map((card) => [card.id, card]))]));
