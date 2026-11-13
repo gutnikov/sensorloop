@@ -5,6 +5,8 @@ import '@fontsource-variable/source-serif-4/opsz-italic.css';
 import '@fontsource-variable/source-code-pro/wght.css';
 import '../styles/site.css';
 import { analyticsSnippet } from '../config.mjs';
+import { kinds } from '../lib/content.js';
+import { KIND, kindHref } from '../lib/present.js';
 
 interface Props {
   title: string;
@@ -13,11 +15,11 @@ interface Props {
 
 const { title, description } = Astro.props;
 
-// The masthead's links; the one for the page's own section is marked current.
+// The masthead's links: the metamodel, then a page per kind. The one for the page's own section is marked current.
 const path = Astro.url.pathname;
 const nav = [
   { href: '/', label: 'Metamodel', current: path === '/' },
-  { href: '/catalog/', label: 'Catalog', current: path !== '/' },
+  ...kinds.map((kind) => ({ href: kindHref(kind), label: KIND[kind].many, current: path.startsWith(kindHref(kind)) })),
 ];
 ---
 

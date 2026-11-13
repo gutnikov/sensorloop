@@ -2,7 +2,7 @@
 // A card's page: /sensors/<id>/, /tools/<id>/, /loops/<id>/. Its facts, with the cards it is linked to, then its text.
 import Page from '../../layouts/Page.astro';
 import { catalog, inline, kinds, markdown } from '../../lib/content.js';
-import { KIND, facts, kicker, source } from '../../lib/present.js';
+import { KIND, facts, kicker, kindHref, source } from '../../lib/present.js';
 
 export function getStaticPaths() {
   const c = catalog();
@@ -15,7 +15,7 @@ const card = c.get(kind, id);
 ---
 
 <Page title={`${card.data.title}: ${KIND[kind].one.toLowerCase()}, superloops`} description={card.data.summary}>
-  <p class="crumbs"><a href="/catalog/">Catalog</a> · <a href={`/catalog/#${kind}`}>{KIND[kind].many}</a></p>
+  <p class="crumbs"><a href={kindHref(kind)}>{KIND[kind].many}</a></p>
   <header class="title-block">
     <p class="kicker">{kicker(card)}</p>
     <h1>{card.data.title}</h1>

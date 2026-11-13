@@ -3,23 +3,33 @@
 import { config } from '../config.mjs';
 import { inline } from './content.js';
 
+/** Each kind has its own page, /sensors/, /tools/ and /loops/, with the lede below its title. */
 export const KIND = {
   sensors: {
     one: 'Sensor',
     many: 'Sensors',
-    description: 'What observes a change and reports a signal about its quality.',
+    lede:
+      'A sensor observes a change, or the system the change lives in, and reports a signal about its quality: ' +
+      'pass or fail, a score, or a list of findings. It never changes the work.',
   },
   tools: {
     one: 'Tool',
     many: 'Tools',
-    description: 'The programs and services the sensors are built with.',
+    lede:
+      'What the sensors are built with. Each tool is described for any project: one tied to a language is the ' +
+      'role it plays, found in the project, with products named only as examples.',
   },
   loops: {
     one: 'Loop',
     many: 'Loops',
-    description: 'A sensor connected to the work: when it is read, what counts as a failure, what happens next.',
+    lede:
+      'A loop connects a sensor to the work: when the sensor is read, what counts as a failure, and what happens ' +
+      'next.',
   },
 };
+
+/** A kind's page. */
+export const kindHref = (/** @type {string} */ kind) => `/${kind}/`;
 
 /** @param {{ kind: string, id: string }} card */
 export const href = (card) => `/${card.kind}/${card.id}/`;
