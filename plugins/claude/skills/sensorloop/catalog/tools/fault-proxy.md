@@ -1,0 +1,26 @@
+---
+title: Fault proxy
+summary: Sits between a service and a dependency in tests, and makes that dependency slow, cut off or broken on demand.
+sensors: [input-fault-injection]
+layer: project
+---
+
+A fault proxy stands between the service under test and one of its dependencies, so a test can make that dependency
+slow, unreachable or broken on purpose. It works at the network level, so it serves a service in any stack.
+
+## Finding it
+
+- **The test setup**: a proxy container in the Compose file or the test fixtures, and its client library among the
+  test dependencies.
+- **The service's test config**: the dependency's address points at the proxy's port, not at the dependency.
+
+When there is none, it starts as one more container beside the dependency it sits in front of.
+
+## Using it
+
+- **Add a fault in the test that needs it**, through the client or the proxy's HTTP API: latency, a timeout, a reset
+  connection, limited bandwidth, or the proxy disabled to cut the dependency off.
+- **Reset after each test** (`POST /reset` in Toxiproxy), so one test's fault cannot break the next.
+- **Assert on what the service does**: it times out within its limit, falls back, or returns a clear error.
+
+Examples: Toxiproxy; WireMock's delays and faults, for a dependency reached over HTTP.
