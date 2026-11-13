@@ -18,7 +18,7 @@ const LOOP =
 
 /** Writes a catalog with the real schemas and the given cards ({ 'sensors/x.md': text }), and returns its folder. */
 function catalog(cards) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'superloops-catalog-'));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sensorloop-catalog-'));
   fs.cpSync(SCHEMAS, path.join(root, 'schema'), { recursive: true });
   for (const [file, text] of Object.entries(cards)) {
     fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });

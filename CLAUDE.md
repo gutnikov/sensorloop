@@ -2,7 +2,7 @@
 
 # This repository
 
-The catalog of sensors, tools and loops, the plugins built from it, and the site at superloops.dev.
+The catalog of sensors, tools and loops, the plugins built from it, and the site at sensorloop.dev.
 
 - `catalog/`: the cards, the only home of their content. `sensors/<id>.md`, `tools/<id>.md`, `loops/<id>/card.md`
   (a loop's folder will also hold its scripts). Front matter is checked against `catalog/schema/`.

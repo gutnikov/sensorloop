@@ -1,11 +1,11 @@
-// The repository's content, as the pages need it: the catalog (loaded, checked and linked by @superloops/catalog),
+// The repository's content, as the pages need it: the catalog (loaded, checked and linked by @sensorloop/catalog),
 // the metamodel from docs/, and Markdown rendered to HTML. Read on every call, so the dev server shows each edit.
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadCatalog } from '@superloops/catalog';
+import { loadCatalog } from '@sensorloop/catalog';
 import { marked } from 'marked';
 
-export { kinds } from '@superloops/catalog';
+export { kinds } from '@sensorloop/catalog';
 
 export const catalog = () => loadCatalog(__CONTENT__.catalogDir);
 

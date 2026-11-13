@@ -4,11 +4,11 @@
  */
 export const config = {
   /** The repository: the site's links to it, and where a card's link to a file with no page goes. */
-  repository: 'https://github.com/gutnikov/superloops',
+  repository: 'https://github.com/gutnikov/sensorloop',
   /** The branch whose files those links open. */
   branch: 'main',
   /**
-   * The Cloudflare Web Analytics token of superloops.dev, from the site's entry in the Cloudflare
+   * The Cloudflare Web Analytics token of sensorloop.dev, from the site's entry in the Cloudflare
    * dashboard. The build fails while it is empty.
    */
   analyticsToken: 'a3efcdc85268432aae5594b62ef77d8f',
@@ -24,7 +24,7 @@ export function analyticsSnippet() {
   if (!token) {
     throw new Error(
       'AnalyticsTokenMissing: site/src/config.mjs has no analyticsToken. Set it to the Cloudflare Web Analytics ' +
-        'token of superloops.dev (Cloudflare dashboard > Web Analytics > superloops.dev > Manage site).',
+        'token of sensorloop.dev (Cloudflare dashboard > Web Analytics > sensorloop.dev > Manage site).',
     );
   }
   if (!/^[0-9a-f]{32}$/.test(token)) {

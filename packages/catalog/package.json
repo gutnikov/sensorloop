@@ -1,5 +1,5 @@
 {
-  "name": "@superloops/catalog",
+  "name": "@sensorloop/catalog",
   "version": "0.0.0",
   "private": true,
   "description": "Reads, checks and links the cards in catalog/: the only code that parses them",
