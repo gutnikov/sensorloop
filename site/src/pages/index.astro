@@ -1,9 +1,127 @@
 ---
+// The home page: the metamodel. The same text is in CLAUDE.md at the repository's root; change both together.
 import Page from '../layouts/Page.astro';
+import ChangePath from '../components/ChangePath.astro';
 ---
 
-<Page title="superloops" description="superloops">
+<Page
+  title="superloops: the metamodel"
+  description="Every change path designed as a set of validation loops: sensors, tools, loops and the metaloop that improves them."
+>
   <header class="title-block">
-    <h1>superloops</h1>
+    <h1>Metamodel</h1>
+    <p class="lede">
+      We believe every change path should be designed as a set of validation loops. Some loops are short and fast,
+      like running unit tests on a change. Others take longer, like running end-to-end tests. Inner loops run while
+      the work is being done, before anything is pushed to git. Outer loops run later: in CI, on staging, or even after
+      the code has reached real users, like scanning production logs.
+    </p>
   </header>
+
+  <figure class="figure">
+    <ChangePath />
+    <figcaption>
+      <span class="figure-number">Figure 1.</span> A change path with its inner and outer loops. Each loop reads its
+      sensor at one point on the path and sends a failure back to the work; the later the point, the longer the loop
+      and the more the failure costs.
+    </figcaption>
+  </figure>
+
+  <div class="prose">
+    <p>
+      A validation loop judges the quality of a change by reading a sensor, and improves the change when the sensor
+      spots a problem.
+    </p>
+    <p>
+      A successful AI-first development process is built around designing the right loops: loops that do the checking
+      for you. The right set of loops is different for every project and depends on its needs and constraints. It is
+      always a trade-off. A loop costs time, money and attention, so it pays off only where the failure it catches is
+      likely or expensive.
+    </p>
+
+    <h2 id="sensor">Sensor</h2>
+    <p>
+      A sensor is anything that observes a change, or the system the change lives in, and reports a signal about its
+      quality: pass or fail, a score, or a list of findings. A sensor only observes. It never changes the work.
+    </p>
+    <p>Sensors come in three kinds:</p>
+    <ul>
+      <li>
+        <strong>Computational</strong>: a program that gives the same answer every time. It is cheap and fast, but it
+        sees only what it was written to see.
+      </li>
+      <li>
+        <strong>Inferential</strong>: a model reads the work and judges it. It can see what no fixed rule can express,
+        but it costs money, it can be wrong, and it has to be calibrated before it is trusted.
+      </li>
+      <li>
+        <strong>Human</strong>: a person looks at the result or answers a question. This is the slowest and most
+        expensive kind, and the final judge of whether the result is what was wanted.
+      </li>
+    </ul>
+    <p>Examples:</p>
+    <ul>
+      <li>A test runner: the tests pass or fail on the changed code.</li>
+      <li>A linter whose message says how to fix the problem.</li>
+      <li>An LLM reviewer that reads the diff with a fresh context and lists what it finds.</li>
+      <li>A service’s error rate after a release, compared with the rate before it.</li>
+    </ul>
+
+    <h2 id="tool">Tool</h2>
+    <p>
+      A tool is the concrete program or service a sensor is built with. The sensor is what is measured; the tool is
+      how. One sensor can be built with different tools, and one tool can serve several sensors. Choosing the sensors
+      is a design decision. Choosing the tools depends on the project’s stack.
+    </p>
+    <p>Examples:</p>
+    <ul>
+      <li>The test-runner sensor is pytest in a Python project, Jest in a TypeScript one, and go test in Go.</li>
+      <li>
+        Playwright serves two sensors: it drives a browser through a user flow, and it takes screenshots of the result.
+      </li>
+      <li>Production logs are read with LogQL in Loki, and the errors users actually hit come from Sentry.</li>
+    </ul>
+
+    <h2 id="loop">Loop</h2>
+    <p>A loop connects a sensor to the work. It defines three things:</p>
+    <ul>
+      <li>
+        <strong>When</strong> the sensor is read: on every edit, before the agent stops, on every pull request, every
+        night, or after a release.
+      </li>
+      <li><strong>What</strong> counts as a failure.</li>
+      <li><strong>What happens next</strong>: who fixes the work, and when to stop and escalate to a person.</li>
+    </ul>
+    <p>
+      The loop repeats until the sensor passes, or until it gives up and asks for help. Where a loop sits in the change
+      path decides how early a problem is caught and how much it costs to fix.
+    </p>
+    <p>Examples:</p>
+    <ul>
+      <li>
+        <strong>Green before stop</strong> (inner, local): the agent can’t end its turn while the tests or the linter
+        fail. It reads the failure, fixes the code, and runs them again.
+      </li>
+      <li>
+        <strong>Pull request review</strong> (before merge): an LLM reviewer reads the diff. A blocking finding sends
+        the change back to the agent, and a person settles any dispute.
+      </li>
+      <li>
+        <strong>Production log scan</strong> (outer, after release): after a deploy, the error signatures in the logs
+        are compared with those from before it. A new signature opens an issue or triggers a rollback.
+      </li>
+    </ul>
+
+    <h2 id="metaloop">Metaloop</h2>
+    <p>The loops themselves are improved in a loop:</p>
+    <ol>
+      <li>Do the task.</li>
+      <li>Notice which sensors or loops should have caught a problem (or caught it earlier), and improve them.</li>
+      <li>Repeat.</li>
+    </ol>
+    <p>
+      For example, a reviewer finds the same mistake in a third pull request. Instead of fixing it a third time, add a
+      lint rule or a test that catches it before review, at the earliest phase that can see it.
+    </p>
+  </div>
 </Page>

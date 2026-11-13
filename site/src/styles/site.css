@@ -1,6 +1,7 @@
 /*
  * superloops.dev: set like a printed catalogue. One serif with optical sizes, small capitals for labels, hairline
- * rules, one ink colour for links. Light paper by default, a warm dark when the reader's system asks for it.
+ * rules, one ink colour for links. Light paper by default, a warm dark when the reader picks it with the toggle
+ * (data-theme="dark" on <html>, set by the layout).
  */
 
 :root {
@@ -24,19 +25,17 @@
   color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #16140f;
-    --ink: #ebe5d8;
-    --ink-soft: #cdc5b6;
-    --muted: #978e7f;
-    --rule: #39342b;
-    --rule-strong: #ebe5d8;
-    --accent: #e3967b;
-    --accent-soft: rgba(227, 150, 123, 0.12);
-    --code-bg: #221f18;
-    color-scheme: dark;
-  }
+:root[data-theme='dark'] {
+  --paper: #16140f;
+  --ink: #ebe5d8;
+  --ink-soft: #cdc5b6;
+  --muted: #978e7f;
+  --rule: #39342b;
+  --rule-strong: #ebe5d8;
+  --accent: #e3967b;
+  --accent-soft: rgba(227, 150, 123, 0.12);
+  --code-bg: #221f18;
+  color-scheme: dark;
 }
 
 *,
@@ -156,6 +155,46 @@ kbd {
 
 .masthead nav a:hover {
   color: var(--accent);
+}
+
+/* The theme toggle: a moon on light paper, a sun on dark. */
+.theme-toggle {
+  align-self: center;
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+.theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.theme-toggle svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.theme-toggle .sun,
+:root[data-theme='dark'] .theme-toggle .moon {
+  display: none;
+}
+
+:root[data-theme='dark'] .theme-toggle .sun {
+  display: block;
 }
 
 .colophon {
@@ -309,6 +348,80 @@ figcaption {
   fill: var(--muted);
   font-family: var(--serif);
   font-size: 12.5px;
+  font-style: italic;
+}
+
+/* ---------------------------------------------------------------- the change path and its loops */
+
+.change-path {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cp-path,
+.cp-path-head {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cp-push {
+  stroke: var(--muted);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.cp-loop.is-inner {
+  stroke: var(--accent);
+}
+
+.cp-loop.is-outer {
+  stroke: var(--muted);
+}
+
+.cp-arc {
+  fill: none;
+  stroke-width: 1.2;
+}
+
+.cp-head {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cp-work {
+  fill: var(--ink);
+}
+
+.cp-sensor {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+
+.cp-label {
+  fill: var(--ink);
+  font-family: var(--serif);
+  font-size: 14px;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.07em;
+}
+
+.cp-bracket {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.cp-note {
+  fill: var(--muted);
+  font-family: var(--serif);
+  font-size: 13px;
   font-style: italic;
 }
 
@@ -523,6 +636,11 @@ figcaption {
 .prose {
   max-width: var(--measure);
   margin-top: 1rem;
+  padding-bottom: 4rem;
+}
+
+.figure + .prose {
+  margin-top: 2.25rem;
 }
 
 .prose h2,

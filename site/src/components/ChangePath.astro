@@ -1,0 +1,69 @@
+---
+// A change path with its inner and outer loops. The change moves right, from the work toward real users. Each loop
+// reads its sensor at one point on the path and, on a failure, goes back to the work: the further right the sensor,
+// the wider the loop, the longer one round takes and the more a failure costs. Inner loops sit left of git push.
+const Y = 190; // the change path
+const WORK = 40; // where the work is done
+const PUSH = 210; // git push
+const END = 620;
+
+const sensors = [
+  { x: 95, label: 'lint', inner: true },
+  { x: 165, label: 'unit tests', inner: true },
+  { x: 330, label: 'e2e tests', inner: false },
+  { x: 440, label: 'staging', inner: false },
+  { x: 570, label: 'prod logs', inner: false },
+];
+
+const loops = sensors.map(({ x, label, inner }) => {
+  const rx = (x - WORK) / 2;
+  const ry = Math.round(rx * 0.55);
+  const cx = WORK + rx;
+  const top = Y - ry;
+  return {
+    x,
+    label,
+    inner,
+    arc: `M${x} ${Y} A${rx} ${ry} 0 0 0 ${WORK} ${Y}`,
+    head: `M${cx + 4} ${top - 4} L${cx} ${top} L${cx + 4} ${top + 4}`,
+  };
+});
+---
+
+<svg class="change-path" viewBox="0 0 640 260" role="img" aria-labelledby="change-path-title">
+  <title id="change-path-title">
+    A change path from the work to real users. Inner loops (lint, unit tests) read their sensors before git push;
+    outer loops (end-to-end tests, staging, production logs) read theirs after it. Every loop leads back to the work.
+  </title>
+
+  <line class="cp-push" x1={PUSH} y1="34" x2={PUSH} y2={Y + 8} />
+  <text class="cp-label" x={PUSH} y="24" text-anchor="middle">git push</text>
+
+  {
+    loops.map((loop) => (
+      <g class:list={['cp-loop', loop.inner ? 'is-inner' : 'is-outer']}>
+        <path class="cp-arc" d={loop.arc} />
+        <path class="cp-head" d={loop.head} />
+      </g>
+    ))
+  }
+
+  <line class="cp-path" x1={WORK} y1={Y} x2={END} y2={Y} />
+  <path class="cp-path-head" d={`M${END - 6} ${Y - 5} L${END + 1} ${Y} L${END - 6} ${Y + 5}`} />
+
+  <circle class="cp-work" cx={WORK} cy={Y} r="6" />
+  <text class="cp-label" x={WORK} y={Y + 24} text-anchor="middle">work</text>
+  {
+    loops.map((loop) => (
+      <>
+        <circle class="cp-sensor" cx={loop.x} cy={Y} r="3.5" />
+        <text class="cp-label" x={loop.x} y={Y + 24} text-anchor="middle">{loop.label}</text>
+      </>
+    ))
+  }
+
+  <path class="cp-bracket" d={`M22 ${Y + 38} v4 H${PUSH - 6} v-4`} />
+  <text class="cp-note" x={(22 + PUSH - 6) / 2} y={Y + 60} text-anchor="middle">inner loops, before the push</text>
+  <path class="cp-bracket" d={`M${PUSH + 6} ${Y + 38} v4 H${END + 2} v-4`} />
+  <text class="cp-note" x={(PUSH + 6 + END + 2) / 2} y={Y + 60} text-anchor="middle">outer loops, after the push</text>
+</svg>
