@@ -1,8 +1,9 @@
 ---
-// A kind's page: /sensors/, /tools/, /loops/. Every card of that kind, with its summary and short facts.
-import Page from '../../layouts/Page.astro';
+// A kind's page: /sensors/, /tools/, /loops/. What the kind is, then every card of it with its summary, in the same
+// groups as the side navigation.
+import Section from '../../layouts/Section.astro';
 import { catalog, inline, kinds } from '../../lib/content.js';
-import { KIND, href, meta } from '../../lib/present.js';
+import { KIND, groups, href, meta } from '../../lib/present.js';
 
 export function getStaticPaths() {
   return kinds.map((kind) => ({ params: { kind } }));
@@ -10,39 +11,43 @@ export function getStaticPaths() {
 
 const { kind } = Astro.params;
 const c = catalog();
-const cards = c[kind];
+const parts = groups(c, kind);
 ---
 
-<Page title={`${KIND[kind].many}: superloops`} description={KIND[kind].lede}>
+<Section kind={kind} title={`${KIND[kind].many}: superloops`} description={KIND[kind].lede}>
   <header class="title-block">
     <h1>{KIND[kind].many}</h1>
     <p class="lede">{KIND[kind].lede}</p>
   </header>
 
-  <section class="contents" aria-labelledby="contents">
-    <h2 id="contents" class="contents-title">
-      Contents <span class="contents-count">{cards.length}</span>
-    </h2>
-    {cards.length === 0 && <p class="empty">No card yet.</p>}
-    <ol class="entries">
-      {
-        cards.map((card, i) => (
-          <li class="entry">
-            <span class="number">{i + 1}</span>
-            <div class="entry-body">
-              <a class="entry-title" href={href(card)}>{card.data.title}</a>
-              <p class="entry-summary" set:html={inline(card.data.summary)} />
-              <p class="meta">
-                {meta(c, card).map(([label, value]) => (
-                  <span class="meta-item">
-                    <span class="meta-label">{label}</span> {value}
-                  </span>
-                ))}
-              </p>
-            </div>
-          </li>
-        ))
-      }
-    </ol>
-  </section>
-</Page>
+  <div class="contents">
+    {c[kind].length === 0 && <p class="empty">No card yet.</p>}
+    {
+      parts.map((part) => (
+        <section class="group">
+          <h2 class="contents-title">
+            {part.label ?? 'Contents'} <span class="contents-count">{part.cards.length}</span>
+          </h2>
+          <ol class="entries">
+            {part.cards.map((card, i) => (
+              <li class="entry">
+                <span class="number">{i + 1}</span>
+                <div class="entry-body">
+                  <a class="entry-title" href={href(card)}>{card.data.title}</a>
+                  <p class="entry-summary" set:html={inline(card.data.summary)} />
+                  <p class="meta">
+                    {meta(c, card).map(([label, value]) => (
+                      <span class="meta-item">
+                        <span class="meta-label">{label}</span> {value}
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))
+    }
+  </div>
+</Section>

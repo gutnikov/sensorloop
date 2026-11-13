@@ -31,6 +31,39 @@ export const KIND = {
 /** A kind's page. */
 export const kindHref = (/** @type {string} */ kind) => `/${kind}/`;
 
+/**
+ * How a kind's cards are grouped, in its side navigation and on its page: sensors by type, loops by placement,
+ * tools in one list (a tool can build several sensors, so no one sensor is its group).
+ */
+const GROUPING = {
+  sensors: {
+    field: 'type',
+    labels: { computational: 'Computational', inferential: 'Inferential', human: 'Human' },
+  },
+  loops: {
+    field: 'placement',
+    labels: { inner: 'Inner: before the push', outer: 'Outer: after the push' },
+  },
+};
+
+/**
+ * A kind's cards in groups, in the order of the labels above; a value with no label yet gets a group of its own
+ * at the end, so a card is never left out.
+ * @returns {{ label: string | null, cards: any[] }[]}
+ */
+export function groups(catalog, kind) {
+  const cards = catalog[kind];
+  const grouping = GROUPING[kind];
+  if (!grouping) return [{ label: null, cards }];
+  const values = [...new Set([...Object.keys(grouping.labels), ...cards.map((card) => card.data[grouping.field])])];
+  return values
+    .map((value) => ({
+      label: grouping.labels[value] ?? value,
+      cards: cards.filter((card) => card.data[grouping.field] === value),
+    }))
+    .filter((group) => group.cards.length > 0);
+}
+
 /** @param {{ kind: string, id: string }} card */
 export const href = (card) => `/${card.kind}/${card.id}/`;
 

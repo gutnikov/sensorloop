@@ -1,0 +1,53 @@
+---
+// The side navigation of a kind's pages: every card of the kind, in its groups, the current one marked. Wide screens
+// show it as a column beside the content; narrow ones fold it into a disclosure above it, closed until opened.
+import { catalog } from '../lib/content.js';
+import { KIND, groups, href, kindHref } from '../lib/present.js';
+
+interface Props {
+  kind: 'sensors' | 'tools' | 'loops';
+  current?: string;
+}
+
+const { kind, current } = Astro.props;
+const c = catalog();
+const total = c[kind].length;
+---
+
+<details class="sidenav" open>
+  <summary>All {KIND[kind].many.toLowerCase()} <span class="sidenav-count">{total}</span></summary>
+  <nav class="sidenav-body" aria-label={KIND[kind].many}>
+    <a class="sidenav-title" href={kindHref(kind)} aria-current={current ? undefined : 'page'}>
+      {KIND[kind].many} <span class="sidenav-count">{total}</span>
+    </a>
+    {
+      groups(c, kind).map((group) => (
+        <div class="sidenav-group">
+          {group.label && <p class="sidenav-label">{group.label}</p>}
+          <ul>
+            {group.cards.map((card) => (
+              <li>
+                <a href={href(card)} aria-current={card.id === current ? 'page' : undefined}>
+                  {card.data.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))
+    }
+  </nav>
+</details>
+<script is:inline>
+  // Open beside the content on wide screens, folded above it on narrow ones; without scripts it stays open. In a
+  // list taller than the screen, the column scrolls to the current card so it is in view.
+  (() => {
+    const nav = document.currentScript.previousElementSibling;
+    const wide = matchMedia('(min-width: 50rem)');
+    const sync = () => (nav.open = wide.matches);
+    sync();
+    wide.addEventListener('change', sync);
+    const here = nav.querySelector('li a[aria-current="page"]');
+    if (here && wide.matches) nav.scrollTop = here.offsetTop - nav.clientHeight / 3;
+  })();
+</script>
