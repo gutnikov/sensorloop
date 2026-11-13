@@ -1,0 +1,19 @@
+{
+  "name": "sensorloop",
+  "owner": {
+    "name": "gutnikov"
+  },
+  "metadata": {
+    "description": "The sensorloop plugin: validation loops for projects built with coding agents."
+  },
+  "plugins": [
+    {
+      "name": "sensorloop",
+      "source": "./plugins/claude",
+      "description": "Keeps a project's validation loops: sets them up to fit the project, keeps CLAUDE.md current, diagnoses the flow, and writes service agents' prompts.",
+      "version": "0.1.0",
+      "homepage": "https://sensorloop.dev",
+      "license": "MIT"
+    }
+  ]
+}

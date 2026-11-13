@@ -14,14 +14,30 @@ The catalog of sensors, tools and loops, the plugins built from it, and the site
 - A relation is written once, on the more specific card: a tool lists the sensors it builds, a loop the sensors it
   reads. A sensor's tools and loops are computed, never written on its card.
 - `packages/catalog`: the only code that parses cards. The site and the plugin builders import it.
-- `docs/metamodel.md`: the metamodel, imported above and rendered on the home page.
+- `docs/metamodel.md`: the metamodel, imported above and rendered on the home page. `docs/get-started.md`: how to
+  install and use the plugin, rendered at /get-started/.
+- A recorded terminal session in a doc is a line `<!-- cast: <name> | <caption> -->` and the file
+  `docs/casts/<name>.cast`, recorded with asciinema (`asciinema rec docs/casts/<name>.cast`, about 90 columns wide);
+  the site plays it in place. Until the file exists, the page shows where it goes.
 - `site/`: renders `docs/` and the catalog. It holds no content of its own.
+- `plugins/claude/`: the Claude Code plugin `sensorloop`, installed from the marketplace in `.claude-plugin/`. Its
+  skill (`skills/sensorloop/`) keeps a project's loops; `procedures/` and `wiring/` are written by hand, `catalog/` is
+  generated from `catalog/` by `npm run build:plugin` and committed (CI fails when it is out of date). The skill wires
+  itself only the loops in `wiring/`; the rest it proposes. Its evals are in `plugins/claude/evals/`.
 
 ```bash
 npm ci
 npm run check     # the catalog against its schemas and references, and the loader's tests
 npm run dev       # the site at http://localhost:4321, reloading on changes to catalog/ and docs/
 npm run build     # the site into site/dist
+npm run build:plugin                       # the catalog into the plugin's skill; commit the result
+claude plugin validate plugins/claude      # the plugin; `claude plugin validate .` for the marketplace
+claude plugin eval plugins/claude --tag trigger --tag no-trigger   # whether the skill loads when it should
+claude plugin eval plugins/claude --scaffold --allow-tools Bash Write Edit Agent   # every case, fixtures included
 ```
+
+The plugin's evals call a model, so they do not run in CI: run them in the session that changes the plugin, and at
+review. The trigger cases after any change to the skill's description; every case after a change to its procedures,
+wiring or scripts. Add `--no-publish` to keep the report local.
 
 Deploy (manual): `npm run build && cd site && npx wrangler@4 deploy`. The account is in `site/wrangler.jsonc`.

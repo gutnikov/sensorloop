@@ -2,11 +2,21 @@
   "name": "sensorloop",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "site"],
-  "engines": { "node": ">=20" },
+  "workspaces": [
+    "packages/*",
+    "site"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "check": "npm run check -w @sensorloop/catalog && npm test -w @sensorloop/catalog",
+    "build:plugin": "node packages/catalog/src/export.js plugins/claude/skills/sensorloop/catalog",
     "dev": "npm run dev -w site",
     "build": "npm run build -w site"
+  },
+  "overrides": {
+    "@babel/runtime": "7.29.10",
+    "solid-js": "1.9.18"
   }
 }

@@ -1,5 +1,6 @@
 # On every pull request and every push to main: the catalog against its schemas and references, the loader's tests,
-# and a build of the site from it. Nothing is deployed here.
+# a build of the site, and the Claude Code plugin: its copy of the catalog is current, and it and the marketplace are
+# valid. Nothing is deployed here, and no model is called.
 name: check
 
 on:
@@ -23,3 +24,16 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+      - name: The plugin's catalog is the catalog
+        run: |
+          npm run build:plugin
+          if [ -n "$(git status --porcelain -- plugins/claude/skills/sensorloop/catalog)" ]; then
+            git status --short -- plugins/claude/skills/sensorloop/catalog
+            echo "plugins/claude/skills/sensorloop/catalog is out of date: run npm run build:plugin and commit it."
+            exit 1
+          fi
+      - name: The plugin and the marketplace are valid
+        run: |
+          npm install -g @anthropic-ai/claude-code@2.1.312
+          claude plugin validate plugins/claude
+          claude plugin validate .

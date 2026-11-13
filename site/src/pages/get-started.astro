@@ -1,0 +1,45 @@
+---
+// Get started: docs/get-started.md, how to install the plugin and use it. Recorded sessions in it play in place.
+import Page from '../layouts/Page.astro';
+import { doc } from '../lib/content.js';
+
+const { intro, rest } = doc('get-started');
+---
+
+<Page
+  title="Get started: sensorloop"
+  description="Install the sensorloop plugin for Claude Code, and let it keep your project's validation loops."
+>
+  <header class="title-block" set:html={intro} />
+  <div class="prose" set:html={rest} />
+</Page>
+
+<script>
+  // Each recorded session on the page becomes a player, in the site's faces and colours. The player, its script and
+  // its styles, is loaded only when the page has a recording: the styles are linked here, by their URL, since an
+  // import would put them in the page's head whether it has one or not. They go before the site's own styles, so that
+  // the site's player theme comes after them and wins.
+  import playerStyles from 'asciinema-player/dist/bundle/asciinema-player.css?url';
+
+  const figures = [...document.querySelectorAll<HTMLElement>('[data-cast]')];
+  if (figures.length > 0) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = playerStyles;
+    document.head.insertBefore(link, document.head.querySelector('link[rel="stylesheet"], style'));
+    import('asciinema-player').then(({ create }) => {
+      for (const figure of figures) {
+        const element = figure.querySelector<HTMLElement>('.cast-player');
+        if (!element || !figure.dataset.cast) continue;
+        create(figure.dataset.cast, element, {
+          fit: 'width',
+          theme: 'sensorloop',
+          terminalFontFamily: "'IBM Plex Mono', ui-monospace, Menlo, monospace",
+          idleTimeLimit: 2,
+          poster: 'npt:0:1',
+          preload: true,
+        });
+      }
+    });
+  }
+</script>
