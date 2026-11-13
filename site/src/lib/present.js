@@ -39,8 +39,8 @@ const links = (/** @type {any[]} */ cards) =>
 
 /** The line above a card's title. */
 export function kicker(card) {
-  const detail = { sensors: card.data.type, tools: card.data.stacks?.join(', '), loops: card.data.placement }[card.kind];
-  return `${KIND[card.kind].one} · ${detail}`;
+  const detail = { sensors: card.data.type, loops: card.data.placement }[card.kind];
+  return detail ? `${KIND[card.kind].one} · ${detail}` : KIND[card.kind].one;
 }
 
 /** The short facts of a card in the catalog's list. */
@@ -49,7 +49,7 @@ export function meta(catalog, card) {
     case 'sensors':
       return [['type', card.data.type], ['tools', catalog.toolsOf(card.id).length], ['loops', catalog.loopsOf(card.id).length]];
     case 'tools':
-      return [['builds', card.data.sensors.map((id) => catalog.get('sensors', id).data.title).join(', ')], ['stack', card.data.stacks.join(', ')]];
+      return [['builds', card.data.sensors.map((id) => catalog.get('sensors', id).data.title).join(', ')]];
     case 'loops':
       return [['reads', card.data.sensors.map((id) => catalog.get('sensors', id).data.title).join(', ')], ['runs', card.data.placement]];
   }
@@ -69,7 +69,6 @@ export function facts(catalog, card) {
     case 'tools':
       return [
         ['Builds', sensors()],
-        ['Stack', escape(card.data.stacks.join(', '))],
         ...(card.data.homepage ? [['Homepage', `<a href="${escape(card.data.homepage)}">${escape(card.data.homepage)}</a>`]] : []),
       ];
     case 'loops':

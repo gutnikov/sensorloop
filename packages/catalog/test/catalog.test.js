@@ -11,7 +11,7 @@ import { CatalogError, loadCatalog } from '../src/index.js';
 const SCHEMAS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'catalog', 'schema');
 
 const SENSOR = '---\ntitle: Test runner\ntype: computational\nsummary: Runs tests.\nsignal: Exit code.\n---\nBody.\n';
-const TOOL = '---\ntitle: pytest\nsummary: Python tests.\nsensors: [test-runner]\nstacks: [python]\n---\n';
+const TOOL = "---\ntitle: The project's test command\nsummary: Runs the tests.\nsensors: [test-runner]\n---\n";
 const LOOP =
   '---\ntitle: Red, then green\nsummary: Test first.\nsensors: [test-runner]\nplacement: inner\n' +
   'when: Before and after.\nfailure: A test fails.\nnext: Fix the code.\n---\n';
@@ -40,21 +40,21 @@ function problems(cards) {
 
 test('a valid catalog loads, and a sensor knows its tools and loops without listing them', () => {
   const c = loadCatalog(
-    catalog({ 'sensors/test-runner.md': SENSOR, 'tools/pytest.md': TOOL, 'loops/red-green-tdd/card.md': LOOP }),
+    catalog({ 'sensors/test-runner.md': SENSOR, 'tools/project-test-command.md': TOOL, 'loops/red-green-tdd/card.md': LOOP }),
   );
   assert.deepEqual(
     [c.sensors.length, c.tools.length, c.loops.length],
     [1, 1, 1],
   );
   assert.equal(c.get('sensors', 'test-runner').body, 'Body.');
-  assert.deepEqual(c.toolsOf('test-runner').map((t) => t.id), ['pytest']);
+  assert.deepEqual(c.toolsOf('test-runner').map((t) => t.id), ['project-test-command']);
   assert.deepEqual(c.loopsOf('test-runner').map((l) => l.id), ['red-green-tdd']);
-  assert.deepEqual(c.toolsFor(c.get('loops', 'red-green-tdd')).map((t) => t.id), ['pytest']);
+  assert.deepEqual(c.toolsFor(c.get('loops', 'red-green-tdd')).map((t) => t.id), ['project-test-command']);
 });
 
 test('a card naming a sensor with no card', () => {
-  assert.deepEqual(problems({ 'tools/pytest.md': TOOL }), [
-    'tools/pytest.md: sensors names "test-runner", which has no card (sensors/test-runner.md)',
+  assert.deepEqual(problems({ 'tools/project-test-command.md': TOOL }), [
+    'tools/project-test-command.md: sensors names "test-runner", which has no card (sensors/test-runner.md)',
   ]);
 });
 
@@ -64,7 +64,7 @@ test('front matter that breaks the schema', () => {
 });
 
 test('a field the schema does not know', () => {
-  const [problem] = problems({ 'sensors/test-runner.md': SENSOR.replace('---\nBody', 'tools: [pytest]\n---\nBody') });
+  const [problem] = problems({ 'sensors/test-runner.md': SENSOR.replace('---\nBody', 'tools: [project-test-command]\n---\nBody') });
   assert.match(problem, /^sensors\/test-runner\.md: front matter must NOT have additional properties/);
 });
 
