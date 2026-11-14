@@ -6,7 +6,7 @@ layer: system
 ---
 
 A backup is proven only by restoring it. This tool is the database's own backup and restore, or the managed service's
-snapshots, found in the project's operations config rather than assumed.
+snapshots. Look for it in the project's operations config rather than assume it.
 
 ## Finding it
 
@@ -15,13 +15,23 @@ snapshots, found in the project's operations config rather than assumed.
 - **The database's version**, so the restore tool matches it: `pg_restore` cannot read a file from a newer
   `pg_dump`.
 
+When no backup job turns up, report that to a person: backups need storage and access that the people who run the
+database grant.
+
 ## Using it
 
-- **Restore the latest backup into a scratch database**, never over a live one:
-  `pg_restore --dbname=<scratch> <file>`, or a new instance from a snapshot.
-- **Check what came back**: the row counts of the main tables, and the newest row's time against the backup's.
-- **Time the restore**: it bounds how long an outage lasts.
-- **On a schedule**, and after any change to the backup job.
+- **Restore the latest backup into a scratch database**, never over a live one: a new instance from a snapshot, or
+  the restore tool that matches the dump's format. `pg_restore --dbname=<scratch> <file>` reads `pg_dump`'s custom
+  format (`-Fc`); a plain SQL dump goes through `psql --dbname=<scratch> -f <file>`.
+- **Check what came back**: the main tables hold rows, in numbers close to the live database's, and the newest row is
+  close to the backup's time. That gap is the data an outage would lose; the project decides how much it can afford.
+- **Time the restore**: an outage that needs a restore lasts at least this long. Compare it with how long the project
+  can afford to be down.
+- **Run the whole drill on a schedule**, more often than backups expire, so a broken backup is found while an older
+  good one is still kept; and again after any change to the backup job.
 
-Examples: `pg_dump` and `pg_restore` (PostgreSQL), `mysqldump` (MySQL), `mongodump` and `mongorestore` (MongoDB), a
-managed database's snapshots.
+A restore that errors, or a check above that does not hold, is a failed step, and the signal names it. Give the
+restore a time limit: one that never finishes is a failure too.
+
+Examples: `pg_dump` and `pg_restore` (PostgreSQL), `mysqldump` and the `mysql` client (MySQL), `mongodump` and
+`mongorestore` (MongoDB), a managed database's snapshots.

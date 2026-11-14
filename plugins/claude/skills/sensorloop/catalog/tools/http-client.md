@@ -17,10 +17,12 @@ works the same against a service in any stack.
 
 ## Using it
 
-- **Turn an HTTP error into a non-zero exit code**: `curl --fail`, or `--fail-with-body` to keep the error's body.
-- **Print the status code alongside the body**: `curl -sS -w '\n%{http_code}\n' <url>`; `-i` adds the headers,
-  `-v` the request too.
-- **Bound the wait** with `--max-time`, so a hung service fails the call instead of hanging it.
-- **Read tokens from the environment**, never typed into the command, where they stay in the history and the logs.
+- **For a smoke and health probe**, let the exit code carry the result: `curl --fail -sS --max-time 10 <url>`.
+  `--fail` turns an HTTP error into a non-zero exit code (`--fail-with-body` keeps the error's body), and `--max-time`
+  makes a hung service fail the call instead of hanging it.
+- **For a manual probe**, show everything that came back: `curl -sS -w '\n%{http_code}\n' <url>` prints the status
+  code after the body; `-i` adds the headers, `-v` the request too. Keep the command with the value it showed.
+- **Read tokens from the environment** (`-H "Authorization: Bearer $TOKEN"`) rather than typing them into the
+  command: a token typed there stays in the shell history and the logs.
 
 Examples: curl, HTTPie, grpcurl (gRPC).

@@ -6,22 +6,26 @@ layer: system
 ---
 
 A chaos platform runs experiments on a running environment: it kills processes, delays the network or exhausts a
-resource, and watches whether the system stays healthy. It belongs to the platform the environment runs on, so it is
-found in that platform's configuration rather than assumed.
+resource, and watches whether the system stays healthy. It is installed on the infrastructure the environment runs
+on, such as a Kubernetes cluster or a cloud account: look for it there, and do not assume one.
 
 ## Finding it
 
-- **On Kubernetes**: the platform's own resource kinds (`PodChaos` and `NetworkChaos` for Chaos Mesh, `ChaosEngine`
-  for LitmusChaos), which `kubectl get crd` lists.
+- **On Kubernetes**: the chaos platform's own resource kinds (`PodChaos` and `NetworkChaos` for Chaos Mesh,
+  `ChaosEngine` for LitmusChaos), which `kubectl get crd` lists.
 - **In a cloud account**: the provider's fault service and its experiment templates.
-- **Experiments in the repository**, as manifests beside the deployment config, reached with rights on staging only.
+- **Experiments in the repository**, as manifests beside the deployment config. Apply them with credentials that
+  reach staging only.
+
+When there is none, ask a person: installing a chaos platform changes a shared environment, and its owners decide.
 
 ## Using it
 
-- **Define the steady state first**, in metrics (the error rate, the latency), and check it holds before the
-  experiment starts.
-- **On staging under load**, never in an environment whose owners have not agreed to it.
-- **Abort conditions and a duration** on every experiment, so it stops itself when the steady state breaks.
-- **Start small** (one pod, one dependency) and widen the blast radius only after it holds.
+- **Define the steady state first**: the normal values of a few metrics (the error rate, the latency). Check that it
+  holds before the experiment starts.
+- **Run on staging only, under load**, and only after the people who own staging have agreed.
+- **Give every experiment abort conditions and a duration**, so it stops itself when the steady state breaks.
+- **Start small** (one pod, one dependency), and widen the blast radius, the part of the system a fault reaches, only
+  after the steady state holds.
 
 Examples: Chaos Mesh and LitmusChaos (Kubernetes), AWS Fault Injection Service (AWS).

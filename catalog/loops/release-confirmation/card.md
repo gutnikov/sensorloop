@@ -3,28 +3,32 @@ title: Confirm the release in production
 summary: After a release reaches production, a job judges a window of real traffic, and the change is confirmed only if production runs it, its own signal appeared often enough, and nothing is worse than under the previous version.
 sensors: [logs, metrics, error-tracker]
 when: After each deploy to production, once a window of real traffic has passed (at least a set time and a set number of events on the changed path, up to a cap).
-failure: Any verdict but confirmed. The new version is not the one running, the change's signal is missing or too rare, something is worse than under the previous version, or the window ended with too few events to judge.
-next: The agent reads the snapshot of a window that did not confirm, names the check that failed, the errors or missing events that show it and the likely cause, and fixes the change, which is judged again after its next release. Rolling back belongs to the pipeline or the canary tool, never to the agent. An inconclusive verdict is reported to a person, not read as a pass.
+failure: "Any verdict but confirmed: production does not run the change yet, its signal is missing or too rare, something is worse than under the previous version, or the window ended with too few events, or no data, to judge."
+next: "When the verdict is signal missing or worse, the agent reads the window's snapshot, finds the check that failed and the likely cause, and fixes the change; the fix is judged again after its next release. A worse verdict also goes at once to the person responsible for the release, since users are affected; rolling back belongs to the pipeline or the canary tool, never to the agent. When the verdict is not deployed yet or inconclusive, the agent changes nothing, and the job sends the verdict to that person instead of reading it as a pass. When the change still does not confirm after the agent's second fix, the agent stops and hands that person the snapshots and what it tried."
 ---
 
 ## The loop
 
-1. The release reaches production, and a job waits for the window.
-2. It saves a snapshot: which version ran and, for the new version and the previous one over comparable windows, the
-   errors, the event counts and the metrics.
+1. The release reaches production, and a job waits for the window to pass.
+2. It saves a snapshot of the window: which version ran, and the errors, the event counts and the metrics of both the
+   new version and the previous one, over comparable windows.
 3. It judges the snapshot with three checks, all of which must hold:
    - **The change is there.** The new version runs; behind a flag, the flag is on for its audience.
-   - **Its signal appeared.** For a feature, the event its spec names appeared at least N times. For a fix, the signal
-     that showed the problem stayed absent while the path where it showed ran at least N times. For maintenance, the
-     product's own events stayed at the previous version's level, and the measure the change named improved.
-   - **Nothing broke.** No new errors, and the error rate and latency are no worse than the previous version's.
+   - **Its signal appeared.** For a feature, the event its spec names appeared at least N times. For a fix, the
+     problem's signal did not appear again, while the path where it used to appear ran at least N times. For
+     maintenance, the product's own events stayed at the previous version's level, and the measure the change named
+     improved.
+   - **Nothing broke.** No new error and no known error whose count grew, and no metric over its limit or worse than
+     under the previous version, such as the error rate or the latency.
 4. It gives one verdict:
    - **confirmed**: all three checks hold;
-   - **not the running version**: production does not run the change yet;
+   - **not deployed yet**: production does not run the new version yet, or its flag is off for its audience;
    - **signal missing**: the signal appeared too rarely, with its count (`3 of 50`);
-   - **worse**: a new error with its count, or a rate above the previous version's (`error rate 2.1% vs 0.4%`);
-   - **inconclusive**: the window reached its cap with too few events to judge.
-5. On anything but confirmed, the agent reads the snapshot and finds which check failed, the errors or missing events
+   - **worse**: a new error or a known error that grew, with its count, or a metric worse than the previous version's
+     (`error rate 2.1% vs 0.4%`);
+   - **inconclusive**: the window reached its cap with too few events to judge, or a metric or a log query had no
+     data for the new version.
+5. On signal missing or worse, the agent reads the snapshot and finds which check failed, the errors or missing events
    that show it, and the likely cause. Its reading never changes the verdict.
 
 ## Why
@@ -38,7 +42,8 @@ too. So the work ends not at the deploy, but when production runs the change, it
 - **The version on every log line and every error**, with release markers in the error tracker. Without it, nothing
   can be attributed to the release.
 - **Each change names its signal before the work starts**: the event in a feature's spec, the reproduction's signal
-  for a fix, the measure for maintenance. For an error fixed from the error tracker, the signal is its issue there.
+  for a fix, the measure for maintenance. For an error fixed from the error tracker, the signal is its issue there,
+  which has to stop.
 - **A window counted in events**: at least T minutes and N events on the changed path, up to a cap. A nightly job's
   window is its next run; a mobile release's is the sessions on the new version over days.
 - **Compared with the previous version, not with zero.** Production always has background errors.
