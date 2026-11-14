@@ -7,7 +7,8 @@ point on the change path where the problem could have been caught, and the loop 
 ## 1. State the problem as a failure
 
 Write it down in one sentence: what went wrong, where it was found, and where it should have been found. Ask the
-person for examples (a pull request, a CI run, an incident) if they have them.
+person for examples (a pull request, a CI run, an incident) if they have them. When the person asks for a new step in
+the flow (a prototype or a plan to approve, a review, a check), the failure is the one that step would catch.
 
 ## 2. Gather evidence with the flow-auditor
 
@@ -18,9 +19,10 @@ problem first became visible. Its reading keeps the long logs out of your contex
 
 ## 3. Find the earliest phase that could catch it
 
-Walk the change path from the work outwards: while editing, before the turn ends, at commit, in CI, on a preview,
-after a deploy, in production. For each point, ask whether a sensor there could have seen the failure. The earliest
-point that could is where the fix belongs, because a failure costs more the later it is found.
+Walk the change path from the work outwards: before the work starts (a plan, a spec or a prototype a person
+approves), while editing, before the turn ends, at commit, in CI, on a preview, after a deploy, in production. For
+each point, ask whether a sensor there could have seen the failure. The earliest point that could is where the fix
+belongs, because a failure costs more the later it is found.
 
 Then match it to the catalog ([../catalog/index.md](../catalog/index.md)): an existing loop that is `active` but did
 not fire (its wiring or command is wrong), a loop that is `proposed` or `off` here, or a loop the project does not

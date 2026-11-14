@@ -1,20 +1,25 @@
 #!/usr/bin/env node
 // Writes the catalog for an agent to read: index.md, one line per card with the relations the loader computes, and
 // every card as it is, under sensors/, tools/ and loops/. The plugin's skill carries this folder; it is generated,
-// so it is rewritten whole and never edited by hand.
-// Usage: node src/export.js <out dir> [catalog folder]   (default catalog: the repository's catalog/)
+// so it is rewritten whole and never edited by hand. With --check it writes nothing: it exports to a temporary folder,
+// lists each file that differs from <out dir>, and exits 1 when any does.
+// Usage: node src/export.js [--check] <out dir> [catalog folder]   (default catalog: the repository's catalog/)
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CatalogError, kinds, loadCatalog } from './index.js';
 
-const [outArg, rootArg] = process.argv.slice(2);
+const args = process.argv.slice(2);
+const check = args[0] === '--check';
+const [outArg, rootArg] = check ? args.slice(1) : args;
 if (!outArg) {
-  console.error('usage: node src/export.js <out dir> [catalog folder]');
+  console.error('usage: node src/export.js [--check] <out dir> [catalog folder]');
   process.exit(2);
 }
 const root = path.resolve(rootArg ?? path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', 'catalog'));
-const out = path.resolve(outArg);
+const target = path.resolve(outArg);
+const out = check ? fs.mkdtempSync(path.join(os.tmpdir(), 'sensorloop-export-')) : target;
 
 let catalog;
 try {
@@ -60,7 +65,33 @@ for (const kind of kinds) {
     fs.copyFileSync(path.join(root, card.file), path.join(out, kind, `${card.id}.md`));
   }
 }
-console.log(
-  `exported to ${path.relative(process.cwd(), out) || '.'}: ` +
-    `${catalog.sensors.length} sensors, ${catalog.tools.length} tools, ${catalog.loops.length} loops`,
-);
+
+if (check) {
+  /** Every file under a folder, as paths relative to it; none when the folder does not exist. */
+  const files = (dir) =>
+    fs.existsSync(dir)
+      ? fs.readdirSync(dir, { recursive: true }).filter((f) => fs.statSync(path.join(dir, f)).isFile())
+      : [];
+  const fresh = new Set(files(out));
+  const kept = new Set(files(target));
+  const differ = [
+    ...[...fresh].filter((f) => !kept.has(f)).map((f) => `missing  ${f}`),
+    ...[...kept].filter((f) => !fresh.has(f)).map((f) => `extra    ${f}`),
+    ...[...fresh]
+      .filter((f) => kept.has(f) && !fs.readFileSync(path.join(out, f)).equals(fs.readFileSync(path.join(target, f))))
+      .map((f) => `changed  ${f}`),
+  ].sort((a, b) => a.slice(9).localeCompare(b.slice(9)));
+  fs.rmSync(out, { recursive: true, force: true });
+  const shown = path.relative(process.cwd(), target) || '.';
+  if (differ.length) {
+    console.error(`${shown} is out of date with the catalog; run npm run build:plugin and commit it:`);
+    for (const line of differ) console.error(`  ${line}`);
+    process.exit(1);
+  }
+  console.log(`${shown} is current with the catalog`);
+} else {
+  console.log(
+    `exported to ${path.relative(process.cwd(), out) || '.'}: ` +
+      `${catalog.sensors.length} sensors, ${catalog.tools.length} tools, ${catalog.loops.length} loops`,
+  );
+}
