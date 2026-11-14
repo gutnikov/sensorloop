@@ -12,6 +12,7 @@
   "scripts": {
     "check": "npm run check -w @sensorloop/catalog && npm test -w @sensorloop/catalog",
     "build:plugin": "node packages/catalog/src/export.js plugins/claude/skills/sensorloop/catalog",
+    "check:plugin": "node packages/catalog/src/export.js --check plugins/claude/skills/sensorloop/catalog && claude plugin validate plugins/claude && claude plugin validate .",
     "dev": "npm run dev -w site",
     "build": "npm run build -w site"
   },

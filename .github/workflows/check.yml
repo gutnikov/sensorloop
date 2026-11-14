@@ -24,16 +24,8 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
-      - name: The plugin's catalog is the catalog
-        run: |
-          npm run build:plugin
-          if [ -n "$(git status --porcelain -- plugins/claude/skills/sensorloop/catalog)" ]; then
-            git status --short -- plugins/claude/skills/sensorloop/catalog
-            echo "plugins/claude/skills/sensorloop/catalog is out of date: run npm run build:plugin and commit it."
-            exit 1
-          fi
-      - name: The plugin and the marketplace are valid
+      # The same command the Stop hook runs in a session here (.sensorloop/loops.yaml).
+      - name: The plugin's catalog is the catalog; the plugin and the marketplace are valid
         run: |
           npm install -g @anthropic-ai/claude-code@2.1.312
-          claude plugin validate plugins/claude
-          claude plugin validate .
+          npm run check:plugin
