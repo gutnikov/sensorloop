@@ -5,22 +5,30 @@ sensors: [metrics]
 layer: system
 ---
 
-The metrics store keeps the service's metrics as time series and evaluates its alert and SLO rules. Which one it is
-depends on the project's platform, so it is found in its configuration rather than assumed.
+The metrics store keeps the metrics of the project's services as time series, and evaluates the project's alert
+rules and its service level objectives (SLOs). Which store that is depends on the project's platform: look it up in
+the project's configuration, and do not assume one.
 
 ## Finding it
 
-- **The monitoring config**: scrape targets (`prometheus.yml`), recording and alert rule files, dashboards kept in
-  the repository.
+- **The monitoring config**: what the metrics are collected from (scrape targets in `prometheus.yml`, the metrics
+  exporters of an OpenTelemetry Collector), rule files, and dashboards kept in the repository. Rule files hold alert
+  rules, and recording rules: queries the store runs ahead of time and saves as new series.
 - **SLO definitions**, if any: the specs that generate the SLO's recording and alert rules.
-- **How the agent reaches it**: the HTTP API (`/api/v1/query` and `/api/v1/query_range` in Prometheus and the stores
-  compatible with it), `promtool`, or an MCP server.
+- **How the agent reaches it**: the store's HTTP API, its command-line client, or an MCP server. The address and the
+  credentials come from the project's environment or CI config; when they are not there, ask a person.
+
+When the repository holds no monitoring config, ask a person where the metrics go before setting up a store.
 
 ## Using it
 
-- **Query over the HTTP API** with PromQL: `curl -G <server>/api/v1/query --data-urlencode 'query=<expr>'`.
-- **Compare versions by a label**, over the same window and the same traffic.
+- **Query over the store's API**, for example with PromQL in Prometheus and the stores compatible with it:
+  `curl -G <server>/api/v1/query --data-urlencode 'query=<expr>'`, or `/api/v1/query_range` for a span of time.
+- **Compare versions by the label that carries the version** (`version="<new>"` against `version="<old>"`), over the
+  same window, while both versions serve the same traffic side by side.
 - **Check that a query returns series** before trusting its value: an empty result is no data, not zero.
-- **Check rules before they ship**: `promtool check rules <file>` and `promtool test rules <file>`.
+- **Check rules before they ship** with the store's own checker: `promtool check rules <rule-file>` and
+  `promtool test rules <test-file>` in Prometheus.
 
-Examples: Prometheus (PromQL), VictoriaMetrics; Sloth to generate SLO rules; Alertmanager.
+Examples: Prometheus (PromQL), VictoriaMetrics, CloudWatch (AWS), Datadog; Sloth to generate SLO rules; Alertmanager
+to route Prometheus alerts.

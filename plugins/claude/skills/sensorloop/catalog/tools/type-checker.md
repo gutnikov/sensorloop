@@ -6,20 +6,25 @@ layer: project
 ---
 
 Where a language checks its types with a program separate from its build, this tool is that checker, with the settings
-the project gives it. Which checker that is, and how strict, is found in the project, not assumed.
+the project gives it. Look up which checker the project uses, and how strict it is, rather than pick one.
 
 ## Finding it
 
-Look in CI and the task file for a type-check step, then for the checker's config (`tsconfig.json`, `mypy.ini`,
-`pyrightconfig.json`, or a `[tool.mypy]` or `[tool.pyright]` section in `pyproject.toml`) and its version in the dev
-dependencies. Where the compiler checks types as part of the build (Go, Rust, Java), the build is the type check.
+1. **CI and the task file**: a type-check step and the command it runs.
+2. **The checker's config**, for example `tsconfig.json`, `mypy.ini`, `pyrightconfig.json`, a `[tool.mypy]` or
+   `[tool.pyright]` section in `pyproject.toml`, or `sorbet/config`.
+3. **The dev dependencies**: the checker and its pinned version.
+
+Where the compiler checks types as part of the build (Go, Rust, Java), the build is the type check. When the project
+has no checker, adding one, and choosing how strict it is, is a decision for a person.
 
 ## Using it
 
 - **Run it as CI does**: `tsc --noEmit`, `mypy`, `pyright`, with the project's config and strictness, not the
   checker's defaults.
-- **The pinned version**: a new release of the checker can find new errors in code that did not change.
-- **New suppressions too**: the checker does not report a new `# type: ignore`, `@ts-ignore` or `@ts-expect-error`, so
-  they are read from the diff; `mypy --warn-unused-ignores` reports the ones no longer needed.
+- **Run the pinned version**: a new release of the checker can find new errors in code that did not change.
+- **Look for new suppressions in the diff**: the checker does not report a new `# type: ignore`, `@ts-ignore` or
+  `@ts-expect-error`, so a search over the diff finds them; `mypy --warn-unused-ignores` reports the ones no longer
+  needed.
 
 Examples: `tsc --noEmit` (TypeScript), mypy and Pyright (Python), Sorbet (Ruby).

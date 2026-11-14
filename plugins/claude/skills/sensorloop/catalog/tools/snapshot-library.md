@@ -5,14 +5,14 @@ sensors: [test-runner]
 layer: project
 ---
 
-A snapshot library stores the approved output of the code in the repository, compares each new run with it, and shows
-the difference when they part. Which library the project uses is found in its test dependencies, not assumed.
+The approved output that a snapshot library keeps in the repository is called a reference: a snapshot, an approved
+file or a golden file, depending on the library. The project's test command runs the comparisons.
 
 ## Finding it
 
 Look in the test dependencies, then for the references themselves: a `__snapshots__` directory beside the tests,
-`.snap` or `.approved.` files, or a `testdata` directory of golden files. The project's test command runs the
-comparisons.
+`.snap` or `.approved.` files, or a `testdata` directory of golden files. When the project has no snapshot library,
+adding one is a decision for a person.
 
 ## Using it
 
@@ -21,7 +21,9 @@ comparisons.
   never a way to make a failing test pass.
 - **No new references in CI**: there, a missing reference fails instead of being written (`jest --ci`), so nothing is
   approved unseen.
-- **Review the diff**: a changed reference is part of the change and is read in review like the code. What changes on
-  its own (times, random ids, absolute paths) is kept out of it.
+- **Review the diff**: a changed reference is part of the change and is read in review like the code.
+- **Stable output**: the test replaces values that change from run to run (times, random ids, absolute paths) with
+  fixed ones before it compares, for example with property matchers in Jest, redactions in insta or scrubbers in
+  ApprovalTests. A reference then changes only when the output does.
 
 Examples: Jest snapshots (JavaScript), insta (Rust), ApprovalTests (several languages), golden files (common in Go).

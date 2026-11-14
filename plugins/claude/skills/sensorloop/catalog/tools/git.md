@@ -16,12 +16,12 @@ shows the other checkouts of the same repository.
 
 ## Using it
 
-- **Machine-readable output**: `git status --porcelain`, `git diff --name-only`, `git diff --numstat`, so a script
-  reads facts rather than a summary meant for people.
-- **The right base**: compare with the merge base of the target branch (`git diff origin/main...HEAD`), fetched first,
-  not with a stale local copy.
-- **Read git, not the report**: a hook or a script that wraps git states the fact (tests touched, a dirty tree,
-  commits ahead) instead of asking the agent.
-- **Leftovers**: `git diff --check` reports conflict markers and whitespace errors left in the change.
+- **Read machine-readable output**: `git status --porcelain`, `git diff --name-only`, `git diff --numstat`, so a
+  script reads facts rather than a summary meant for people.
+- **Compare with the right base**: fetch the target branch first (`git fetch origin main`), then diff against its
+  merge base (`git diff origin/main...HEAD`). Without the fetch, a stale local `origin/main` gives the wrong base.
+- **Read git, not the report**: a hook or a script takes the fact from git (tests touched, a dirty tree, commits
+  ahead) instead of asking the agent.
+- **Look for leftovers**: `git diff --check` reports conflict markers and whitespace errors left in the change.
 
 Examples: `git diff`, `git status --porcelain`, `git log`, `git worktree`.
