@@ -5,8 +5,8 @@ sensors: [structure-check]
 layer: project
 ---
 
-A schema validator checks a YAML or JSON file against its JSON Schema, and names the field that breaks it. It catches
-a malformed config before the program that reads it does.
+A schema validator catches a malformed config before the program that reads it does: a missing field, or a string
+where a number belongs.
 
 ## Finding it
 
@@ -18,8 +18,9 @@ Store.
 
 - **Run it**: `check-jsonschema --schemafile <schema> <files>`, or `ajv validate -s <schema> -d <file>` with ajv's
   command-line client.
-- **Keep the schema next to what it describes**, so a change to one is reviewed with the other.
-- **On commit and in CI**: a pre-commit hook gives the signal early, and CI makes sure it ran.
+- **Keep the schema next to what it describes**: a change to one is then reviewed with the other.
+- **Check on commit and in CI**: a pre-commit hook gives the signal early, and the same check in CI catches a commit
+  that skipped the hook.
 - **Pin a fetched schema**: a schema read from the web can change on its own; keep a copy or pin its version.
 
-Examples: check-jsonschema, ajv (JavaScript).
+Examples: check-jsonschema (Python), ajv (JavaScript).

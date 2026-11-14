@@ -8,6 +8,9 @@ layer: project
 The project, not the loop, chooses how it is built. This tool is the command the project already builds with, found in
 the project before anything is run.
 
+A build does not always check types: a bundler can compile TypeScript without checking it, and many Python projects
+have no build at all. Where the build does not check them, the project's type checker covers that part of the sensor.
+
 ## Finding it
 
 Look where the project itself builds, in this order:
@@ -22,10 +25,12 @@ rather than guess.
 
 ## Using it
 
+- **The whole build before the work counts as done**, run as CI runs it.
 - **The part that changed, while working**: `cargo build -p <crate>`, `go build ./pkg/...`,
-  `bazel build //path:target`. The whole build, as CI runs it, before the work counts as done.
+  `bazel build //path:target`.
 - **The same flags as CI**: warnings that CI treats as errors are errors locally too.
-- **Warm caches**: the build and dependency caches kept between runs make it fast enough to run often. A clean build
-  now and then, since a stale cache can hide an error.
+- **Warm caches**: the build and dependency caches kept between runs make it fast enough to run often. Build from
+  clean after the dependencies or the build's config change, since a stale cache can hide an error.
 
-Examples: `npm run build` (JavaScript), `cargo build` (Rust), `go build ./...` (Go), Gradle (JVM), Bazel.
+Examples: `npm run build` (JavaScript), `cargo build` (Rust), `go build ./...` (Go), `./gradlew build` (JVM),
+`bazel build //...` (several languages).

@@ -5,22 +5,25 @@ sensors: [manual-probe]
 layer: project
 ---
 
-The project's language comes with a REPL to call the code and a debugger to stop it and read its values. Which ones
-depend on the language and its setup, so they are found in the project rather than assumed.
+Most languages have a REPL to call the code and a debugger to stop it and read its values. Some, such as Go and Rust,
+ship no REPL, and a short program run once takes its place. Which REPL and debugger a project has depends on its
+language and setup, so look for them in the project rather than assume them.
 
 ## Finding it
 
 - **The language and its environment**: the manifest (`pyproject.toml`, `package.json`, `go.mod`) and where the
   project's interpreter lives (a virtual environment, a version file).
 - **A project console**, if there is one: `python manage.py shell`, `rails console`, `iex -S mix`.
-- **The debugger**: built in (`pdb`, `node inspect`) or a development dependency (Delve).
+- **The debugger**: built in (`pdb`, `node inspect`) or a development dependency (Delve). When the project has none
+  and the work needs one, add it as a development dependency.
 
 ## Using it
 
-- **Drive them with scripts**, not interactive sessions: `python -c '...'`, `node -e '...'`, or a short file run
-  once.
-- **Give the debugger its commands up front**, from a file or the command line, so a run stops, prints and exits on
-  its own.
+- **Drive them with scripts**, not interactive sessions: a one-line command or a short file run once, such as
+  `python -c 'from app.prices import total; print(total([]))'`.
+- **Give the debugger its commands up front**, from the command line or a file, so a run stops, prints and exits on
+  its own: `python -m pdb -c 'break app/prices.py:12' -c continue -c 'p items' -c quit script.py`, or a file of
+  commands passed to Delve with `dlv debug --init <file>`.
 - **Run inside the project's environment** (its virtual environment, its config), so values match what the tests
   see.
 - **Remove debug output and breakpoints** before the work counts as done.
