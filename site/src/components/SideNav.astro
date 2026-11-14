@@ -44,7 +44,7 @@ const total = c[kind].length;
   // list taller than the screen, the column scrolls to the current card so it is in view.
   (() => {
     const nav = document.currentScript.previousElementSibling;
-    const wide = matchMedia('(min-width: 68rem)'); // as in site.css
+    const wide = matchMedia('(min-width: 68rem)'); // as in every look's stylesheet
     const sync = () => (nav.open = wide.matches);
     sync();
     wide.addEventListener('change', sync);

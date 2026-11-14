@@ -1,0 +1,564 @@
+---
+// The `tui-modern` look: the site as a terminal app of today, in the lineage of btop, lazygit and k9s. Truecolor on a
+// deep violet, rounded panes whose focused border is a pink-to-cyan gradient, a tab bar on top, a powerline status bar
+// at the bottom, and a fuzzy finder over every card on `/` or Ctrl+K. The site's look since November 2026: the fonts
+// served from the site itself, Cloudflare Web Analytics and no banner.
+import '@fontsource/iosevka/400.css';
+import '@fontsource/iosevka/700.css';
+import '@fontsource-variable/martian-mono/wdth.css';
+import './look.css';
+import Pane from './Pane.astro';
+import { analyticsSnippet, config } from '../../config.mjs';
+import { catalog, kinds } from '../../lib/content.js';
+import { href, kicker } from '../../lib/present.js';
+
+export interface Props {
+  title: string;
+  description: string;
+  bodyClass?: string;
+  nav: { href: string; label: string; current: boolean }[];
+}
+
+const { title, description, bodyClass, nav } = Astro.props;
+const c = catalog();
+
+// What the page is, from its address: the home page, a doc, a kind's list, or one card.
+const path = Astro.url.pathname;
+const parts = path.split('/').filter(Boolean);
+const kind = kinds.includes(parts[0]) ? parts[0] : undefined;
+const view = path === '/' ? 'home' : kind ? (parts.length > 1 ? 'card' : 'list') : 'doc';
+
+// The file the page is built from: the title of its main pane, and the path in the status bar.
+let file = path;
+if (view === 'home') file = 'docs/metamodel.md';
+if (view === 'doc') file = `docs/${parts[0]}.md`;
+if (view === 'list') file = `catalog/${kind}/`;
+if (view === 'card') {
+  const card = c.get(kind, parts[1]);
+  file = card ? `catalog/${card.file}` : path;
+}
+
+// Each section's key: its place in the tab bar, 1 to 5. A kind's tab also shows its count of cards.
+const counts = Object.fromEntries(kinds.map((k) => [k, c[k].length]));
+const keyed = nav.map((item, i) => ({
+  ...item,
+  key: String(i + 1),
+  count: counts[item.href.replaceAll('/', '')],
+}));
+const here = keyed.find((item) => item.current);
+
+// Every card, for the finder and the list's preview: its kind, title, summary as plain text, and its relations.
+const plain = (text: string) =>
+  text
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\*\*?([^*]+)\*\*?/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+const linked = (cards: any[]) => cards.map((card) => [card.data.title, href(card)]);
+const cards = kinds.flatMap((k) =>
+  c[k].map((card: any) => {
+    const relations =
+      k === 'sensors'
+        ? [
+            ['tools', linked(c.toolsOf(card.id))],
+            ['loops', linked(c.loopsOf(card.id))],
+          ]
+        : k === 'tools'
+          ? [['builds', linked(card.data.sensors.map((id: string) => c.get('sensors', id)))]]
+          : [
+              ['reads', linked(card.data.sensors.map((id: string) => c.get('sensors', id)))],
+              ['tools', linked(c.toolsFor(card))],
+            ];
+    return {
+      kind: k,
+      id: card.id,
+      title: card.data.title,
+      tag: kicker(card).split(' · ')[1] ?? '',
+      summary: plain(card.data.summary),
+      href: href(card),
+      relations,
+    };
+  }),
+);
+const json = JSON.stringify(cards).replace(/</g, '\\u003c');
+---
+
+<html lang="en" data-look="tui-modern">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#191335" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <Fragment set:html={analyticsSnippet()} />
+  </head>
+  <body class={bodyClass} data-view={view} data-kind={kind}>
+    <a class="skip" href="#main">Skip to the page</a>
+
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="sensorloop: the metamodel">
+        <span class="spinner" aria-hidden="true">⣾</span><span class="wordmark">sensorloop</span>
+      </a>
+      <nav class="tabs" aria-label="Site">
+        {
+          keyed.map((item) => (
+            <a href={item.href} aria-current={item.current ? 'page' : undefined}>
+              <kbd aria-hidden="true">{item.key}</kbd>
+              <span class="tab-label">{item.label}</span>
+              {item.count !== undefined && <span class="tab-count">{item.count}</span>}
+            </a>
+          ))
+        }
+      </nav>
+      <div class="topbar-end">
+        <a class="repo" href={config.repository}>github</a>
+        <time class="clock" aria-hidden="true">--:--</time>
+      </div>
+    </header>
+
+    <main id="main" class={`desk desk-${view}`} style={`--file: "${file}"`}>
+      {
+        view === 'doc' ? (
+          <div class="doc">
+            <Pane title={file} hotkey={here?.key} primary class="pane-doc">
+              <slot />
+            </Pane>
+            <Pane title="outline" class="pane-outline" id="doc-outline">
+              <nav aria-label="Sections of the page">
+                <ol class="outline" />
+              </nav>
+            </Pane>
+          </div>
+        ) : (
+          <slot />
+        )
+      }
+      {
+        view === 'list' && (
+          <aside class="pane preview" aria-label="Preview">
+            <span class="pane-title">
+              <span>preview</span>
+            </span>
+            <div class="pane-body" aria-live="polite" />
+          </aside>
+        )
+      }
+    </main>
+
+    <footer class="statusbar">
+      <span class="seg seg-mode">{view}</span>
+      <span class="seg seg-path">{file}</span>
+      <span class="seg seg-counts">
+        {kinds.map((k) => <span><b>{counts[k]}</b> {k}</span>)}
+      </span>
+      <span class="statusbar-fill"></span>
+      <button class="seg seg-key" type="button" data-open="finder"><kbd>/</kbd> find</button>
+      <button class="seg seg-key" type="button" data-open="keys"><kbd>?</kbd> keys</button>
+      <span class="seg seg-key seg-last"><kbd>1-5</kbd> sections</span>
+    </footer>
+
+    <div class="overlay finder" id="finder" hidden>
+      <div class="pane pane-float" role="dialog" aria-modal="true" aria-labelledby="finder-title">
+        <span class="pane-title" id="finder-title"><kbd aria-hidden="true">[/]</kbd><span>find a card</span></span>
+        <div class="finder-body">
+          <div class="finder-main">
+            <label class="finder-prompt">
+              <span aria-hidden="true">❯</span>
+              <input
+                type="text"
+                role="combobox"
+                aria-expanded="true"
+                aria-controls="finder-list"
+                aria-autocomplete="list"
+                aria-label="Find a sensor, tool or loop"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <span class="finder-count" aria-live="polite"></span>
+            </label>
+            <ul class="finder-list" id="finder-list" role="listbox" aria-label="Cards"></ul>
+          </div>
+          <div class="finder-preview" aria-hidden="true"></div>
+        </div>
+        <p class="finder-hint" aria-hidden="true">
+          <kbd>↑↓</kbd> move <kbd>enter</kbd> open <kbd>esc</kbd> close
+        </p>
+      </div>
+    </div>
+
+    <div class="overlay keys" id="keys" hidden>
+      <div class="pane pane-float pane-keys" role="dialog" aria-modal="true" aria-labelledby="keys-title">
+        <span class="pane-title" id="keys-title"><kbd aria-hidden="true">[?]</kbd><span>keys</span></span>
+        <dl class="keylist">
+          <div><dt><kbd>1</kbd>–<kbd>5</kbd></dt><dd>open a section: {keyed.map((item) => item.label).join(', ')}</dd></div>
+          <div><dt><kbd>/</kbd> <kbd>ctrl k</kbd></dt><dd>find a card by its name</dd></div>
+          <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>move down and up a list</dd></div>
+          <div><dt><kbd>enter</kbd></dt><dd>open the selected card</dd></div>
+          <div><dt><kbd>?</kbd></dt><dd>show these keys</dd></div>
+          <div><dt><kbd>esc</kbd></dt><dd>close what is open</dd></div>
+        </dl>
+      </div>
+    </div>
+
+    <script type="application/json" id="sl-cards" set:html={json} />
+
+    <script>
+      type Card = {
+        kind: string;
+        id: string;
+        title: string;
+        tag: string;
+        summary: string;
+        href: string;
+        relations: [string, [string, string][]][];
+      };
+
+      const cards: Card[] = JSON.parse(document.getElementById('sl-cards')!.textContent || '[]');
+      const byHref = new Map(cards.map((card) => [card.href, card]));
+      const view = document.body.dataset.view;
+      const still = matchMedia('(prefers-reduced-motion: reduce)');
+      const esc = (text: string) =>
+        text.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]!);
+      const typing = (t: EventTarget | null) =>
+        t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+
+      // ---------------------------------------------------------------- the clock and the spinner
+
+      const clock = document.querySelector('.clock')!;
+      const tick = () => (clock.textContent = new Date().toTimeString().slice(0, 5));
+      tick();
+      setInterval(tick, 10_000);
+
+      const spinner = document.querySelector('.spinner')!;
+      const FRAMES = '⣾⣽⣻⢿⡿⣟⣯⣷';
+      let f = 0;
+      setInterval(() => {
+        if (still.matches || document.hidden) return;
+        spinner.textContent = FRAMES[(f = (f + 1) % FRAMES.length)];
+      }, 110);
+
+      // ---------------------------------------------------------------- a card's kind, as badges
+
+      const KINDS: Record<string, string> = { sensors: 'sensor', tools: 'tool', loops: 'loop' };
+      const badge = (kind: string) => `<span class="badge badge-${kind}">${KINDS[kind] ?? kind}</span>`;
+
+      // The kicker reads "Sensor · computational": its parts become badges.
+      for (const k of document.querySelectorAll<HTMLElement>('.kicker')) {
+        const [first, ...restParts] = (k.textContent || '').split('·').map((s) => s.trim());
+        const kind = document.body.dataset.kind || '';
+        k.innerHTML =
+          `<span class="badge badge-${kind}">${esc(first.toLowerCase())}</span>` +
+          restParts.map((p) => `<span class="badge badge-tag">${esc(p)}</span>`).join('');
+      }
+
+      // A fact that lists cards becomes chips: the commas between the links go.
+      for (const dd of document.querySelectorAll<HTMLElement>('.facts dd')) {
+        const nodes = [...dd.childNodes];
+        const links = nodes.every(
+          (n) =>
+            (n instanceof HTMLAnchorElement) ||
+            (n instanceof HTMLElement && n.classList.contains('none')) ||
+            (n.nodeType === Node.TEXT_NODE && /^[\s,]*$/.test(n.textContent || '')),
+        );
+        if (!links || !dd.querySelector('a')) continue;
+        nodes.forEach((n) => n.nodeType === Node.TEXT_NODE && n.remove());
+        dd.classList.add('chips');
+      }
+
+      // Code blocks get their language in the border.
+      for (const code of document.querySelectorAll<HTMLElement>('.prose pre > code')) {
+        const lang = [...code.classList].find((c) => c.startsWith('language-'))?.slice(9);
+        code.parentElement!.dataset.lang = lang || 'text';
+      }
+
+      // ---------------------------------------------------------------- a doc's outline
+
+      if (view === 'doc') {
+        const pane = document.getElementById('doc-outline');
+        const list = pane?.querySelector('.outline');
+        const heads = [...document.querySelectorAll<HTMLElement>('.pane-doc .prose h2')];
+        if (pane && list && heads.length > 1) {
+          list.innerHTML = heads
+            .map((h, i) => {
+              h.id ||= `s-${i + 1}-${(h.textContent || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+              return `<li><a href="#${h.id}">${esc(h.textContent || '')}</a></li>`;
+            })
+            .join('');
+        } else pane?.setAttribute('hidden', '');
+      }
+
+      // ---------------------------------------------------------------- a kind's list: bars, selection, preview
+
+      const rows = [...document.querySelectorAll<HTMLElement>('.entry')];
+      const preview = document.querySelector<HTMLElement>('.preview .pane-body');
+      let selected = -1;
+
+      // A count in a list becomes a bar of blocks before the number.
+      for (const item of document.querySelectorAll<HTMLElement>('.entry .meta-item')) {
+        const value = (item.lastChild?.textContent || '').trim();
+        if (!/^\d+$/.test(value)) continue;
+        const n = Number(value);
+        item.classList.add('is-count');
+        item.lastChild!.textContent = '';
+        item.insertAdjacentHTML(
+          'beforeend',
+          `<span class="mini" aria-hidden="true">${n ? '■'.repeat(Math.min(n, 8)) : '·'}</span><span class="mini-n">${n}</span>`,
+        );
+      }
+
+      // Each group's rows get a header row, its columns named after the row's facts.
+      for (const entries of document.querySelectorAll<HTMLElement>('.entries')) {
+        const first = entries.querySelector('.entry');
+        if (!first) continue;
+        const labels = [...first.querySelectorAll('.meta-label')].map((l) => l.textContent || '');
+        entries.insertAdjacentHTML(
+          'afterbegin',
+          `<li class="entry entry-head" aria-hidden="true"><span>#</span><span>name</span>${labels
+            .map((l) => `<span>${esc(l)}</span>`)
+            .join('')}</li>`,
+        );
+      }
+
+      // In the side pane, the current card is scrolled into view: the list scrolls, not the pane.
+      const here = document.querySelector<HTMLElement>('.sidenav li a[aria-current="page"]');
+      const sideScroll = document.querySelector<HTMLElement>('.sidenav-body');
+      if (here && sideScroll && sideScroll.scrollHeight > sideScroll.clientHeight) {
+        sideScroll.scrollTop = here.offsetTop - sideScroll.offsetTop - sideScroll.clientHeight / 3;
+      }
+
+      const show = (card: Card | undefined) => {
+        if (!preview || !card) return;
+        preview.innerHTML =
+          `<p class="pv-badges">${badge(card.kind)}${card.tag ? `<span class="badge badge-tag">${esc(card.tag)}</span>` : ''}</p>` +
+          `<p class="pv-title"><a href="${card.href}">${esc(card.title)}</a></p>` +
+          `<p class="pv-summary">${esc(card.summary)}</p>` +
+          card.relations
+            .map(
+              ([label, list]) =>
+                `<div class="pv-rel"><p class="pv-label">${esc(label)} <span>${list.length}</span></p>` +
+                (list.length
+                  ? `<p class="chips">${list.map(([t, h]) => `<a href="${h}">${esc(t)}</a>`).join('')}</p>`
+                  : `<p class="none">none yet</p>`) +
+                `</div>`,
+            )
+            .join('') +
+          `<p class="pv-path">${esc(card.href)}</p>`;
+      };
+
+      const select = (i: number, focus = false) => {
+        if (!rows.length) return;
+        i = Math.max(0, Math.min(rows.length - 1, i));
+        rows[selected]?.classList.remove('is-selected');
+        selected = i;
+        const row = rows[i];
+        row.classList.add('is-selected');
+        const link = row.querySelector<HTMLAnchorElement>('.entry-title');
+        if (focus && link) {
+          link.focus({ preventScroll: true });
+          row.scrollIntoView({ block: 'nearest' });
+        }
+        show(byHref.get(link?.getAttribute('href') || ''));
+      };
+
+      rows.forEach((row, i) => {
+        row.addEventListener('pointerenter', () => select(i));
+        row.addEventListener('focusin', () => select(i));
+      });
+      // Where the preview shows, the first row starts selected, so the pane is never empty.
+      if (rows.length && matchMedia('(min-width: 84rem)').matches) select(0);
+
+      // On a narrow screen the tabs scroll; the current one is brought into view.
+      const tab = document.querySelector<HTMLElement>('.tabs a[aria-current="page"]');
+      const tabs = tab?.parentElement;
+      if (tab && tabs && tabs.scrollWidth > tabs.clientWidth) {
+        tabs.scrollLeft = tab.offsetLeft - tabs.offsetLeft - 8;
+      }
+
+      // ---------------------------------------------------------------- the finder
+
+      const finder = document.getElementById('finder')!;
+      const input = finder.querySelector('input')!;
+      const list = finder.querySelector<HTMLElement>('.finder-list')!;
+      const count = finder.querySelector<HTMLElement>('.finder-count')!;
+      const fpreview = finder.querySelector<HTMLElement>('.finder-preview')!;
+      const keys = document.getElementById('keys')!;
+      let results: { card: Card; idx: number[] }[] = [];
+      let active = 0;
+      let opener: Element | null = null;
+
+      // fzf's idea, small: the query's letters in order; runs, word starts and short names score higher.
+      const fuzzy = (query: string, text: string) => {
+        const q = query.toLowerCase().replace(/\s+/g, '');
+        const s = text.toLowerCase();
+        if (!q) return { score: 0, idx: [] as number[] };
+        let qi = 0;
+        let score = 0;
+        let prev = -2;
+        const idx: number[] = [];
+        for (let i = 0; i < s.length && qi < q.length; i++) {
+          if (s[i] !== q[qi]) continue;
+          let bonus = 1;
+          if (i === prev + 1) bonus += 5;
+          if (i === 0 || /[\s\-/']/.test(s[i - 1])) bonus += 3;
+          score += bonus;
+          idx.push(i);
+          prev = i;
+          qi++;
+        }
+        if (qi < q.length) return null;
+        return { score: score - s.length * 0.03 - idx[0] * 0.05, idx };
+      };
+
+      const marked = (text: string, idx: number[]) => {
+        const set = new Set(idx);
+        return [...text].map((ch, i) => (set.has(i) ? `<mark>${esc(ch)}</mark>` : esc(ch))).join('');
+      };
+
+      const showFinderPreview = () => {
+        const r = results[active];
+        if (!r) {
+          fpreview.innerHTML = '';
+          return;
+        }
+        const card = r.card;
+        fpreview.innerHTML =
+          `<p class="pv-badges">${badge(card.kind)}${card.tag ? `<span class="badge badge-tag">${esc(card.tag)}</span>` : ''}</p>` +
+          `<p class="pv-title">${esc(card.title)}</p>` +
+          `<p class="pv-summary">${esc(card.summary)}</p>` +
+          card.relations
+            .map(([label, rel]) => `<p class="pv-label">${esc(label)} <span>${rel.length}</span></p>`)
+            .join('') +
+          `<p class="pv-path">${esc(card.href)}</p>`;
+      };
+
+      const paint = () => {
+        list.innerHTML = results
+          .map(
+            ({ card, idx }, i) =>
+              `<li role="option" id="fo-${i}" aria-selected="${i === active}" data-i="${i}">` +
+              `${badge(card.kind)}<span class="fo-title">${marked(card.title, idx)}</span>` +
+              `<span class="fo-id">${esc(card.kind)}/${esc(card.id)}</span></li>`,
+          )
+          .join('');
+        input.setAttribute('aria-activedescendant', results.length ? `fo-${active}` : '');
+        count.textContent = `${results.length}/${cards.length}`;
+        list.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+        showFinderPreview();
+      };
+
+      const search = () => {
+        const q = input.value.trim();
+        results = cards
+          .map((card) => {
+            const m = fuzzy(q, card.title);
+            if (m) return { card, idx: m.idx, score: m.score };
+            const byId = fuzzy(q, `${card.kind}/${card.id}`);
+            return byId ? { card, idx: [], score: byId.score - 4 } : null;
+          })
+          .filter((r): r is { card: Card; idx: number[]; score: number } => r !== null)
+          .sort((a, b) => (q ? b.score - a.score : 0));
+        active = 0;
+        paint();
+      };
+
+      const move = (d: number) => {
+        if (!results.length) return;
+        active = (active + d + results.length) % results.length;
+        paint();
+      };
+
+      const open = (el: HTMLElement) => {
+        opener = document.activeElement;
+        el.hidden = false;
+        document.documentElement.classList.add('has-overlay');
+      };
+      const close = (el: HTMLElement) => {
+        if (el.hidden) return;
+        el.hidden = true;
+        document.documentElement.classList.remove('has-overlay');
+        if (opener instanceof HTMLElement) opener.focus({ preventScroll: true });
+      };
+      const openFinder = () => {
+        close(keys);
+        open(finder);
+        input.value = '';
+        search();
+        input.focus();
+      };
+
+      input.addEventListener('input', search);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || (e.ctrlKey && e.key === 'n')) move(1);
+        else if (e.key === 'ArrowUp' || (e.ctrlKey && e.key === 'p')) move(-1);
+        else if (e.key === 'Enter') {
+          const r = results[active];
+          if (r) location.href = r.card.href;
+        } else if (e.key === 'Escape') close(finder);
+        else if (e.key === 'Tab') {
+          // The focus stays in the finder: Tab moves down the results, as in fzf.
+          move(e.shiftKey ? -1 : 1);
+        } else return;
+        e.preventDefault();
+      });
+      list.addEventListener('pointermove', (e) => {
+        const li = (e.target as HTMLElement).closest<HTMLElement>('[data-i]');
+        if (li && Number(li.dataset.i) !== active) {
+          active = Number(li.dataset.i);
+          for (const o of list.children) o.setAttribute('aria-selected', String(o === li));
+          input.setAttribute('aria-activedescendant', li.id);
+          showFinderPreview();
+        }
+      });
+      list.addEventListener('click', (e) => {
+        const li = (e.target as HTMLElement).closest<HTMLElement>('[data-i]');
+        const r = li && results[Number(li.dataset.i)];
+        if (r) location.href = r.card.href;
+      });
+      for (const o of [finder, keys]) {
+        o.addEventListener('pointerdown', (e) => {
+          if (e.target === o) close(o);
+        });
+      }
+      for (const b of document.querySelectorAll<HTMLElement>('[data-open]')) {
+        b.addEventListener('click', () => (b.dataset.open === 'finder' ? openFinder() : open(keys)));
+      }
+
+      // ---------------------------------------------------------------- the keys
+
+      const sections = [...document.querySelectorAll('.tabs a')].map((a) => a.getAttribute('href')!);
+      addEventListener('keydown', (e) => {
+        if (e.defaultPrevented) return;
+        if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k') {
+          e.preventDefault();
+          finder.hidden ? openFinder() : close(finder);
+          return;
+        }
+        if (e.key === 'Escape') {
+          close(finder);
+          close(keys);
+          return;
+        }
+        if (e.ctrlKey || e.metaKey || e.altKey || typing(e.target) || !finder.hidden) return;
+        if (e.key === '/') {
+          e.preventDefault();
+          openFinder();
+        } else if (e.key === '?') {
+          e.preventDefault();
+          keys.hidden ? open(keys) : close(keys);
+        } else if (!keys.hidden) {
+          return;
+        } else if (/^[1-5]$/.test(e.key) && sections[Number(e.key) - 1]) {
+          e.preventDefault();
+          location.href = sections[Number(e.key) - 1];
+        } else if (rows.length && (e.key === 'j' || e.key === 'k')) {
+          e.preventDefault();
+          select(selected + (e.key === 'j' ? 1 : -1), true);
+        } else if (rows.length && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && rows.some((r) => r.contains(document.activeElement))) {
+          e.preventDefault();
+          select(selected + (e.key === 'ArrowDown' ? 1 : -1), true);
+        }
+      });
+    </script>
+  </body>
+</html>
