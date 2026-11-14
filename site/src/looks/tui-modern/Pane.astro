@@ -1,0 +1,26 @@
+---
+// A pane, as a terminal app of today draws one: a thin rounded border, its title set into the top border with the
+// key that opens it, the focused pane's border in the pink-to-cyan gradient and the others dim.
+export interface Props {
+  /** The title in the top border: a file's path, or what the pane holds. */
+  title: string;
+  /** The key shown before the title, as `[3]`. */
+  hotkey?: string;
+  /** The title as a heading (h1, h2), or a plain label. */
+  heading?: 'h1' | 'h2' | 'span';
+  /** The pane that has the focus when nothing else has it: its border is the gradient. */
+  primary?: boolean;
+  class?: string;
+  id?: string;
+}
+
+const { title, hotkey, heading = 'span', primary = false, class: className, id } = Astro.props;
+const Title = heading;
+---
+
+<section class:list={['pane', className, { 'is-primary': primary }]} id={id} aria-label={heading === 'span' ? title : undefined}>
+  <Title class="pane-title">{hotkey && <kbd aria-hidden="true">[{hotkey}]</kbd>}<span>{title}</span></Title>
+  <div class="pane-body">
+    <slot />
+  </div>
+</section>

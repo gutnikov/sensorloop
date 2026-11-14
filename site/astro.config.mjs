@@ -5,15 +5,25 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import { analyticsSnippet } from './src/config.mjs';
 
-const REPOSITORY = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const SITE = path.dirname(fileURLToPath(import.meta.url));
+const REPOSITORY = path.dirname(SITE);
 const CONTENT = {
   catalogDir: path.join(REPOSITORY, 'catalog'),
   docsDir: path.join(REPOSITORY, 'docs'),
 };
 
+// The site's look: the shell around every page and the home page, from src/looks/<LOOK>/, imported as @look. The
+// default is the published one, `tui-modern`; another (`report`, the look before it, or a new prototype) runs with
+// `LOOK=report npm run dev -- --port 4401`. Each look gets its own caches and build folder, so several can run side
+// by side.
+const PUBLISHED = 'tui-modern';
+const LOOK = process.env.LOOK || PUBLISHED;
+const PROTOTYPE = LOOK !== PUBLISHED;
+
 export default defineConfig({
   site: 'https://sensorloop.dev',
   output: 'static',
+  ...(PROTOTYPE && { outDir: `./dist-looks/${LOOK}`, cacheDir: `./node_modules/.astro-${LOOK}` }),
   build: { format: 'directory' },
   devToolbar: { enabled: false },
   integrations: [
@@ -25,6 +35,10 @@ export default defineConfig({
   ],
   vite: {
     define: { __CONTENT__: JSON.stringify(CONTENT) },
+    resolve: { alias: { '@look': path.join(SITE, 'src', 'looks', LOOK) } },
+    ...(PROTOTYPE && { cacheDir: `./node_modules/.vite-${LOOK}` }),
+    // A look's build, written beside the site, must not reload the other looks' dev servers.
+    server: { watch: { ignored: ['**/dist-looks/**'] } },
     plugins: [reloadOnContent()],
   },
 });
