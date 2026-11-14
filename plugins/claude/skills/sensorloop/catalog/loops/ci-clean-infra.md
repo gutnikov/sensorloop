@@ -1,10 +1,10 @@
 ---
-title: Fix CI until it is green
-summary: The agent pushes, CI runs the checks on clean machines, and the agent fixes what fails until every required job passes for its latest commit.
+title: Fix what fails in CI
+summary: The agent pushes, CI runs the checks on clean machines, and the agent fixes what fails; after the second red round, a person takes over.
 sensors: [ci-results]
 when: After each push, once CI has finished the run for the branch's latest commit.
-failure: A required job that failed, was cancelled or skipped, or has no run for the latest commit. A skip passes only when the job that decided it succeeded.
-next: The agent reads the failing step's log, reproduces the failure locally, fixes the code and pushes again; removing or weakening a job is not a fix. After the second red CI round, it stops and hands the branch to a person with the log.
+failure: A required job that failed or was cancelled, or is missing or skipped, for the branch's latest commit.
+next: "The agent reads the failing step's log, reproduces the failure locally, fixes the code and pushes again; removing or weakening a job is not a fix. A failure that does not come from the change, such as a job that never ran or a runner out of disk space, is not fixed in the code: the agent hands the branch to a person with the log. After the second red round, it stops and hands over the same way."
 ---
 
 ## The loop
@@ -13,14 +13,17 @@ next: The agent reads the failing step's log, reproduces the failure locally, fi
    pushes.
 2. CI runs every check on clean machines. An autofix job runs the formatters and the fixable lint rules and commits
    the result to the branch; the agent pulls it before its next change.
-3. The agent reads the run for its latest commit only. Where the runtime can wake a session on an event, it ends its
-   turn after the push and wakes as each check finishes, instead of polling.
-4. For a job that still fails, it reads only the failing step's log, or a subagent reads it and returns the cause,
-   the lines that show it and the next step, so thousands of log lines stay out of the agent's context.
-5. It reruns the failure locally with the command the failure report names, before it reads any code. Then it fixes
-   the code and pushes again.
-6. The loop ends when every required job passes for the latest commit. After the second red round, the agent stops
-   and hands the branch to a person: further rounds rarely pay off.
+3. The agent reads the run for the branch's latest commit only: its own push, or the autofix commit after it. Where
+   the runtime can wake a session on an event, the agent ends its turn after the push and wakes as each check
+   finishes, instead of polling.
+4. For a job that still fails, the agent reads only the failing step's log. Or a subagent reads the log and returns
+   the cause, the lines that show the cause and the next step, so thousands of log lines stay out of the agent's
+   context.
+5. The agent reruns the failure locally with the command the failure report names, before it reads any code. When
+   the failure does not reproduce, it looks for what only its own workspace has, such as a cached package or a
+   generated file. Then it fixes the code and pushes again.
+6. The loop ends when every required job passes for the branch's latest commit. After the second red round, the agent
+   stops and hands the branch to a person with the log.
 
 ## Why
 
@@ -32,13 +35,16 @@ machine. A CI round takes minutes, so the cheap checks run locally first, and th
 
 - **Clean runners.** Each job starts from a fresh runner or container image and installs from the lockfile. Caches
   are keyed by the lockfile's hash and the CI configuration. A pull request's run restores caches and never saves
-  them, so its code cannot plant packages a release build restores; a failed or timed-out run saves none.
+  them, so code in a pull request cannot put packages into a cache that a release build later restores. A failed or
+  timed-out run saves no cache.
 - **A failure report that names the local command.** A script watches the run, stops at the first failed job, and
   prints the failures by test file, without stack traces or install noise, then the command that reruns exactly
   those files. The failing step's log alone comes from `gh run view --log-failed` (GitHub Actions) or `glab ci trace`
   (GitLab CI).
 - **Capped wake-ups.** Wakes on CI results are capped, for example five in ten minutes and twenty since the person's
-  last prompt, so the agent cannot loop on its own. Only the person's comments steer it; others' are information.
+  last prompt, so the agent cannot loop on its own.
+- **One person steers.** Only the comments of the person who prompts the agent steer it; comments from anyone else,
+  bots included, are information.
 - **Required checks always report.** A required workflow with a path filter never runs on a pull request outside its
   paths, and the pull request waits for it for good. Skip the heavy steps inside the job instead.
 - **A gate that only an explicit success passes.** One required job depends on every check, runs even when one of

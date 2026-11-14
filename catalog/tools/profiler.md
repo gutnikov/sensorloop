@@ -5,22 +5,29 @@ sensors: [performance-measure, manual-probe]
 layer: project
 ---
 
-A profiler samples a running program and shows where it spends its time or memory, function by function. Which one
-applies depends on the language and the runtime, and is found in the project or in the runtime itself.
+A benchmark tells that a change made the code slower; a profile shows which functions made it so. Which profiler
+applies depends on the language and the runtime.
 
 ## Finding it
 
-Many runtimes ship one: Go's `pprof`, Node's `--cpu-prof`, a browser's performance panel. Otherwise look in the dev
-dependencies and the README for the one the project uses, and for a profiling endpoint the service already serves
-(`/debug/pprof/` in Go).
+Look first for the one the project uses: in the dev dependencies, in the README, and a profiling endpoint the service
+already serves (`/debug/pprof/` in Go). Many runtimes also ship one: Go's `pprof`, Node's `--cpu-prof`, a browser's
+performance panel.
+
+When neither the project nor its runtime has one, ask a person before adding one.
 
 ## Using it
 
-- **The same workload before and after the change**, a benchmark where there is one, so the two profiles compare.
-- **Sample a running process**: `py-spy record -o profile.svg --pid <pid>`, `perf record -g -p <pid>`, or
-  `go tool pprof` on a profile fetched from the service.
-- **Compare the two**: `go tool pprof -diff_base=old.prof new.prof`, or both opened in speedscope.
-- **Long enough to see the slow case**: a short sample misses work that happens rarely.
+1. **Choose one workload** to run before and after the change, a benchmark where there is one, so the two profiles
+   compare.
+2. **Sample it long enough to see the slow case**, since a short sample misses work that happens rarely:
+   `py-spy record -o profile.svg --pid <pid>`, `perf record -g -p <pid>`, or `go tool pprof` on a profile fetched
+   from the service.
+3. **Compare the two profiles**: `go tool pprof -diff_base=old.prof new.prof`, or both opened in speedscope.
+
+Attaching to a running process often needs extra rights (root, or the system's ptrace and perf settings), and a
+container may block it. When attaching fails, start the program under the profiler instead:
+`py-spy record -o profile.svg -- python <script>`, `perf record -g -- <command>`.
 
 Examples: pprof (Go), py-spy (Python), perf (Linux), async-profiler (Java), a browser's performance panel; speedscope
 to view profiles.

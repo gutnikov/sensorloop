@@ -5,9 +5,8 @@ sensors: [smoke-probe]
 layer: system
 ---
 
-A service's health endpoints say whether it is alive and whether it is ready for traffic, and the platform's probes
-call them. Their paths and probes differ per service, so they are found in its code and deployment config rather than
-assumed.
+The paths, the port and the probes differ from one service to the next: look them up in the service's code and
+deployment config, and do not assume `/health`.
 
 ## Finding it
 
@@ -17,12 +16,20 @@ assumed.
   Boot).
 - **The port** they answer on, which may differ from the service's main port.
 
+When the service has no health route, call one of its main paths instead, such as a page or an API call that only
+reads, and propose adding the route.
+
 ## Using it
 
-- **Call them directly** after a start or a rollout: `curl --fail --max-time 5 <url>/ready`.
-- **Ask the platform as well**: `kubectl rollout status deployment/<name>` waits until the new pods are ready.
-- **Readiness checks the service's own dependencies** (its database, its queue); liveness does not, so an outage of a
-  dependency does not restart every replica.
+- **Wait until the platform reports the new version ready**: `kubectl rollout status deployment/<name>` on
+  Kubernetes, `docker compose up --wait` with Compose. A call made before then can reach an old instance, or one that
+  is still starting.
+- **Then call them directly**: `curl --fail --max-time 5 <url>/ready`. Where the endpoint reports a version, check
+  that it is the new one.
+- **Read what readiness checks** in the service's code. By convention, readiness (can it take traffic) checks the
+  service's own dependencies, such as its database and its queue, and liveness (is it alive) does not, so an outage
+  of a dependency does not restart every replica. A readiness route that checks nothing says only that the process
+  answers.
 
 Examples: `/health` and `/ready`, Kubernetes liveness and readiness probes, Docker's `HEALTHCHECK`, Spring Boot
 Actuator (Java).

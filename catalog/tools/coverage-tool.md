@@ -19,12 +19,14 @@ When these disagree, CI wins. When none of them names a tool, ask a person befor
 
 ## Using it
 
-- **Run the tests with coverage on**, through the project's own test command where it can: for example
-  `coverage run -m pytest`, `npx jest --coverage` or `go test -coverprofile=cover.out ./...`.
+- **Run the tests with coverage on** through the project's own test command where that command accepts the option,
+  for example `npm test -- --coverage` where the test script runs Jest. Otherwise use the tool's own command, such as
+  `coverage run -m pytest` or `go test -coverprofile=cover.out ./...`.
 - **Write a common report format** (LCOV, Cobertura XML), or convert to one, so other tools can read it.
 - **Measure the changed lines**, not only the total: a diff-coverage tool reads the report with the diff from the
   main branch.
-- **Keep a floor** in the config (`fail_under` in coverage.py, `coverageThreshold` in Jest) that only rises.
+- **Keep a floor that only rises**: the minimum coverage, set in the config (`fail_under` in coverage.py,
+  `coverageThreshold` in Jest). Raise it as coverage grows, and never lower it to make a run pass.
 
 Examples: coverage.py (Python), c8 and Istanbul (JavaScript), JaCoCo (Java), `go test -cover` (Go); diff-cover for
 the changed lines.
