@@ -1,6 +1,6 @@
 ---
 title: Test fixtures
-summary: The test code that puts the app into the state a test or a probe starts from, such as a user with an unpaid invoice, seeded through the project's testing API before the UI.
+summary: The test code that puts the app into the state a test or a probe starts from, such as a user with an unpaid invoice. It seeds the state through the project's testing API rather than the UI.
 sensors: [browser-run, manual-probe, test-runner]
 layer: project
 ---
@@ -8,13 +8,14 @@ layer: project
 Most of a test is its precondition. In "a user sends an invoice and sees it marked as sent", creating the user and the
 invoice is most of the code, and the check is a few lines. A fixture is that first part: it seeds a state, that is,
 creates the data the state needs, and asserts nothing about the feature. The scenario, the test's own steps, checks
-behaviour on that state and seeds nothing itself. A state written once as a fixture serves the browser suite, the
-integration tests and the agent's probes, the throwaway scripts with which it finds out what the running app does.
+behaviour on that state and seeds nothing itself. A state written once as a fixture serves the browser tests (the
+Browser run sensor), the integration tests (Test runner) and the agent's probes (Manual probe). A probe is a throwaway
+script with which the agent finds out what the running app does.
 
 In browser tests, fixtures have a close relative: page objects, classes that are the only way tests touch one page of
 the UI, with a method for each user action and the locators kept inside. The fixture produces the state and the page
-objects act on it, so a spec or a probe built on both holds no seeding and no locators of its own, and a probe that
-finds a defect becomes a spec on the same fixture.
+objects act on it. A browser test or a probe built on both holds no seeding and no locators of its own. A probe that
+finds a defect becomes a browser test on the same fixture.
 
 ## Finding it
 
@@ -24,9 +25,11 @@ finds a defect becomes a spec on the same fixture.
   user or a plan.
 - **The testing API**: an internal API for tests that creates users and records directly. Its client sits in the
   tests; read the service's own code too, which often has methods the tests never used.
-- **Seeding helpers and logging in**: the wrappers around the testing API's calls, some of which wait until a new
-  record is ready, and the way fixtures log in, such as an API call or a stored browser session.
-- **Contract checks**: where the existing ones live, and the tag they carry.
+- **Seeding helpers and logging in**: beside the fixtures and the testing API's client, look for the wrappers around
+  the API's calls, some of which wait until a new record is ready, and for the way fixtures log in, such as an API call
+  or a stored browser session.
+- **Contract checks**: the small tests that assert only the state a fixture promises (see Proving it). Find where the
+  existing ones live and how they are marked to run on their own, such as a tag in Playwright or a marker in pytest.
 
 Where the project's conventions differ from this card, follow the project's. When it has no fixtures yet, the first
 test or probe that needs a state starts one file for its area.
@@ -36,15 +39,17 @@ test or probe that needs a state starts one file for its area.
 - **Reuse first.** Take a fixture that already produces the state; failing that, build on one by adding one thing;
   write one from scratch last.
 - **Name it after the state it produces**: `userWithUnpaidInvoice`, `adminWithInvitedMember`, never `setupUser` or
-  `createInvoice`. Each fixture adds one thing to the one it builds on, at most three levels deep, so a reader can
-  still tell which fixture seeded what.
+  `createInvoice`.
+- **At most three levels deep.** Each fixture adds one thing to the one it builds on, so a reader can still tell which
+  fixture seeded what.
 - **Seed through the testing API first**, and through the UI only when the test is about the flow that creates the
   state, or the state needs effects only the UI produces. Seeding by walking forms is slow and breaks with each
   redesign of a screen the test is not about. Before deciding the API cannot do something, read its code. In tests
   that run inside the app's process, a factory library creates the records directly and plays the same part.
 - **A fresh user for each test**, logged in through the API or a stored session, not the login form, unless the test
-  is about logging in. A fixture never changes what tests running in parallel share, such as a user's role, and
-  waits for a response or a state, never a fixed time.
+  is about logging in.
+- **Leave shared state alone.** A fixture never changes what tests running in parallel share, such as a user's role.
+- **Wait for a response or a state**, never a fixed time.
 - **Say what it promises**: a comment above the fixture names the state it produces, the tests that need it, why it is
   seeded this way, and what a test must know, such as whose session it leaves open.
 - **States named in a specification are fixtures.** Where the feature's specification starts each example from a
@@ -61,10 +66,10 @@ nothing more, at most a navigation and one assertion. It seeds nothing and never
   `--workers=2` in Playwright). Red the first time means the fixture is wrong: fix the fixture, never the check.
 - **Green alone, red in parallel** means tests share something: an identifier without a random part, state kept
   between tests, a race in logging in, a rate limit. Fix it in the fixture; a retry only hides it.
-- **A state the project cannot seed yet**, such as one the testing API has no route for or one only an outside party
-  creates, is declared anyway as a stub fixture: it fails at once with a message that says what is missing and what
-  would unblock it. Tests that need it fail fast and the gap stays in view, where a skipped test or a missing fixture
-  would hide it. Its contract check is marked as known to fail (`test.fixme` in Playwright, `xfail` in pytest) until
-  the gap closes, and a probe that meets the stub reports its message instead of seeding around it.
+- **Declare a state the project cannot seed yet as a stub fixture.** The testing API may have no route for it, or only
+  an outside party creates it. The stub fails at once with a message that says what is missing and what would unblock
+  it. Tests that need it fail fast and the gap stays in view, where a skipped test or a missing fixture would hide it.
+  Its contract check is marked as known to fail (`test.fixme` in Playwright, `xfail` in pytest) until the gap closes,
+  and a probe that meets the stub reports its message instead of seeding around it.
 
 Examples: Playwright Test fixtures (JavaScript), pytest fixtures (Python), factory_bot (Ruby), Factory Boy (Python).
