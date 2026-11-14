@@ -5,9 +5,8 @@ summary: Drives a scripted flow through a page in a real browser, and reports th
 signal: The failed step with the element it looked for, and the script errors, failed requests and accessibility violations met on the way.
 ---
 
-A browser run drives a scripted user flow through a running copy of the app in a real browser: it opens pages,
-clicks, types and waits for what should appear. Loops read it because it meets the app the way a user does, with
-every layer put together.
+A browser run opens pages in a running copy of the app, clicks, types and waits for what should appear. Loops read it
+because it meets the app the way a user does, with every layer put together.
 
 ## What it sees
 
@@ -24,6 +23,6 @@ flow visits, and it sees layout only through screenshots.
 - **Accessibility violations**: elements the flow met that break accessibility rules, each named. They are findings
   even when every step passed.
 
-A browser run needs the app running. When the app did not start, no browser was available, or the run timed out
-before its first step, the run failed and the work was not observed. Read which kind of failure it is before acting
-on it.
+A browser run needs the app running. A run can fail before its first step: the app did not start, no browser was
+available, or the run timed out. Such a failure says nothing about the work. Read which kind of failure it is before
+acting on it.

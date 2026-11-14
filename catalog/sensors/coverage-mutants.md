@@ -5,8 +5,9 @@ summary: "Shows what the tests do not check: lines no test runs, and changes to 
 signal: Uncovered changed lines as file:line; each surviving mutant with the change that survived; a score under its threshold.
 ---
 
-Coverage and mutation show what the tests do not check. Coverage finds the lines no test runs; mutation testing makes
-small changes to the code and finds the ones no test notices. Loops read them to judge the tests, not the code.
+Loops read coverage and mutation to judge the tests, not the code. Coverage records which lines run during the tests.
+Mutation testing makes small changes to the code, called mutants, runs the tests against each, and reports the mutants
+that no test failed on.
 
 ## What it sees
 
@@ -21,6 +22,8 @@ behaviour.
 - **A surviving mutant**: the change to the code that survived. Either a test lacks an assertion, or the mutant is
   equivalent to the original and no test could catch it.
 - **A score under its threshold**: the share of covered lines or killed mutants fell below its floor.
+- **No data**: a mutation run that stopped before it tested its mutants, or a coverage report with no data, has
+  observed nothing. This is not a pass.
 
-Mutation runs are slow, so they run on the changed files or on a schedule. A mutation run that stopped before it
-tested its mutants, or a coverage report with no data, has observed nothing.
+Mutation testing runs the tests once for each mutant, so it is slow; loops run it on the changed files or on a
+schedule.
