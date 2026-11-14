@@ -1,6 +1,6 @@
 {
   "name": "sensorloop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Keeps a project's validation loops: sets up the checks that catch an agent's mistakes, fitted to the project's needs and limits, keeps CLAUDE.md's instructions on them current, diagnoses problems in the flow, and writes service agents' prompts.",
   "author": {
     "name": "gutnikov"

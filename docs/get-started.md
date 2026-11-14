@@ -38,6 +38,8 @@ Ask in plain words. The skill loads when the work calls for it; you do not name 
 
 **When something keeps going wrong.** "Regressions keep reaching main although the agent says the tests pass. Why, and what should change?" It gathers the evidence (CI runs, git history, agent sessions), finds the earliest point where the problem could have been caught, and proposes the loop that would catch it there.
 
+**When you change how work gets made.** "For features with screens, I want to see a prototype of each one before the agent writes the code." A step where you approve the work is a loop too, with you as its sensor. It finds where the step belongs in the flow, and the check that keeps the agent from skipping it.
+
 **Write a service agent.** "Write the prompt for a subagent that reviews our diffs for security problems." It writes a reviewer, judge or triager as a sensor: read-only, a fresh context, written criteria, a structured verdict, and advice only until it is calibrated.
 
 **Keep CLAUDE.md current.** "Update CLAUDE.md so agents know how the checks here work." It rewrites the instructions on the loops from the project's registry.

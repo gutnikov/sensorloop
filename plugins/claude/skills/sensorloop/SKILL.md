@@ -1,6 +1,6 @@
 ---
 name: sensorloop
-description: Keeps a project's validation loops, the checks that catch an agent's mistakes (tests, type checks, linters, hooks, CI jobs, reviewer agents, gates before risky actions), fitted to the project's needs and limits. Use when setting a project up for coding agents, when its setup changes (a new stack, test command, CI or deploy), when something keeps going wrong in how changes get made (regressions slip through, CI is often red, the agent loops or breaks things, bugs reach users), when writing the prompt of a service agent such as a reviewer, judge or triager, or to keep CLAUDE.md's instructions on the loops current.
+description: Keeps a project's validation loops: the checks that catch an agent's mistakes (tests, type checks, linters, hooks, CI jobs, reviewer agents, gates before risky actions) and the points where a person approves the work (a plan, a spec, a prototype, a demo), fitted to the project's needs and limits. Use whenever the talk turns to how changes get made in the project, its development flow, even when no check is named: adding, removing or moving a step such as a prototype or spec to approve before building, a review, a check, a hook or a CI job; when something goes wrong in that flow (regressions slip through, CI is often red, bugs reach users, the agent loops, breaks things or skips a step); when setting a project up for coding agents, or when its setup changes (a new stack, test command, CI or deploy); when writing the prompt of a service agent such as a reviewer, judge or triager; or to keep CLAUDE.md's instructions on the loops current.
 ---
 
 # sensorloop
@@ -28,7 +28,7 @@ do not have this plugin, and in CI. Formats: [procedures/loops-file.md](procedur
 |---|---|
 | Set the project up for coding agents; there is no `.sensorloop/loops.yaml` yet | [procedures/setup.md](procedures/setup.md) |
 | The project changed (stack, commands, CI, deploy), or the registry no longer matches it | [procedures/change.md](procedures/change.md) |
-| Something keeps going wrong in the flow, or the person asks how to improve it | [procedures/diagnose.md](procedures/diagnose.md) |
+| A step to add to the flow or change in it (an approval, a review, a check), something keeps going wrong in the flow, or the person asks how to improve it | [procedures/diagnose.md](procedures/diagnose.md) |
 | Write or fix the prompt of a service agent (reviewer, judge, triager, verifier) | [procedures/agent-prompt.md](procedures/agent-prompt.md) |
 
 Read [procedures/loops-file.md](procedures/loops-file.md) before you write anything under `.sensorloop/`.
