@@ -2,12 +2,15 @@
 // the metamodel from docs/, and Markdown rendered to HTML. Read on every call, so the dev server shows each edit.
 import fs from 'node:fs';
 import path from 'node:path';
-import { loadCatalog } from '@sensorloop/catalog';
+import { loadCatalog, loadWizard } from '@sensorloop/catalog';
 import { marked } from 'marked';
 
 export { kinds } from '@sensorloop/catalog';
 
 export const catalog = () => loadCatalog(__CONTENT__.catalogDir);
+
+/** The wizard's tree (catalog/wizard/tree.yaml), checked against the catalog. */
+export const wizard = () => loadWizard(__CONTENT__.catalogDir, catalog());
 
 /** @param {string} text */
 export const markdown = (text) => /** @type {string} */ (marked.parse(text, { async: false }));

@@ -62,4 +62,4 @@ Commit them all, except `.sensorloop/state/`, which it adds to `.gitignore`. The
 
 It wires six loops itself: [Run the tests first](/loops/run-tests-first/), [Red, then green](/loops/red-green-tdd/), [Type check and build](/loops/type-check-and-build/), [Lint with fix instructions](/loops/lint-with-fix-instructions/), [Ask before the irreversible](/loops/risky-action-gates/) and [Stall detector](/loops/stall-detector/).
 
-Every other loop in the [catalog](/loops/) it proposes when your project calls for it, with what your project must provide, and records it in the registry as proposed.
+Every other loop in the [catalog](/loops/) it proposes when your project calls for it, with what your project must provide, and records it in the registry as proposed. To see which of them your project calls for before you install anything, answer the eight questions of the [wizard](/wizard/).

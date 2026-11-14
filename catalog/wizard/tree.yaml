@@ -1,0 +1,821 @@
+# The wizard at /wizard/: at most eight questions about a project, and the loops its answers call for.
+#
+# A condition maps a question's id to the options that satisfy it: it holds when the answer includes any of them.
+# Several questions in one condition must all hold; `any` holds when one of its conditions does, `not` when its
+# condition does not, and `loops` when the result so far has one of the loops named. A question or an option with an
+# `ask_if` is shown only when its condition holds, and a condition only reads the questions before it.
+#
+# The result: the base loops, which every project gets; then the loops the rules add, each with its own reason. A
+# rule's weight says how strongly its answer calls for them (4 for what defines how the work runs, 3 for a risk the
+# person named, 2 for what the product is, 1 by default, 0 for a loop to add once the rest runs); the loops with the
+# highest total, up to `first.count`, are the ones to start with (a base loop a named risk calls for comes first among
+# them), the next heaviest come next, and the rest follow by phase. A loop whose `needs` do not hold goes
+# under "later", with what it needs; one that an `exclude` rule names is left out, with the reason. Checked by
+# `npm run check` against catalog/schema/wizard.schema.json and the catalog, and run on the personas in personas/.
+
+first:
+  count: 5
+  min_weight: 2
+  next: 5
+  next_min_weight: 1
+
+phases:
+  - id: agent
+    label: Around the agent
+    summary: What the agent may do on its own, and where a person steps in.
+  - id: start
+    label: Before the work starts
+    summary: What is settled before the first edit.
+  - id: edit
+    label: While the agent works
+    summary: Checks the agent runs on its own change, before it says it is done.
+  - id: merge
+    label: Before the merge
+    summary: Checks on the pull request, by machines and by people.
+  - id: release
+    label: Deploys and releases
+    summary: Checks against the running app or the built release, before it reaches everyone.
+  - id: production
+    label: In production
+    summary: What real use shows, and what comes back as work.
+
+loops:
+  risky-action-gates: agent
+  correction-becomes-rule: agent
+  stall-detector: agent
+  observe-and-interrupt: agent
+  approval-reviewer-agent: agent
+  afk-run-handoff: agent
+  agent-branch-integration: agent
+  agent-calibration: agent
+  triage: start
+  user-feedback: start
+  spec-before-tests: start
+  plan-approval: start
+  run-tests-first: start
+  isolated-environment: start
+  red-green-tdd: edit
+  bug-failing-test-fix: edit
+  type-check-and-build: edit
+  lint-with-fix-instructions: edit
+  secret-scanning: edit
+  architecture-fitness-functions: edit
+  db-migration-lint: edit
+  api-breaking-changes: edit
+  config-validation: edit
+  approved-fixtures: edit
+  fault-injection: edit
+  scripted-model-tests: edit
+  llm-evals: edit
+  skill-trigger-eval: edit
+  agentic-manual-testing: edit
+  e2e-browser: edit
+  structured-logs: edit
+  traces-opentelemetry: edit
+  mutation-testing: edit
+  text-from-a-brief: edit
+  verification-subagent: merge
+  agent-code-review: merge
+  result-demo: merge
+  human-diff-review: merge
+  ci-clean-infra: merge
+  dependency-scanning-sbom: merge
+  agent-ci-hardening: merge
+  third-party-extension-scan: merge
+  preview-environments: release
+  health-checks-smoke: release
+  lighthouse-ci: release
+  load-testing: release
+  dast: release
+  shipped-artifact-check: release
+  release-confirmation: production
+  error-tracking: production
+  backup-restore-rollback: production
+  repo-health-agent: production
+
+base:
+  - loop: risky-action-gates
+    because: Some actions cannot be undone, such as a deploy, a migration, a delete or a push. The agent stops before each one, and a person confirms it.
+  - loop: run-tests-first
+    because: An agent that has not run the tests before its change takes old failures for its own.
+  - loop: red-green-tdd
+    because: A test that fails before the change and passes after it is the cheapest proof that the change does what was asked.
+  - loop: type-check-and-build
+    because: The build, the compiler or the type checker, whichever the stack has, finds a broken change seconds after the edit, at its file and line.
+  - loop: lint-with-fix-instructions
+    because: A lint message that says how to fix the problem keeps the agent from silencing the rule.
+  - loop: secret-scanning
+    because: Agents copy keys into code and configuration. A scan before each commit stops a key before it reaches the history.
+  - loop: correction-becomes-rule
+    because: Each correction you make is a check that was missing. The second of a kind becomes a rule, so you stop making it by hand.
+
+
+questions:
+  - id: product
+    text: What are you building?
+    hint: Pick all that apply.
+    multiple: true
+    options:
+      - id: web
+        label: A web app or a site people open in a browser
+      - id: backend
+        label: "A backend: an API, services or jobs that other code calls"
+      - id: app
+        label: A mobile or desktop app people install
+      - id: game
+        label: A game
+      - id: library
+        label: A library, an SDK or a command-line tool that others install
+      - id: bot
+        label: A bot or a chat assistant
+      - id: data
+        label: Data pipelines, analytics or model training
+      - id: infra
+        label: "Infrastructure: cloud resources, clusters, deploy configuration"
+      - id: device
+        label: Firmware or software that runs on devices
+      - id: llm
+        label: "Features where a model answers or acts: prompts, retrieval, an AI agent"
+      - id: agent-tools
+        label: "Tools for coding agents: skills, plugins, MCP servers"
+
+  - id: path
+    text: Where does a change go after your machine?
+    hint: Pick all that apply.
+    multiple: true
+    options:
+      - id: ci
+        label: "Checks run on a server on every push or pull request (CI, such as GitHub Actions, GitLab CI or Jenkins; a hosting provider's build alone does not count)"
+      - id: preview
+        label: "Each change gets its own temporary copy to try at its own address (a preview; Vercel and Netlify make one per branch)"
+        ask_if: { product: [web, backend, bot, llm, infra] }
+      - id: staging
+        label: "A shared test copy of the whole system, before the release (staging)"
+      - id: servers
+        label: "It goes live, however it gets there: servers, jobs or data that people use every day (production)"
+      - id: installed
+        label: "A release people install: an app store, a package registry, a game store, devices"
+      - id: migrations
+        label: Database migrations, run against a production database
+        ask_if: { product: [web, backend, app, bot, data, llm] }
+      - id: rig
+        label: Real devices to test on before the release (a hardware rig, a device farm)
+        ask_if: { product: [app, game, device] }
+      - id: local
+        label: "Nowhere yet: it runs on my machine"
+        only: true
+
+  - id: observe
+    text: When something breaks for the people who use it, how do you find out?
+    hint: Pick all that apply.
+    multiple: true
+    ask_if: { path: [servers, installed] }
+    options:
+      - id: errors
+        label: An error or crash tracker (Sentry, Crashlytics, Bugsnag)
+      - id: logs
+        label: Logs we can search
+      - id: metrics
+        label: Metrics and dashboards
+      - id: traces
+        label: Traces across services
+      - id: alerts
+        label: Alerts from failed jobs, monitors or uptime checks
+      - id: feedback
+        label: "People report it: issues, a chat, store reviews, a forum"
+      - id: nothing
+        label: Nothing tells us until someone complains
+        only: true
+
+  - id: agent
+    text: How do coding agents (such as Claude Code, Codex or Cursor) work on your code?
+    hint: Pick all that apply.
+    multiple: true
+    options:
+      - id: watched
+        label: I watch the agent work, and step in when it drifts
+      - id: handoff
+        label: I hand over a task and come back to the result
+      - id: fleet
+        label: Several agents run unattended at once, in parallel or overnight, wherever they run
+      - id: ci
+        label: An agent runs inside CI, started by issues, comments or pull requests
+        ask_if: { path: [ci] }
+
+  - id: review
+    text: Who looks at a change before it ships?
+    options:
+      - id: me
+        label: Only me
+      - id: team
+        label: A teammate reviews each pull request
+      - id: strict
+        label: Required reviewers, and a record of who approved what
+      - id: result
+        label: Nobody reads the code closely; we judge by trying the result
+
+  - id: risk
+    text: What would hurt most if a change broke it?
+    hint: Pick all that would cost real money, users or sleep. The first steps follow what you pick.
+    multiple: true
+    options:
+      - id: data
+        label: "Data we cannot lose: a database, storage, or the files and saves people keep"
+        ask_if: { product: [web, backend, app, game, bot, data, llm, infra] }
+      - id: clients
+        label: "Things built on what we publish: our API, events or tables, file or save formats, a tool's output, older versions of our app or firmware"
+      - id: irreversible
+        label: "An action that cannot be taken back: a message to every user, an update to devices, an apply to production infrastructure, a release"
+      - id: money
+        label: "Money the product moves or spends: payments and billing, or jobs that cost a lot to run (a backfill)"
+      - id: wrong
+        label: "Wrong numbers or answers that people act on: reports, dashboards, a model's answers"
+      - id: agent-acts
+        label: "Our AI feature acting for users: calling tools, changing their data"
+        ask_if: { product: [llm] }
+      - id: load
+        label: Speed and capacity at peak traffic
+      - id: pages
+        label: How fast pages load and how they look (search ranking, a shop, a marketing site)
+        ask_if: { product: [web] }
+      - id: attack
+        label: "Attackers: it faces the internet, or holds personal data"
+      - id: supply
+        label: A compromised dependency, package, plugin or MCP server
+      - id: deps
+        label: Services, networks or sensors it relies on going slow, down or silent
+      - id: legacy
+        label: Old code that nobody fully understands
+      - id: audit
+        label: "An audit or a regulator: every change must be traceable"
+      - id: none
+        label: Nothing serious yet
+        only: true
+
+  - id: tests
+    text: What are your tests like today?
+    hint: Pick all that apply.
+    multiple: true
+    options:
+      - id: none
+        label: Few or none, or I do not know
+        only: true
+      - id: some
+        label: They run in a few minutes
+      - id: slow
+        label: They are slow, ten minutes or more
+      - id: flaky
+        label: Some are flaky, or the main branch is often red
+      - id: strong
+        label: We trust them to catch a regression
+
+  - id: budget
+    text: Besides the coding agent itself, may other agents and checks call a model? For example, a reviewer agent that reads the diff. It costs tokens, and sends code to the model's provider.
+    options:
+      - id: no
+        label: "No: only the coding agent itself"
+      - id: local
+        label: Yes, on our own machines, next to the coding agent
+      - id: anywhere
+        label: Yes, also from CI and scheduled jobs
+        ask_if: { path: [ci] }
+
+rules:
+  # ------------------------------------------------------------------ what you build
+  - when: { product: [web] }
+    weight: 2
+    add:
+      e2e-browser: People reach your features in a browser, and only a walk through one shows a feature broken end to end while the unit tests pass.
+  - when: { product: [web], tests: [none] }
+    add:
+      e2e-browser: With no tests, a walk through the main flows and forms in a browser is the cheapest check that the site still works.
+  - when: { product: [web, app] }
+    add:
+      result-demo: The agent shows you the screen it changed, as a screenshot or a recording, and you judge the behaviour instead of the code.
+  - when: { product: [backend] }
+    add:
+      agentic-manual-testing: The agent calls what it changed the way a client would, and turns each defect it meets into a test.
+  - when: { product: [app] }
+    weight: 2
+    add:
+      shipped-artifact-check: The build people install is installed and started from scratch before it goes to the store.
+      approved-fixtures: Screens are compared with approved snapshots, and only a person approves a new one, so a screen does not change by accident.
+  - when: { product: [app] }
+    add:
+      agentic-manual-testing: The agent runs the app in an emulator or a simulator and goes through the flow it changed, the way people use it.
+  - when: { product: [game] }
+    weight: 2
+    add:
+      shipped-artifact-check: The exact build that goes to the store is installed and started from scratch, and reaches the main menu, before players get it.
+      agentic-manual-testing: The agent launches the built game, reaches the menu and loads a save, and turns each crash it meets into a test.
+  - when: { product: [game] }
+    add:
+      result-demo: The agent shows you a clip of what it changed, and you judge how it plays, not how the code reads.
+      config-validation: Build profiles and the store's upload configuration are checked at each edit, and the build starts with each profile.
+  - when: { product: [library] }
+    weight: 2
+    add:
+      api-breaking-changes: Your users' code calls your public API. A change that breaks it is caught before the commit, not by their builds.
+      shipped-artifact-check: The exact package is packed, installed into an empty project and run before the registry's `latest` points to it.
+  - when: { product: [library] }
+    add:
+      agentic-manual-testing: The agent uses the library, or runs the tool, the way your users do, and turns each defect into a test.
+      approved-fixtures: Output that people parse or read is compared with approved output, so a change to it is a decision and not an accident.
+  - when: { product: [library] }
+    weight: 0
+    add:
+      text-from-a-brief: Your README, docs and release notes are what users read first. Each fact in them is checked against its source before they ship.
+  - when: { product: [bot] }
+    weight: 2
+    add:
+      agentic-manual-testing: The agent talks to the bot the way a user would, and turns each wrong reply into a test.
+  - when: { product: [bot] }
+    add:
+      approved-fixtures: The fixed texts the bot sends (commands, menus, templates) are compared with approved ones, so a changed text is a decision and not an accident.
+  - when: { product: [data] }
+    weight: 2
+    add:
+      approved-fixtures: A sample input with its approved output catches a transformation that quietly changed the numbers.
+      isolated-environment: Each task runs against its own development dataset, never the production one, and is thrown away after.
+  - when: { product: [data] }
+    add:
+      config-validation: Pipeline, job and schedule configuration is checked against its schema at each edit, before anything runs.
+      agentic-manual-testing: The agent runs the model it changed against the development dataset and looks at the rows (counts, nulls, a diff with production) before it says it is done.
+  - when: { product: [data], risk: [money] }
+    weight: 3
+    add:
+      risky-action-gates: A full refresh or a backfill costs real money, so the agent stops before each one and a person confirms it.
+  - when: { product: [data], path: [staging, servers] }
+    add:
+      health-checks-smoke: After each deploy, the pipeline runs on a slice of the data, and row counts and freshness are checked before it runs on all of it.
+  - when: { product: [infra] }
+    weight: 3
+    add:
+      config-validation: Every configuration file is checked against its schema at each edit, and the services start with each profile, before anything is applied.
+  - when: { product: [device] }
+    weight: 2
+    add:
+      shipped-artifact-check: The firmware image is built, signed and installed the way devices will install it, and boots, before the rollout starts.
+      config-validation: Partition tables, build configuration and update manifests are checked at each edit; an error there can brick a device.
+  - when: { product: [device] }
+    add:
+      api-breaking-changes: Devices in the field run many firmware versions. The update manifest, the protocol and the stored settings stay readable by the older ones.
+  - when: { product: [llm] }
+    weight: 3
+    add:
+      llm-evals: A prompt change can fix one case and break three. Only a suite of cases, run several times, shows it before your users do.
+  - when: { product: [llm] }
+    weight: 2
+    add:
+      scripted-model-tests: The code around the model (tools, retries, parsing) is tested against a scripted fake model, with no tokens and the same result every time.
+  - when: { product: [agent-tools] }
+    weight: 3
+    add:
+      skill-trigger-eval: A skill that does not load when it should does nothing. Realistic requests show how often it loads, before and after each change to its description.
+      llm-evals: Your prompts are the product. A suite of cases, run several times, shows whether a change made the agent better or worse.
+  - when: { product: [agent-tools] }
+    weight: 2
+    add:
+      config-validation: Manifests and skill files are checked against their schema at each edit, and each server starts, so a broken one never ships.
+  - when: { product: [agent-tools] }
+    add:
+      third-party-extension-scan: An extension runs with the permissions of whoever installs it. Each one you pull in is read against a policy before it runs.
+  - when: { product: [agent-tools] }
+    weight: 0
+    add:
+      text-from-a-brief: Your README and docs are what users read first. Each fact in them is checked against its source before they ship.
+
+  # ------------------------------------------------------------------ where a change goes
+  - when: { path: [ci] }
+    weight: 2
+    add:
+      ci-clean-infra: CI runs the checks on a clean machine, and the agent fixes what fails there before anyone looks.
+  - when: { path: [ci] }
+    add:
+      dependency-scanning-sbom: A scanner flags each dependency with a known vulnerability, or a licence you do not allow, before it is merged.
+  - when: { path: [ci], tests: [flaky] }
+    weight: 0
+    add:
+      ci-clean-infra: Your main branch is often red. The agent tells a flaky failure from its own by retrying only the tests on the flaky list.
+  - when: { path: [migrations] }
+    add:
+      db-migration-lint: Your migrations run against a production database, and reverting the code does not undo one. Each is checked, then applied, rolled back and applied again on a throwaway database.
+  - when: { path: [servers], not: { path: [staging, preview] }, product: [web, backend, bot, llm] }
+    weight: 3
+    add:
+      health-checks-smoke: Your changes go straight to production. A smoke check right after each deploy is what tells you, before your users do, that it did not start.
+  - when: { path: [preview] }
+    weight: 0
+    add:
+      preview-environments: Each change runs at its own address, so every check that needs a running app tests that change alone.
+  - when: { path: [preview, staging, servers], product: [web, backend, bot, llm, infra] }
+    add:
+      health-checks-smoke: After each deploy, a few smoke checks confirm that the new version is up and answers, before it goes further.
+  - when: { path: [rig] }
+    weight: 3
+    add:
+      agentic-manual-testing: The agent runs its change on a real device, the way people use it, and turns each defect into a test.
+  - when: { path: [servers, installed], not: { product: [infra] } }
+    add:
+      bug-failing-test-fix: A bug that reaches people starts as a failing test, so the fix stays fixed.
+  - when: { path: [installed] }
+    add:
+      shipped-artifact-check: An install that has already failed cannot be taken back, so the exact release is installed and started before people get it.
+  - when: { product: [web, backend, infra], path: [ci], not: { path: [preview] } }
+    weight: 0
+    add:
+      preview-environments: With each pull request deployed to its own address, the checks that need a running app test that change alone, before the merge.
+  - when: { path: [servers], not: { path: [ci] } }
+    add:
+      ci-clean-infra: Nothing checks a change on a clean machine before it goes live. A CI that runs the same checks on every push is the backstop for what the agent skipped.
+  - when: { path: [servers], review: [result], not: { path: [ci] } }
+    weight: 2
+    add:
+      ci-clean-infra: Only you look at a change before it goes live. The agent sets up a CI that builds the project and runs its checks on every push (GitHub Actions is free for this), and fixes what fails there.
+
+  # ------------------------------------------------------------------ how you find out
+  - when: { observe: [errors] }
+    weight: 2
+    add:
+      error-tracking: The errors people hit come back as work, each reproduced by a failing test, and a fix counts once the error stops.
+  - when: { path: [servers, installed], not: { observe: [errors, logs, alerts] } }
+    weight: 0
+    add:
+      error-tracking: You hear about errors from people. An error or crash tracker brings each one to the agent with its stack trace.
+  - when: { observe: [errors, logs, metrics, alerts], product: [web, backend, app, game, bot, llm, device, infra] }
+    weight: 0
+    add:
+      release-confirmation: A release counts as done only once real use shows that it runs, and nothing is worse than under the version before.
+  - when: { product: [data], path: [servers], observe: [errors, logs, metrics, alerts] }
+    add:
+      release-confirmation: After each release, the next runs are compared with the ones before (row counts, freshness, the key numbers), and a drop stops the rollout.
+  - when: { observe: [errors, metrics], risk: [money, load] }
+    weight: 2
+    add:
+      release-confirmation: After each release, real traffic on the paths that make money is compared with the version before, and a drop stops the rollout.
+  - when: { risk: [money], path: [servers], product: [web, backend, bot] }
+    weight: 2
+    add:
+      health-checks-smoke: After each deploy, a smoke check walks the paths that take money, such as a checkout against the payment provider's sandbox.
+  - when: { observe: [logs], product: [web, backend, bot, llm] }
+    add:
+      structured-logs: After running a scenario, the agent reads the logs of its own run, which show an error the response hid.
+  - when: { observe: [traces] }
+    add:
+      traces-opentelemetry: The agent reads the traces of its own run, which show the call that failed or went over its budget.
+  - when: { observe: [feedback] }
+    weight: 0
+    add:
+      user-feedback: A request from a user becomes acceptance criteria tied to a scenario, approved by a person before any work starts.
+
+  # ------------------------------------------------------------------ how agents work
+  - when: { agent: [watched] }
+    weight: 0
+    add:
+      observe-and-interrupt: You watch instead of approving each step. When the agent drifts, you stop it, roll the work back, and your correction becomes its next instruction.
+  - when: { agent: [handoff], not: { agent: [fleet] } }
+    add:
+      plan-approval: Before you leave, the agent writes the task in its own words and a plan, and you correct it, so it does not build the wrong thing while you are away.
+  - when: { agent: [handoff, fleet, ci] }
+    add:
+      stall-detector: An agent that repeats the same call five times is told to step back, and then stopped, instead of burning hours and tokens while nobody watches.
+      verification-subagent: When the agent says it is done, a separate agent with a fresh context tries to prove it wrong by running the tests and the app.
+  - when: { agent: [fleet] }
+    weight: 4
+    add:
+      isolated-environment: Each agent works in its own environment, thrown away after, so two agents never share a database, a port or a working tree.
+      agent-branch-integration: Agents working in parallel each leave a branch. They are merged one at a time, with the tests after each, so one agent does not break another's work.
+  - when: { agent: [fleet] }
+    weight: 3
+    add:
+      afk-run-handoff: Every unattended run ends in a hand-off or a reason, read from git, never in an item left in progress.
+      stall-detector: An agent stuck in a loop at night burns tokens until morning. A hook stops it after the same call five times.
+      approval-reviewer-agent: Nobody is awake to answer a permission prompt, so a read-only reviewer model answers it, and a denial cannot be worked around.
+  - when: { agent: [fleet] }
+    weight: 3
+    add:
+      verification-subagent: A pull request that claims to be done is checked by a separate agent that tries to prove the claim wrong.
+  - when: { agent: [ci] }
+    weight: 4
+    add:
+      agent-ci-hardening: An agent in CI reads text that anyone can write. Each job that runs one keeps its guards, a filtered network, a tool list and a turn cap.
+  - when: { agent: [ci] }
+    add:
+      afk-run-handoff: A run in CI ends in a pull request or a reason, read from git, never in an issue left in progress.
+  - when: { agent: [ci] }
+    weight: 2
+    add:
+      approval-reviewer-agent: Nobody answers a permission prompt in CI, so a read-only reviewer model answers it, and a denial cannot be worked around.
+  - when: { agent: [ci] }
+    add:
+      triage: The agent in CI picks up issues that anyone can open. Each is sorted, or joined to an open one, before it starts.
+  - when: { any: [{ agent: [ci] }, { agent: [fleet], observe: [errors, alerts, feedback] }] }
+    add:
+      triage: Work arrives on its own, from issues and alerts. Each item is sorted, or joined to an open one, before an agent starts on it.
+  - when: { agent: [fleet] }
+    weight: 0
+    add:
+      repo-health-agent: With agents doing much of the work, a daily job records the delivery metrics and proposes one change for the worst trend.
+      correction-becomes-rule: Each morning's corrections to the night's pull requests are the rules the next night's agents need.
+
+  # ------------------------------------------------------------------ who looks
+  - when: { review: [team, strict, result] }
+    add:
+      agent-code-review: A reviewer agent with a fresh context reads the diff before a person does, and the agent fixes each finding it confirms.
+  - when: { review: [me] }
+    weight: 2
+    add:
+      agent-code-review: You are the only reviewer, so a reviewer agent with a fresh context is a second pair of eyes before you read.
+  - when: { review: [me], path: [ci] }
+    weight: 0
+    add:
+      human-diff-review: When you do review a pull request, the agent answers each of your comments in its thread, with a change or a reason.
+  - when: { review: [team, strict] }
+    weight: 0
+    add:
+      human-diff-review: You already review each pull request. The agent answers each comment in its thread with a change or a reason, and the merge waits for the approval.
+  - when: { review: [strict] }
+    add:
+      plan-approval: The plan is approved before the work starts, and the approval is on record.
+  - when: { review: [strict] }
+    add:
+      architecture-fitness-functions: Rules for the direction of imports between layers keep a codebase that many people work in from tangling, and each message says where the code belongs.
+  - when: { review: [result] }
+    weight: 3
+    add:
+      plan-approval: Nobody reads the code, so what will be built is agreed in plain words before the agent starts.
+      result-demo: Once the checks pass, the agent shows you the working result, and you judge it by trying it, before it goes live.
+      verification-subagent: A separate agent tries to prove the claim of done wrong, by running the tests and the app, before you see it.
+
+  # ------------------------------------------------------------------ what would hurt
+  - when: { risk: [data], product: [web, backend, app, bot, data, llm] }
+    weight: 3
+    add:
+      db-migration-lint: A bad migration does its damage when it runs, and reverting the code does not undo it. Each one is checked, then applied, rolled back and applied again on a throwaway database.
+  - when: { risk: [data], path: [servers] }
+    weight: 3
+    add:
+      backup-restore-rollback: A backup that was never restored may not restore on the day it is needed. A drill restores it into a throwaway place on a schedule.
+  - when: { risk: [data], product: [game, app] }
+    weight: 3
+    add:
+      approved-fixtures: Saves and local data from older versions are kept as fixtures, and each build must load them unchanged.
+  - when: { risk: [data], product: [infra] }
+    weight: 3
+    add:
+      backup-restore-rollback: An apply can destroy a database or a bucket. A drill restores its backup into a throwaway account on a schedule, so the restore is known to work.
+      plan-approval: A person reads what the change will replace or destroy before anything is applied, and the agent applies only what was approved.
+  - when: { risk: [clients], product: [app] }
+    weight: 3
+    add:
+      api-breaking-changes: Older versions of your app stay installed for months. What they store and read (local data, deep links, the requests they send) stays compatible, and a change that breaks them is caught before the commit.
+  - when: { risk: [clients], product: [web, backend, library, data, bot, llm, infra, agent-tools, device, game] }
+    weight: 3
+    add:
+      api-breaking-changes: Code you do not control reads what you publish or store (an API, events, tables, a file or save format), and so do the older versions of your own app or firmware. A change that breaks them is caught before the commit.
+  - when: { risk: [clients], product: [library, data, game] }
+    weight: 2
+    add:
+      approved-fixtures: Output and files that others read are compared with approved references (a tool's output, a table, a save from an older version), so a change to them is a decision.
+  - when: { risk: [irreversible] }
+    weight: 3
+    add:
+      risky-action-gates: Name the actions that cannot be taken back (a broadcast, a release to devices, an apply to production) and the agent stops before each one for a person.
+  - when: { risk: [irreversible], any: [{ product: [device, app, game, library] }, { path: [installed] }] }
+    weight: 3
+    add:
+      shipped-artifact-check: A release that is already on people's machines cannot be pulled back, so the exact build is installed and started before it goes out.
+  - when: { risk: [irreversible], any: [{ product: [device, app] }], observe: [errors] }
+    weight: 3
+    add:
+      release-confirmation: The rollout goes out in stages, and each stage goes on only once crash reports from the one before show nothing worse.
+  - when: { risk: [irreversible], product: [device] }
+    weight: 3
+    add:
+      config-validation: An error in partition tables or update manifests bricks a device, so they are checked at each edit, before an image is built.
+  - when: { risk: [irreversible], product: [device], path: [rig] }
+    add:
+      backup-restore-rollback: A failed update must roll back on its own. The rollback is drilled on the rig on a schedule, before a rollout needs it.
+  - when: { risk: [irreversible], product: [infra] }
+    weight: 3
+    add:
+      plan-approval: A person reads what the change will create, replace or destroy before anything is applied, and the agent applies only what was approved.
+  - when: { risk: [money] }
+    weight: 3
+    add:
+      verification-subagent: Where a mistake costs money, a separate agent tries to prove the change wrong before anyone merges it.
+  - when: { risk: [money], product: [backend, web, bot] }
+    weight: 3
+    add:
+      fault-injection: Payment providers time out and fail. Tests make them do so on purpose, and the code must neither lose a payment nor take it twice.
+  - when: { risk: [money], product: [backend, web, bot], not: { tests: [flaky] } }
+    add:
+      mutation-testing: Where a calculation moves money, mutation testing shows the changes to it that no test would notice.
+  - when: { risk: [money], product: [backend, web, bot] }
+    weight: 3
+    add:
+      approved-fixtures: Each calculation that moves money is run on known inputs and compared with approved results, and only a person approves a new result.
+  - when: { risk: [wrong], not: { product: [llm] } }
+    weight: 3
+    add:
+      approved-fixtures: Known inputs with their approved results catch a change that quietly alters the numbers.
+  - when: { risk: [wrong], product: [llm] }
+    weight: 3
+    add:
+      llm-evals: The answers are scored on a suite of cases after every change to a prompt or a model, and a drop in the pass rate fails the change.
+  - when: { risk: [agent-acts] }
+    weight: 3
+    add:
+      llm-evals: Cases where the feature must act, refuse or ask first are run several times after each change, and one wrong action fails the change.
+      scripted-model-tests: Tool calls are tested against a scripted model and a fake account, so the code that acts is checked without touching a real one.
+  - when: { risk: [load] }
+    weight: 3
+    add:
+      load-testing: Response time and failed requests are measured under load on the change, before the peak finds the bottleneck.
+  - when: { risk: [pages] }
+    weight: 3
+    add:
+      lighthouse-ci: A page audit scores your main pages on each change, and a score below your threshold fails it.
+  - when: { risk: [pages], not: { product: [backend] } }
+    weight: 2
+    add:
+      approved-fixtures: Your main pages are compared with approved screenshots, so a layout the agent broke elsewhere shows before the client sees it.
+  - when: { risk: [attack], product: [web, backend, app, game, library, bot, data, llm, agent-tools, device] }
+    weight: 3
+    add:
+      dependency-scanning-sbom: Every dependency is checked against known vulnerabilities before it is merged, and every night over what runs in production.
+  - when: { risk: [attack], product: [infra] }
+    weight: 3
+    add:
+      config-validation: Policy rules check every change for what attackers look for first, such as a security group or a bucket open to the world, before anything is applied.
+  - when: { risk: [attack], product: [web, backend, bot, llm] }
+    weight: 2
+    add:
+      dast: A scanner probes the running app from outside, as an attacker would, and the agent fixes each alert your rules mark as a failure.
+  - when: { risk: [supply] }
+    weight: 3
+    add:
+      dependency-scanning-sbom: Every dependency is checked against known vulnerabilities and allowed licences before it is merged.
+  - when: { risk: [supply], product: [agent-tools] }
+    weight: 3
+    add:
+      third-party-extension-scan: Every plugin, skill or MCP server you depend on is read against a policy before it runs, and again when its version moves.
+  - when: { risk: [supply] }
+    weight: 0
+    add:
+      third-party-extension-scan: The plugins, skills and MCP servers your coding agents load are dependencies too, with your permissions. Each is read against a policy before it runs.
+  - when: { risk: [deps], product: [web, backend, app, game, bot, device, llm, data] }
+    weight: 3
+    add:
+      fault-injection: Tests make each service, network or sensor you rely on slow, unavailable or silent, and the agent fixes timeouts, retries and fallbacks until the code copes.
+  - when: { risk: [legacy] }
+    weight: 3
+    add:
+      approved-fixtures: Before the agent changes old code, characterisation tests record what it does today, so any change in behaviour shows.
+      plan-approval: In code nobody fully understands, the agent studies it read-only and writes its plan, and a person corrects it before the first edit.
+      bug-failing-test-fix: Each bug in the old code becomes a failing test first, which is how its behaviour gets pinned down one piece at a time.
+  - when: { risk: [legacy] }
+    add:
+      approved-fixtures: Characterisation tests come first, because every other check on old code needs to know what it does today.
+  - when: { risk: [legacy], not: { tests: [flaky, slow] } }
+    add:
+      mutation-testing: Mutation testing shows which parts of the old code no test would notice changing, which is where the next test goes.
+  - when: { risk: [audit] }
+    weight: 2
+    add:
+      spec-before-tests: Each requirement is traced to the tests that cover it, which is the record an auditor asks for.
+  - when: { risk: [audit] }
+    add:
+      human-diff-review: A person approves each change, and the approval is on record.
+      plan-approval: The plan is approved before the work starts, and the approval is on record.
+      isolated-environment: Each task runs in a clean environment of its own, so the same code gives the same result, and the result can be shown again.
+      dependency-scanning-sbom: Every dependency is checked against known vulnerabilities and allowed licences, and every release has a bill of materials.
+  - when: { risk: [audit], path: [servers] }
+    weight: 0
+    add:
+      backup-restore-rollback: Restores and rollbacks are drilled on a schedule, and each drill is on record.
+  - when: { risk: [audit], path: [preview, staging], product: [web, backend] }
+    add:
+      dast: A scanner probes the running app from outside before each release, which most audits require.
+
+  # ------------------------------------------------------------------ tests
+  - when: { tests: [none], not: { product: [infra] } }
+    add:
+      bug-failing-test-fix: With few tests, each bug becomes the first test of its area.
+  - when: { tests: [flaky] }
+    weight: 2
+    add:
+      isolated-environment: A clean environment for each task tells a flaky test from a broken one, and the same code gives the same result.
+  - when: { tests: [strong], not: { tests: [flaky, slow] } }
+    weight: 0
+    add:
+      mutation-testing: Your tests catch regressions. Mutation testing shows the changes to the code that they would still not notice.
+
+  # ------------------------------------------------------------------ judges are calibrated
+  - when: { product: [llm, agent-tools] }
+    weight: 0
+    add:
+      agent-calibration: The judge that scores your evals must agree with an expert's grades before its scores are trusted.
+  - when: { loops: [approval-reviewer-agent, triage] }
+    weight: 0
+    add:
+      agent-calibration: The models that answer permission prompts or sort incoming work must agree with an expert's grades before they are trusted, and again after each change to their prompt or model.
+
+exclude:
+  - when: { budget: [no] }
+    loops: [agent-code-review, verification-subagent, approval-reviewer-agent, third-party-extension-scan, text-from-a-brief, triage, repo-health-agent]
+    because: They call a model of their own, and you said only the coding agent may.
+
+notes:
+  - when: { tests: [slow] }
+    loop: run-tests-first
+    text: With a slow suite, the baseline is the tests of the area the agent changes, and CI compares the rest with the last full run of the main branch.
+  - when: { tests: [flaky] }
+    loop: run-tests-first
+    text: A list of known flaky tests, kept by a person, gets retries, and a main branch that is already red is reported before the work starts.
+  - when: { tests: [none], not: { product: [infra] } }
+    loop: run-tests-first
+    text: You have few tests, so the agent's first task is one command that runs them, starting with a smoke test that the app or the game starts at all.
+  - when: { product: [infra] }
+    loop: run-tests-first
+    text: For infrastructure, the suite is its static checks (validate, lint, policy) and a plan that shows no change it did not expect.
+  - when: { tests: [none], not: { product: [infra] } }
+    loop: red-green-tdd
+    text: Start where the agent works. Each change brings its own first test.
+  - when: { product: [infra] }
+    loop: red-green-tdd
+    text: For infrastructure, the failing check comes first, such as a policy rule or a plan assertion the change must satisfy.
+  - when: { agent: [fleet, ci] }
+    loop: risky-action-gates
+    text: In a run nobody watches, an irreversible action is refused, or answered by the reviewer of permission prompts; it never waits for a person who is asleep.
+  - when: { product: [infra] }
+    loop: risky-action-gates
+    text: The gated commands include the apply and the destroy, and the person reads the plan before confirming.
+  - when: { product: [library] }
+    loop: risky-action-gates
+    text: Publishing a release is one of them; a version that people have installed cannot be taken back.
+  - when: { risk: [agent-acts] }
+    loop: risky-action-gates
+    text: This gate stops your coding agent. The actions your own AI feature takes for users need their own guard, which the evals above test.
+  - when: { product: [bot], risk: [irreversible] }
+    loop: risky-action-gates
+    text: The broadcast in your own product needs its own guard too, such as a dry run to a test list; this gate stops only the agent.
+  - when: { budget: [local] }
+    loop: agent-code-review
+    text: On your machines only, before the pull request.
+  - when: { budget: [local] }
+    loop: verification-subagent
+    text: On your machines only, before the pull request.
+  - when: { path: [preview] }
+    loop: preview-environments
+    text: You have previews already; this loop makes the checks that need a running app run against them.
+  - when: { review: [team, strict] }
+    loop: human-diff-review
+    text: You have this review already; the loop is the agent's half of it.
+  - when: { path: [staging], not: { path: [preview] } }
+    loop: load-testing
+    text: Run it against staging until each pull request has a preview.
+  - when: { path: [staging], not: { path: [preview] } }
+    loop: dast
+    text: Run it against staging until each pull request has a preview; never attack production.
+  - when: { path: [ci], not: { path: [preview] } }
+    loop: lighthouse-ci
+    text: Audit the built site in CI until each pull request has a preview.
+  - when: { path: [servers], not: { path: [staging] } }
+    loop: backup-restore-rollback
+    text: With no staging, the drill restores last night's backup into a throwaway database, such as a new project at your database provider.
+
+needs:
+  triage:
+    when: { budget: [anywhere] }
+    text: a model that runs in CI or on a schedule
+  repo-health-agent:
+    when: { budget: [anywhere] }
+    text: a model that runs in CI or on a schedule
+  ci-clean-infra:
+    when: { any: [{ path: [ci] }, { review: [result] }] }
+    text: a CI that runs the checks on each push
+  agent-ci-hardening:
+    when: { path: [ci] }
+    text: a CI that runs on each pull request
+  preview-environments:
+    when: { path: [preview] }
+    text: a deploy of each pull request to its own address
+  load-testing:
+    when: { path: [preview, staging] }
+    text: a preview or staging environment to put the load on
+  dast:
+    when: { path: [preview, staging] }
+    text: a preview or staging environment to scan
+  lighthouse-ci:
+    when: { path: [ci, preview] }
+    text: a CI or a preview to audit the pages in
+  error-tracking:
+    when: { observe: [errors] }
+    text: an error or crash tracker
+  release-confirmation:
+    when: { observe: [errors, logs, metrics, alerts] }
+    text: errors, logs or metrics from production to judge the release by
+  backup-restore-rollback:
+    when: { any: [{ path: [servers] }, { path: [rig] }] }
+    text: production servers with a database to restore

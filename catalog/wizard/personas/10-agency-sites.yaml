@@ -1,0 +1,19 @@
+title: Agency shipping client sites
+who: |
+  I run a small web agency, three people. We build marketing sites and small shops for clients in Next.js and
+  sometimes WordPress, a dozen projects at once. Everything is on Vercel, so every PR gets a preview link that the
+  client looks at; the client approves by looking, not by reading code, and neither do I most of the time. Tests are
+  basically none. Contact forms and page speed matter, because clients judge us by Lighthouse scores and their
+  Google ranking. We use Claude Code and hand it whole pages to build. Model calls on our machines are fine.
+expect:
+  must: [preview-environments, lighthouse-ci, result-demo, e2e-browser]
+  must_not: [load-testing, traces-opentelemetry, architecture-fitness-functions, agent-branch-integration]
+answers:
+  product: [web]
+  path: [preview, servers]
+  observe: [feedback]
+  agent: [handoff]
+  review: result
+  risk: [pages, attack]
+  tests: [none]
+  budget: local

@@ -1,0 +1,20 @@
+title: Embedded firmware
+who: |
+  I'm one of two firmware engineers at a hardware startup. We write C for ESP32 devices; about ten thousand of them are
+  in customers' homes and get updates over the air. GitHub Actions cross-compiles and runs host-side unit tests; we
+  also have a hardware-in-the-loop rig in the office with a few real devices. We roll out OTA updates in stages and
+  get crash reports from devices. No browser, no log search. We review each other's PRs. We watch Claude Code work,
+  and allow model calls locally only. Worst cases: bricking devices in the field with a bad update, and devices
+  misbehaving when Wi-Fi or a sensor drops out.
+expect:
+  must: [type-check-and-build, lint-with-fix-instructions, red-green-tdd, risky-action-gates, shipped-artifact-check, release-confirmation]
+  must_not: [e2e-browser, lighthouse-ci, preview-environments, dast]
+answers:
+  product: [device]
+  path: [ci, installed, rig]
+  observe: [errors]
+  agent: [watched]
+  review: team
+  risk: [irreversible, deps]
+  tests: [some]
+  budget: local
