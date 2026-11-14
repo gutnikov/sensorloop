@@ -5,24 +5,26 @@ sensors: [linter, dependency-graph]
 layer: project
 ---
 
-This tool builds the graph of imports between the project's modules, checks it against the directions the project
-allows, and measures how coupled the modules are. Which one applies depends on the language, and is found in the
-project.
+The project's rules name its layers and the directions in which one may import another: the UI may import the
+domain, say, but the domain never imports the UI. The tool checks every import against those rules and reports a
+wrong one as a lint violation. It also measures how coupled each module is: the cycles it is part of, its fan-in (how
+many modules import it) and its fan-out (how many modules it imports). Each language has its own program, so look in
+the project for the one it uses.
 
 ## Finding it
 
-Look for its rules in the repository (`.dependency-cruiser.js`, an import-linter section in `pyproject.toml` or
-`setup.cfg`, ArchUnit tests among the Java tests) and in CI for the step that runs them. The rules name the layers and
-the directions allowed between them.
+Look for the rules in the repository: `.dependency-cruiser.js`, an import-linter section in `pyproject.toml` or
+`setup.cfg`, ArchUnit tests among the Java tests. Then look in CI for the step that runs them. When the project has
+no rules, adding the tool and naming its layers is a decision for a person.
 
 ## Using it
 
 - **Run it**: `depcruise src` for dependency-cruiser, `lint-imports` for import-linter; ArchUnit's rules run with the
   test command.
-- **A baseline that only shrinks**: known violations are recorded in the repository (`--output-type baseline` and
-  `--ignore-known` in dependency-cruiser, `FreezingArchRule` in ArchUnit), so a new one fails and old ones are removed
+- **Keep a baseline that only shrinks**: record the known violations in the repository (`--output-type baseline` and
+  `--ignore-known` in dependency-cruiser, `FreezingArchRule` in ArchUnit), so a new one fails, and remove old ones
   over time.
-- **Coupling over time**: cycles, fan-in and fan-out per module saved from each run, on each pull request and on a
-  schedule, so the trend can be compared.
+- **Save the coupling from each run**: cycles, fan-in and fan-out per module, on each pull request and on a schedule,
+  so a new cycle, or a module whose coupling grew, shows against the values approved before.
 
 Examples: dependency-cruiser (JavaScript), ArchUnit (Java), import-linter (Python), deptrac (PHP).

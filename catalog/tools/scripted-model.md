@@ -11,17 +11,20 @@ time.
 
 ## Finding it
 
-How the project does it is found in its test suite: a fake model provider or client, a fixture that starts a mock
+Look in the test suite for how the project does it: a fake model provider or client, a fixture that starts a mock
 model server, or a directory of recorded responses (cassettes). The test dependencies name the recording library, if
-there is one. The setting that holds the model's address or client is where the fake is swapped in.
+there is one. The substitute goes in at the setting that holds the model's address or client; check whether the
+project already swaps it there.
+
+When there is none, the plainest start is a fake client at that setting, returning the responses each test scripts.
 
 ## Using it
 
-- **Fail on anything not mocked**: a request with no recorded or scripted answer is an error, never a call to the real
-  model.
+- **Fail on any request without an answer**: a request with no recorded or scripted answer is an error, never a call
+  to the real model.
 - **Re-record on purpose**: recordings are replaced by a deliberate run and reviewed with the change, never refreshed
   because a test happened to miss one.
-- **Scrub secrets**: keys, tokens and personal data are removed from recordings before they are committed.
+- **Scrub secrets**: remove keys, tokens and personal data from recordings before they are committed.
 
-Examples: a fake model provider in the test suite, a mock model server, recorded HTTP responses (cassettes, for
-example with VCR.py in Python).
+Examples: a fake model provider in the test suite, a mock model server, recorded HTTP responses (cassettes) with a
+recording library such as VCR.py (Python), VCR (Ruby), nock (Node.js) or go-vcr (Go).

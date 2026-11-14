@@ -2,12 +2,11 @@
 title: Logs
 type: computational
 summary: Queries the logs of a run or a release, and reports the errors in them, grouped and counted.
-signal: One line per distinct error with its source and count, or none since the change.
+signal: The errors that are new since the change or more frequent than before it, each with its source and count; or none.
 ---
 
-The logs sensor reads what a running system wrote about itself, during a test run or after a release, and reports the
-errors in it, grouped and counted. Loops read it because many failures never reach an exit code: an error is caught
-and logged, and the run carries on.
+Loops read the logs because many failures never reach an exit code: an error is caught and logged, and the run
+carries on. They read them during a test run, and after a release.
 
 ## What it sees
 
@@ -18,12 +17,13 @@ logged, nor a code path that did not run in the period it read.
 
 ## Reading the signal
 
-- **None since the change**: no new error appeared in the version and period the query covered.
+- **None since the change**: no new error appeared, and no known error grew, in the version and period the query
+  covered.
 - **A new error**: a group that did not occur before the change, with its source and count. The change has to account
   for it.
 - **A known error whose count grew**: an existing problem the change made more frequent. Compare counts over the same
   period and the same traffic.
 
-An empty result is not a clean log when the query found no lines at all: the store was unreachable, the run wrote
-nowhere, or the version was missing from the lines. Check that the query matched the run's own lines before reading
-silence as a pass.
+**None since the change** is not a clean log when the query found no lines at all: the store was unreachable, the run
+wrote nowhere, or the version was missing from the lines. Check that the query matched the run's own lines before
+reading it as a pass.

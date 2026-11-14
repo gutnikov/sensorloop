@@ -5,8 +5,7 @@ sensors: [performance-measure, browser-run]
 layer: project
 ---
 
-A page audit loads a page in a browser and scores its performance, accessibility and best practices, listing the
-audits that cost it points. It needs a running copy of the app, usually a preview.
+A page audit needs a running copy of the app, usually a preview, and a browser to load it in.
 
 ## Finding it
 
@@ -14,14 +13,17 @@ Look for the audit's config in the repository (`lighthouserc.json` or `.lighthou
 for the job that runs it. The config lists the pages, the number of runs and the assertions; the job names the address
 it audits.
 
+When there is none, `npx lighthouse <url>` still audits one page with no config; ask a person before adding the CI
+job. Without a preview, audit a production build started on the machine: a development server serves code that is not
+optimised, and its performance score misleads.
+
 ## Using it
 
-- **Several runs, the median**: scores vary from run to run, so take the median of several (`numberOfRuns` in
-  Lighthouse CI).
-- **Assertions per page**: a minimum score per category or a limit per metric, so the job fails on what got worse.
-- **The same conditions every time**: a preview on the same kind of machine, with the same throttling and nothing else
-  heavy running.
-- **One page while working**: `npx lighthouse <url> --output=json` audits a single page; `lhci autorun` runs the whole
-  config as CI does.
+- **Take the median of three runs or more**: scores vary from run to run (`numberOfRuns` in Lighthouse CI).
+- **Assert per page**: a minimum score per category or a limit per metric, so the job fails on what got worse.
+- **Keep the conditions the same every time**: the audit run on the same kind of machine, with the same throttling
+  (the slow network and CPU the audit simulates) and nothing else heavy running there.
+- **Audit one page while working**: `npx lighthouse <url> --output=json` audits a single page; `lhci autorun` runs
+  the whole config as CI does.
 
 Examples: Lighthouse, Lighthouse CI.

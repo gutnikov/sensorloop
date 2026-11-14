@@ -5,15 +5,14 @@ summary: Measures the graph of imports between modules (cycles, fan-in, fan-out)
 signal: A new cycle with its path, or a module whose coupling grew past the baseline.
 ---
 
-The dependency graph is the graph of imports between the project's modules. This sensor measures it (cycles, fan-in,
-fan-out) and compares it with an approved baseline. Loops read it because structure erodes one import at a time, and
-no single change looks like the cause.
+Loops read this sensor because structure erodes one import at a time, and no single change looks like the cause. The
+graph changes slowly, so the sensor fits a scheduled run as well as a pull request.
 
 ## What it sees
 
 Which modules import which, and how coupled each module is. Unlike a lint rule, which judges one import, it tracks a
 trend across the whole graph. It sees structure, not behaviour, and only the imports the code declares: a module
-loaded by name at run time does not appear in it.
+loaded by name at run time does not appear in the graph.
 
 ## Reading the signal
 
@@ -21,5 +20,6 @@ loaded by name at run time does not appear in it.
 - **A new cycle**: the signal gives its path, module by module.
 - **Coupling past the baseline**: the module, and the measure that grew.
 
-The baseline may only shrink: when the graph improves, the new values become the baseline. The graph changes slowly,
-so the sensor fits a scheduled run as well as a pull request.
+When the graph improves, the new values become the baseline. The baseline grows only with a person's approval: a
+change that has to add a cycle or raise a module's coupling raises the baseline in the same change, and a reviewer
+accepts or refuses it.

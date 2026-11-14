@@ -2,7 +2,7 @@
 title: Test runner
 type: computational
 summary: Runs the project's tests on the changed code and reports which pass and which fail.
-signal: The exit code, and each failed test with its file, line and assertion message.
+signal: The exit code, the number of tests collected, and each failed test with its file, line and assertion message.
 ---
 
 A test runner runs the project's tests: unit, integration, acceptance, contract and snapshot tests. More loops
@@ -18,7 +18,8 @@ work. It does not say the change is right, and it says nothing about cases no te
 - **Exit code zero**: every collected test passed.
 - **Non-zero exit code**: at least one test failed, or the run itself broke. Each failure names the test, its file
   and line, and the assertion that did not hold.
-- **No tests collected** is not a pass. A runner that found nothing to run has observed nothing.
+- **No tests collected**: not a pass, even where the runner exits with zero. A runner that found nothing to run has
+  observed nothing.
 
 A failure that comes from the run itself (an import error, a broken fixture, a missing dependency) says nothing about
 the behaviour under test. Read which kind of failure it is before acting on it.

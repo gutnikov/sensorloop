@@ -5,21 +5,26 @@ sensors: [live-supervision]
 layer: agent
 ---
 
-The coding agent's controls stop it in the middle of a step and roll its changes back. They are how a person watching
-the work turns a drift into a correction.
+They are how a person watching the work turns a drift into a correction: a stop before more is built on a wrong turn,
+and a way back to before it.
 
 ## Finding it
 
-- **Claude Code**: Esc stops the current step; Esc twice, or `/rewind`, goes back to an earlier checkpoint.
-- **Other coding agents**: checkpoints or snapshots of the files they edit.
-- **What checkpoints miss**: changes made by shell commands (a migration, a file a script wrote) are not in them; git
-  is the fallback.
+- **Claude Code**: Esc stops the current step and keeps the work done so far. Esc twice at an empty prompt, or
+  `/rewind`, opens the list of earlier prompts to go back to, each with its checkpoint.
+- **Other coding agents**: a stop key or button, and checkpoints of the files they edit, such as Cursor's checkpoints
+  or Gemini CLI's `/restore` once checkpointing is turned on.
+- **What checkpoints miss**: changes made by shell commands (a migration, a file a script wrote). Git brings back only
+  what was committed before the step, and nothing rewinds a migration already applied to a database. So commit
+  before a risky step, and apply migrations to a database that can be thrown away.
 
 ## Using it
 
-- **Interrupt early**, when the direction is wrong, not after the step finishes.
-- **Follow with the correction** as the next instruction: what was wrong, and what to do instead.
-- **Rewind the code, the conversation or both** to before the step that drifted.
-- **Record the correction**: one made twice should become a rule.
+1. **Interrupt early**, when the direction is wrong, not after the step finishes.
+2. **Rewind, if the drifted work should go**: the code alone keeps the conversation, so the agent still knows what
+   went wrong; the code and the conversation together start the step over.
+3. **Give the correction** as the next instruction: what was wrong, and what to do instead.
+4. **Record the correction**: one made twice should become a rule another sensor checks, such as a lint rule or a
+   test.
 
-Examples: Esc and `/rewind` in Claude Code, checkpoints and snapshots in other coding agents.
+Examples: Esc and `/rewind` in Claude Code, checkpoints in Cursor, `/restore` in Gemini CLI.

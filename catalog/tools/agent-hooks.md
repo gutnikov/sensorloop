@@ -1,26 +1,35 @@
 ---
 title: The agent's hooks
-summary: Commands the coding agent runs before and after each tool call and when it is about to stop, which can record the call or refuse it.
+summary: "Commands the coding agent runs before and after each tool call and when it is about to stop: a hook can record a call, refuse it, or keep the agent from stopping."
 sensors: [agent-activity]
 layer: agent
 ---
 
-Hooks are commands the coding agent runs before and after each tool call, and when it is about to stop. A hook sees
-each call as it happens, so it can record the call or refuse it.
+A hook sees each tool call as it happens, before or after it runs. Hooks are the live source of the Agent activity
+sensor: they record the calls the sensor reads for patterns, and they can refuse a call, or the agent's stop, before
+it takes effect.
 
 ## Finding it
 
-They are set in the coding agent's settings: in Claude Code, the `hooks` section of `.claude/settings.json` in the
-project, or of the user's own settings. A person approves them, since a hook runs with that person's rights; `/hooks`
-in Claude Code lists the active ones.
+They are set in the coding agent's settings. In Claude Code, that is the `hooks` section of `.claude/settings.json` in
+the project or of `~/.claude/settings.json` for the user, and `/hooks` lists the configured ones. Cursor reads them
+from `.cursor/hooks.json`. A hook runs with the user's full rights, so a person reviews each one before it is added.
 
 ## Using it
 
-- **Record**: a `PostToolUse` hook appends each call and its result to a log, for patterns read later.
+- **Record**: a `PostToolUse` hook appends each call and its result to a log, and a `PostToolUseFailure` hook each
+  call that failed. The Agent activity sensor reads that log for patterns such as the same call repeated or a tool
+  that keeps failing.
 - **Refuse**: a `PreToolUse` hook that exits with code 2 blocks the call, and what it writes to standard error goes
-  back to the agent as the reason.
-- **Before the agent stops**: a `Stop` hook can run the checks and, when they fail, exit with code 2 to keep the agent
-  working, with the failure as its reason.
-- **Quick and narrow**: a hook runs on every matching call, so it is fast and matches only the tools it is about.
+  back to the agent as the reason. Any other non-zero exit code counts as an error of the hook, and the call goes
+  ahead.
+- **Keep the agent working**: a `Stop` hook runs the project's checks, such as its tests and linter, and when they
+  fail it exits with code 2, with the failure as the reason. The hook's input says whether the agent is already
+  continuing because of a stop hook (`stop_hook_active`). The hook reads it, or counts its own blocks, and after a few
+  failed attempts lets the agent stop and report the failure to a person, so checks that never pass do not hold the
+  agent forever.
 
-Examples: Claude Code hooks (`PreToolUse`, `PostToolUse`, `Stop`), and the equivalents in other coding agents.
+A hook runs on every call it matches, so a slow hook slows each of them. Keep hooks fast, and match only the tools
+they check (the `matcher` field in Claude Code).
+
+Examples: Claude Code hooks (`PreToolUse`, `PostToolUse`, `Stop`), Cursor hooks (`preToolUse`, `postToolUse`, `stop`).

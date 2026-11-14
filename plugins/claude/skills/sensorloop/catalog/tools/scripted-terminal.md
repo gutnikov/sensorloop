@@ -5,13 +5,14 @@ sensors: [terminal-run, screenshot]
 layer: project
 ---
 
-A scripted terminal runs a terminal app inside a terminal of fixed size that a script can type into and read back as
-text. A test drives a command-line or full-screen app through it, as a user at a keyboard would.
+A test drives a command-line or full-screen app through it, as a user at a keyboard would, and reads the screen back
+as text.
 
 ## Finding it
 
 Look in the project's tests for a helper that starts the app in a terminal multiplexer or a pseudo-terminal, and in
-the test dependencies for a terminal-emulator library. When the project has none, tmux on the machine serves.
+the test dependencies for a terminal-emulator library, which turns the app's output into the screen a user would see.
+When the project has none, tmux on the machine serves.
 
 ## Using it
 
@@ -21,5 +22,5 @@ the test dependencies for a terminal-emulator library. When the project has none
 - **Read the screen back**: `tmux capture-pane -p -t app` prints it as text; `-e` keeps the colours when they matter.
 - **Wait for text, not a timer**: capture the screen in a loop until the expected text appears, with a timeout.
 
-Examples: tmux (`send-keys`, `capture-pane`), a pseudo-terminal with a VT100 parser, such as pexpect with pyte
-(Python).
+Examples: tmux (`send-keys`, `capture-pane`); a pseudo-terminal with a terminal-emulator library, such as pexpect with
+pyte (Python), node-pty with `@xterm/headless` (JavaScript), or `portable-pty` with the `vt100` crate (Rust).

@@ -6,7 +6,9 @@ layer: project
 ---
 
 A mutation tester changes the code in small ways (a `<` for a `<=`, a call removed) and runs the project's tests
-against each change. Each language has its own, so the one in use is found in the project rather than assumed.
+against each changed version, called a mutant. A mutant is killed when a test fails on it, and survives when none
+does; the score is the share of mutants killed. Each language has its own tool, so look in the project for the one it
+uses rather than assume one.
 
 ## Finding it
 
@@ -22,6 +24,7 @@ When the project has none, choosing one for its language and test framework is a
 - **Start from a green suite**: the tests must pass on the unchanged code first, or the score means nothing.
 - **Limit it while working** to the changed files or the diff (`--mutate` in Stryker, `--in-diff` in cargo-mutants).
 - **Run the whole codebase on a schedule**: one test run per mutant makes it the slowest check the project has.
-- **Keep a timeout per mutant**, since a mutant can loop forever, and keep the report as JSON or HTML.
+- **Keep a timeout per mutant**, since a mutant can loop forever.
+- **Keep the report**, as JSON for other tools or HTML for people: it lists each surviving mutant with its change.
 
 Examples: Stryker (JavaScript, C#), PIT (Java), mutmut (Python), cargo-mutants (Rust).

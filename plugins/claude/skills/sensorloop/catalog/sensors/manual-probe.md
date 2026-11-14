@@ -5,14 +5,13 @@ summary: "Checks one hypothesis on real values: a call in a REPL, a breakpoint i
 signal: The value that confirmed or refuted the hypothesis, with the command that produced it.
 ---
 
-A manual probe checks one hypothesis on real values: a call in a REPL, a breakpoint in a debugger, a request with an
-HTTP client. It is the agent's instrument for exploring, used when it does not yet know what to test.
+A manual probe is the agent's instrument for exploring: it reaches for one when it does not yet know what to test.
 
 ## What it sees
 
-One value, at one moment, for the inputs the agent chose. It answers the question asked from the running code rather
-than from reading it, and it answers nothing else. It leaves no check that runs again: a finding that matters becomes
-a test, and debug output left behind is removed before the work counts as done.
+One value, at one moment, for the inputs the agent chose. The probe gets its answer by running the code, not by
+reading it, and it answers only the question asked. It leaves no check that runs again, so the agent turns a finding
+the change relies on into a test, and removes its debug output before it calls the work done.
 
 ## Reading the signal
 

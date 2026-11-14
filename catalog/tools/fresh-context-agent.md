@@ -5,21 +5,25 @@ sensors: [llm-reviewer, llm-judge]
 layer: agent
 ---
 
-A fresh-context agent is a separate run of a coding agent that starts with none of the working session's context. It
-reads the work with read-only tools and returns its verdict in a fixed shape.
+The run builds two sensors, and its prompt decides which. As an LLM reviewer it reads the work against a checklist and
+lists findings, each with its `file:line` and severity. As an LLM judge it grades the work against a rubric: pass or
+fail with a critique, or a score.
 
 ## Finding it
 
 - **Subagents** defined in the agent's configuration: Claude Code reads them from `.claude/agents/`.
 - **Headless runs** from the command line: `claude -p`, `codex exec`.
-- **Review commands** the agent ships with or the project adds, such as `/code-review` and `/security-review`.
+- **Review commands** the agent ships with or the project adds, such as `/code-review` and `/security-review` in
+  Claude Code.
 
 ## Using it
 
 - **Hand it the work to read** (a diff, a file, a spec) and a checklist, not the story of how the work was done.
-- **Read-only tools only**: the `tools` list in a subagent's definition, or `--allowedTools` for `claude -p`.
-- **Output the loop can parse**: a schema in the prompt, and `--output-format json` for `claude -p`.
-- **A limit on its run** (`--max-turns`), so a stuck review ends.
+- **Give it read-only tools**: the `tools` list in a subagent's definition, or `--tools` for `claude -p`; `codex exec`
+  runs in a read-only sandbox by default.
+- **Ask for output the loop can parse**: a JSON schema, passed with `--json-schema` to `claude -p` or with
+  `--output-schema` to `codex exec`.
+- **Limit its run**, so a stuck review ends: `--max-turns` for `claude -p`, or a timeout around the command.
 
-Examples: Claude Code subagents, `claude -p`, `codex exec`; review commands such as `/security-review`, or
-`/code-review` from a plugin.
+Examples: Claude Code subagents, `claude -p`, `codex exec`; the review commands `/code-review` and `/security-review`
+that ship with Claude Code.

@@ -5,18 +5,24 @@ sensors: [input-fault-injection]
 layer: project
 ---
 
-A property-based testing library lets a test describe its inputs instead of listing them, and state what must hold
-for all of them. Each language has its own, so the one in use is found in the project rather than assumed.
+A property-based testing library lets a test describe its inputs instead of listing them, and state a property: what
+must hold for all of them. For example, decoding an encoded value gives back the same value, whatever the value. The
+library generates many inputs; when one breaks the property, it shrinks it to the smallest input that still fails,
+called a counterexample. So it builds the input side of the input and fault injection sensor; faults come from other
+tools.
+
+Each language has its own library, so look in the project for the one it uses rather than assume one.
 
 ## Finding it
 
 - **The dependency manifest**: the library among the test dependencies.
 - **Existing tests** that use it: `@given` in Python, `fc.assert` in JavaScript, `@Property` in Java, `proptest!`
   in Rust.
-- **Its settings**: the number of cases per property, and profiles for local runs and CI (Hypothesis's `settings`
-  profiles, often in `conftest.py`).
+- **Its settings**: the number of cases per property, and profiles for local runs and CI (the `settings` profiles of
+  Hypothesis, in Python, often in `conftest.py`).
 
-It has no command of its own: property tests run with the project's test command.
+It has no command of its own: property tests run with the project's test command. When the project has no such
+library, adding one is a decision for a person.
 
 ## Using it
 
@@ -24,6 +30,7 @@ It has no command of its own: property tests run with the project's test command
   failing examples in its `.hypothesis` folder.
 - **Keep the shrunk input as a fixed case** (`@example` in Hypothesis, or a plain unit test), so it is checked on
   every run.
-- **More cases on a schedule** than on every change (`max_examples` in Hypothesis, `numRuns` in fast-check).
+- **Run more cases on a schedule** than on every change (`max_examples` in Hypothesis, `numRuns` in fast-check for
+  JavaScript).
 
 Examples: Hypothesis (Python), fast-check (JavaScript), jqwik (Java), proptest (Rust), QuickCheck (Haskell).

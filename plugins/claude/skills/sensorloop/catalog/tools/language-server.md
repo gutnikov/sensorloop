@@ -18,10 +18,11 @@ the server started.
 
 - **After every edit**: the server reports errors and warnings in the changed file, and in the files that depend on
   it, without a build.
-- **The project's settings**: the server reads the project's own config (`tsconfig.json`, `pyproject.toml`, `go.mod`),
-  so its errors match those of the type check and the build.
-- **Indexing first**: on a large project the server reports little until it has finished loading; an empty list from a
-  server still loading is not a result.
+- **The project's config**: the server reads the project's own config files (`tsconfig.json`, `pyproject.toml`,
+  `go.mod`), so its errors match those of the type check and the build.
+- **Indexing first**: on a large project the server reports little until it has finished indexing the project, and
+  an empty list from a server still indexing is not a result. When the list is empty soon after the server started,
+  run the type check before taking the file as clean.
 - **Not a replacement for the build**: the full type check and build still run before the work counts as done.
 
 Examples: gopls (Go), rust-analyzer (Rust), Pyright (Python), typescript-language-server (TypeScript), clangd (C and

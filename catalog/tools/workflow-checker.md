@@ -1,25 +1,28 @@
 ---
 title: CI workflow checker
-summary: "Checks the CI workflows themselves: actions not pinned to a commit, permissions wider than needed, untrusted input in commands."
+summary: "Checks the CI workflows themselves: third-party steps not pinned to a commit, permissions wider than needed, untrusted input in commands."
 sensors: [structure-check, security-scanner]
 layer: project
 ---
 
-This tool checks the CI workflows themselves: actions not pinned to a commit, permissions wider than needed, untrusted
-input pasted into commands. It reads the workflows as code that runs with the project's secrets.
+This tool reads the CI workflows as code that runs with the project's secrets. Which checker fits depends on the CI
+system; look for the one the project already runs.
 
 ## Finding it
 
-Look in the CI directory (`.github/workflows/` for GitHub Actions), and in CI or the pre-commit config for a step that
-already checks it. The checker's config (`.github/actionlint.yaml`, `zizmor.yml`) lists what it ignores.
+The workflows are in the CI directory or file (`.github/workflows/` for GitHub Actions, `.gitlab-ci.yml` for GitLab
+CI). Look in CI and in the pre-commit config for a step that already checks them. The checker's config (for example
+`.github/actionlint.yaml` or `zizmor.yml`) lists what it ignores.
 
 ## Using it
 
-- **Run it**: `actionlint` checks the syntax, the expressions and the shell in each step; `zizmor .github/workflows/`
-  reports security findings such as template injection and excessive permissions.
-- **Pin actions to a full commit SHA**, with the version in a comment, so a moved tag cannot change what runs.
-- **The strictest rules for workflows that run an agent**: the narrowest permissions, only the secrets they need, and
-  no untrusted text in their prompt or commands.
-- **Before merge**: every change to a workflow is checked in its own pull request.
+- **Run it on the workflows**: for GitHub Actions, `actionlint` checks the syntax, the expressions and the shell in
+  each step, and `zizmor .github/workflows/` reports security findings such as excessive permissions and template
+  injection (untrusted input pasted into a command); for GitLab CI, `glab ci lint` checks the syntax.
+- **Pin what a workflow pulls in** (an action, an included template, a container image) to a full commit SHA or
+  digest, with the version in a comment, so a moved tag cannot change what runs.
+- **Hold workflows that run an agent to the strictest rules**: the narrowest permissions, only the secrets they need,
+  and no untrusted text in their prompt or commands.
+- **Before merge**: run the checker on every pull request that changes a workflow.
 
-Examples: actionlint and zizmor (GitHub Actions).
+Examples: actionlint and zizmor (GitHub Actions), `glab ci lint` (GitLab CI).

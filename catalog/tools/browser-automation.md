@@ -5,24 +5,30 @@ sensors: [browser-run, screenshot]
 layer: project
 ---
 
-A browser automation library drives a real browser from a test script: it clicks, types and waits as a user would, and
-records screenshots, video and traces of the run. Which library the project uses is found in the project, not assumed.
+Test scripts written with the library build the Browser run sensor; the screenshots, videos and traces it records
+build the Screenshot and recording sensor. Look for the library the project already uses rather than assume one.
 
 ## Finding it
 
-Look in the dev dependencies and for the library's config file (`playwright.config.ts`, for example), then in CI for
-the job that runs the browser tests. The config says where the tests live, which browsers run, and how the app is
-started for them.
+Look in the dev dependencies for the library and its config file (`playwright.config.ts` or `cypress.config.js`, for
+example; Selenium keeps its setup in the test code). Then look in CI for the job that runs the browser tests: when two
+libraries turn up, that job shows which one the project runs. The config says where the tests live, which browsers
+run, and how the app is started for them.
+
+When the project has no browser tests, add a library that supports the project's language, and start with one test of
+the main user flow.
 
 ## Using it
 
-- **Start the app from the test config** (Playwright's `webServer` setting, for example), so a local run and CI start
-  it the same way and wait for it to answer.
+- **Start the app from the test config** (Playwright's `webServer` setting, for example; elsewhere, a script that
+  starts the app before the tests), so a local run and CI start it the same way and wait for it to answer.
 - **Locate elements by role and name**: `getByRole('button', { name: 'Save' })` rather than a CSS path, so the test
   finds what a user and assistive technology would find.
-- **No retries when looking for flakiness**: retries off and each test repeated (`--retries=0 --repeat-each=10` in
-  Playwright).
-- **Keep the evidence**: a trace, a screenshot or a video of each failed run; screenshots compared against approved
-  images (`toHaveScreenshot`).
+- **Turn retries off to look for flakiness**, and run each test many times (`--retries=0 --repeat-each=10` in
+  Playwright; a loop in the shell where the library has no repeat option).
+- **Keep the evidence of each failed run**: a trace, a screenshot or a video, for a model or a person to look at.
+- **Compare screenshots against approved images** (`toHaveScreenshot` in Playwright, a plugin in Cypress). An intended
+  change updates the approved image in the same change, where a reviewer sees it.
 
-Examples: Playwright (several languages), Puppeteer (JavaScript), Cypress (JavaScript), Selenium (several languages).
+Examples: Playwright (JavaScript, Python, Java, .NET), Puppeteer (JavaScript), Cypress (JavaScript), Selenium (Java,
+Python, C#, Ruby, JavaScript).

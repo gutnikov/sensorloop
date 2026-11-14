@@ -6,8 +6,9 @@ layer: system
 ---
 
 Each agent run gets an environment of its own, so the same code gives the same signal and runs side by side do not
-collide. How it is built depends on the project and the agent, so it is found in their configuration rather than
-assumed.
+collide. The environment sits around the project rather than in its code: files in the repository and the agent's
+settings describe it, and the run takes place inside it. How it is built depends on both, so look in their
+configuration rather than assume a default.
 
 ## Finding it
 
@@ -21,6 +22,8 @@ assumed.
 - **One checkout per run**: `git worktree add <path> -b <branch>`, removed with `git worktree remove <path>`.
 - **Services per environment** (a database, a log store), on their own ports or network, so two runs share no state.
 - **Outbound network on an allowlist**: the package registry and the code host, nothing else by default.
-- **Only the secrets the task needs**, for test accounts; torn down after the run, with nothing left behind.
+- **Only the secrets the task needs**, and only those of test accounts, never production ones.
+- **Nothing left after the run**: the checkout, the services and their data removed, and the secrets revoked or
+  expired.
 
 Examples: git worktrees, dev containers, Nix, the coding agent's sandbox.
