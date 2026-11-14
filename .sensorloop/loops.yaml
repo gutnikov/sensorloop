@@ -1,0 +1,51 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [javascript, node, astro]
+  commands:
+    test: npm run check             # the catalog against its schemas and references, and the loader's tests
+    typecheck: null
+    build: npm run build            # the site
+    lint: null
+    format: null
+    plugin: npm run check:plugin    # the plugin's catalog is current; the plugin and the marketplace are valid
+  has: [ci, deploy]                 # GitHub Actions (check.yml); a manual deploy of the site to Cloudflare
+  limits:
+    - The person works with the agent in a session.
+    - Pushes and the site's deploy wait for the person (the skill's default; the person did not choose otherwise).
+    - The plugin's evals call a model and cost money; they run by hand, never in CI.
+    - The repository uses its own skill as it stands in the working tree (.claude/skills/sensorloop links to it).
+loops:
+  - id: run-tests-first
+    status: active
+    wiring: Instruction in LOOPS.md; `npm run check` takes about a second.
+    proved: 2026-11-14
+  - id: type-check-and-build
+    status: active
+    wiring: >-
+      Stop runs `npm run check && npm run check:plugin` (.sensorloop/hooks/check.sh checks), about 3 s.
+      PreToolUse on Bash runs `npm run build` before each `git commit` (.sensorloop/hooks/check.sh --on-git-commit
+      build), about 21 s. Together they run what CI runs.
+    proved: 2026-11-14
+  - id: risky-action-gates
+    status: active
+    wiring: >-
+      `ask` rules in .claude/settings.json: git push, npx wrangler@4 deploy, npx wrangler deploy, wrangler deploy.
+      Seen to hold in bypassPermissions mode and inside `cd site && ...`.
+    proved: 2026-11-14
+  - id: llm-evals
+    status: proposed
+    needs: >-
+      A record of the last eval run that a commit check can read (the results folder is not committed), so that a
+      change to plugins/claude/skills/ or plugins/claude/evals/ with no run after it is refused.
+    why: >-
+      CLAUDE.md asks for the plugin's evals after each change to the skill, and only that instruction holds it today;
+      an agent can skip it, and nothing sees the skip.
+  - id: agent-code-review
+    status: proposed
+    needs: A reviewer agent with a fresh context on each pull request, before the push or in CI with a model key.
+    why: Pull requests are merged on the agent's report; the evals judge the skill, not the cards' text or the loader.
+  - id: preview-environments
+    status: proposed
+    needs: A Cloudflare preview of the site for each pull request.
+    why: A change to the site is seen only after the manual deploy.

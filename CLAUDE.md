@@ -24,6 +24,9 @@ The catalog of sensors, tools and loops, the plugins built from it, and the site
   skill (`skills/sensorloop/`) keeps a project's loops; `procedures/` and `wiring/` are written by hand, `catalog/` is
   generated from `catalog/` by `npm run build:plugin` and committed (CI fails when it is out of date). The skill wires
   itself only the loops in `wiring/`; the rest it proposes. Its evals are in `plugins/claude/evals/`.
+- This repository keeps its own loops with that skill: `.sensorloop/`, and the hooks and gates in
+  `.claude/settings.json`. `.claude/skills/sensorloop` and `.claude/agents/flow-auditor.md` link to the plugin's, so a
+  session here uses the skill as it stands in the working tree; a change to it takes effect in the next session.
 
 ```bash
 npm ci
@@ -31,6 +34,7 @@ npm run check     # the catalog against its schemas and references, and the load
 npm run dev       # the site at http://localhost:4321, reloading on changes to catalog/ and docs/
 npm run build     # the site into site/dist
 npm run build:plugin                       # the catalog into the plugin's skill; commit the result
+npm run check:plugin                       # the plugin's catalog is current; the plugin and the marketplace are valid
 claude plugin validate plugins/claude      # the plugin; `claude plugin validate .` for the marketplace
 claude plugin eval plugins/claude --tag trigger --tag no-trigger   # whether the skill loads when it should
 claude plugin eval plugins/claude --scaffold --allow-tools Bash Write Edit Agent   # every case, fixtures included
@@ -41,3 +45,7 @@ review. The trigger cases after any change to the skill's description; every cas
 wiring or scripts. Add `--no-publish` to keep the report local.
 
 Deploy (manual): `npm run build && cd site && npx wrangler@4 deploy`. The account is in `site/wrangler.jsonc`.
+
+## Loops
+
+@.sensorloop/LOOPS.md
