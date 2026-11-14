@@ -1,0 +1,128 @@
+---
+// The home page in the tui-modern look, as panes: the metamodel's first sentence in heavy wide type beside the loop
+// spinning in braille; the catalog as meters, one per kind; Figure 1; then the text, with an outline pane beside it.
+import ChangePath from '../../components/ChangePath.astro';
+import BrailleTorus from './BrailleTorus.astro';
+import Pane from './Pane.astro';
+import { catalog, kinds } from '../../lib/content.js';
+import { KIND, groups, kindHref } from '../../lib/present.js';
+
+export interface Props {
+  intro: string;
+  rest: string;
+}
+
+const { intro, rest } = Astro.props;
+
+// The intro is the doc's title and its lede: the title goes into the pane's border, the lede's first sentence becomes
+// the headline, and the rest of the lede follows it.
+const title = intro.match(/<h1[^>]*>([\s\S]*?)<\/h1>/)?.[1] ?? 'Metamodel';
+const lede = intro.match(/<p class="lede">([\s\S]*?)<\/p>/)?.[1] ?? '';
+const cut = lede.indexOf('. ');
+const headline = cut > 0 ? lede.slice(0, cut + 1) : lede;
+const more = cut > 0 ? lede.slice(cut + 2) : '';
+
+// The text's sections, given ids so the outline can link to them.
+const slug = (text: string) => text.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const sections: { id: string; label: string }[] = [];
+const body = rest.replace(/<h2>([\s\S]*?)<\/h2>/g, (_, label) => {
+  const id = slug(label);
+  sections.push({ id, label });
+  return `<h2 id="${id}">${label}</h2>`;
+});
+
+// The catalog as meters, btop-style: each kind's count as a bar, to an eighth of a cell, the longest filling the
+// meter's 16 cells; under it the kind's groups (sensors by type, tools by where they run) on the same scale.
+const c = catalog();
+const WIDTH = 16;
+const most = Math.max(...kinds.map((kind) => c[kind].length));
+const meter = (count: number) => ({ cells: Math.max(1 / 8, Math.round((count / most) * WIDTH * 8) / 8) });
+const meters = kinds.map((kind, i) => ({
+  kind,
+  key: String(i + 3),
+  href: kindHref(kind),
+  count: c[kind].length,
+  label: KIND[kind].many.toLowerCase(),
+  ...meter(c[kind].length),
+  groups: groups(c, kind)
+    .filter((g) => g.label)
+    .map((g) => ({ label: g.label.toLowerCase(), count: g.cards.length, ...meter(g.cards.length) })),
+}));
+---
+
+<div class="home">
+  <Pane title={title} hotkey="1" heading="h1" primary class="pane-hero">
+    <div class="hero">
+      <div class="hero-text">
+        <p class="headline" set:html={headline} />
+        {more && <p class="hero-more" set:html={more} />}
+      </div>
+      <div class="hero-torus">
+        <BrailleTorus cols={60} rows={28} />
+      </div>
+    </div>
+  </Pane>
+
+  <Pane title="catalog/" class="pane-meters">
+    <ul class="meters">
+      {
+        meters.map((m) => (
+          <li>
+            <a href={m.href}>
+              <kbd aria-hidden="true">{m.key}</kbd>
+              <span class="meter-label">{m.label}</span>
+              <span class="meter-bar" aria-hidden="true">
+                <span class="meter-fill" style={`--cells: ${m.cells}`} />
+              </span>
+              <span class="meter-count">{m.count}</span>
+            </a>
+            {m.groups.length > 0 && (
+              <ul class="submeters">
+                {m.groups.map((g, gi) => (
+                  <li>
+                    <span class="sub-tree" aria-hidden="true">{gi === m.groups.length - 1 ? '└─' : '├─'}</span>
+                    <span class="meter-label">{g.label}</span>
+                    <span class="meter-bar" aria-hidden="true">
+                      <span class="meter-fill" style={`--cells: ${g.cells}`} />
+                    </span>
+                    <span class="meter-count">{g.count}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </Pane>
+
+  <Pane title="change-path.svg" class="pane-figure">
+    <figure class="figure">
+      <ChangePath />
+      <figcaption>
+        A change path with its loops. Each loop reads its sensor at one point on the path and sends a failure back to
+        the work; the later the point, the longer the loop and the more the failure costs.
+      </figcaption>
+    </figure>
+  </Pane>
+
+  <Pane title="docs/metamodel.md" class="pane-prose">
+    <div class="prose" set:html={body} />
+  </Pane>
+
+  {
+    sections.length > 0 && (
+      <Pane title="outline" class="pane-outline">
+        <nav aria-label="Sections of the metamodel">
+          <ol class="outline">
+            {sections.map((s) => (
+              <li>
+                <a href={`#${s.id}`} set:html={s.label} />
+              </li>
+            ))}
+          </ol>
+        </nav>
+      </Pane>
+    )
+  }
+</div>

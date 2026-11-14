@@ -19,7 +19,9 @@ The catalog of sensors, tools and loops, the plugins built from it, and the site
 - A recorded terminal session in a doc is a line `<!-- cast: <name> | <caption> -->` and the file
   `docs/casts/<name>.cast`, recorded with asciinema (`asciinema rec docs/casts/<name>.cast`, about 90 columns wide);
   the site plays it in place. Until the file exists, the page shows where it goes.
-- `site/`: renders `docs/` and the catalog. It holds no content of its own.
+- `site/`: renders `docs/` and the catalog. It holds no content of its own. Its look (the shell around every page,
+  and the home page) is a folder in `site/src/looks/`: `tui-modern` is published, `report` is the one before it. Run
+  another with `LOOK=report npm run dev -- --port 4401`; it builds into `site/dist-looks/<look>/`.
 - `plugins/claude/`: the Claude Code plugin `sensorloop`, installed from the marketplace in `.claude-plugin/`. Its
   skill (`skills/sensorloop/`) keeps a project's loops; `procedures/` and `wiring/` are written by hand, `catalog/` is
   generated from `catalog/` by `npm run build:plugin` and committed (CI fails when it is out of date). The skill wires

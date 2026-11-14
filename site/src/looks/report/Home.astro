@@ -1,0 +1,26 @@
+---
+// The home page's body in the report look: the metamodel's title and lede, Figure 1, and the rest of the text.
+import ChangePath from '../../components/ChangePath.astro';
+
+export interface Props {
+  /** docs/metamodel.md up to Figure 1: its title (h1) and the lede (p.lede), as HTML. */
+  intro: string;
+  /** The rest of docs/metamodel.md, as HTML. */
+  rest: string;
+}
+
+const { intro, rest } = Astro.props;
+---
+
+<header class="title-block" set:html={intro} />
+
+<figure class="figure">
+  <ChangePath />
+  <figcaption>
+    <span class="figure-number">Figure 1.</span> A change path with its loops. Each loop reads its
+    sensor at one point on the path and sends a failure back to the work; the later the point, the longer the loop
+    and the more the failure costs.
+  </figcaption>
+</figure>
+
+<div class="prose" set:html={rest} />
