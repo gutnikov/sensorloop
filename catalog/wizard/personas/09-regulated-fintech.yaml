@@ -1,0 +1,21 @@
+title: Regulated fintech backend
+who: |
+  I work on the payments backend of a bank: Kotlin and Spring, Postgres, Kafka, Kubernetes in our own data centre.
+  Code lives in a self-hosted GitLab, and Jenkins runs the pipelines. We have test and staging environments, and
+  production. We're PCI DSS audited: every change needs a second approver and a link to a ticket with requirements,
+  and we keep records for the auditors. Our test suite is large and slow (about 40 minutes) and sometimes flaky. We
+  have ELK for logs, Prometheus metrics and an incident process. Developers may use Claude Code on their laptops,
+  watched, but no code may be sent to a cloud model from CI or any server. What hurts: money moved wrongly, a schema
+  migration locking a payments table, the card network or an internal service timing out, and a security finding.
+expect:
+  must: [plan-approval, spec-before-tests, human-diff-review, risky-action-gates, db-migration-lint, backup-restore-rollback, dependency-scanning-sbom, secret-scanning, dast, fault-injection, isolated-environment]
+  must_not: [repo-health-agent, triage, approval-reviewer-agent]
+answers:
+  product: [backend]
+  path: [ci, staging, servers, migrations]
+  observe: [logs, metrics, alerts]
+  agent: [watched]
+  review: strict
+  risk: [data, irreversible, money, attack, deps, audit]
+  tests: [slow, flaky]
+  budget: local

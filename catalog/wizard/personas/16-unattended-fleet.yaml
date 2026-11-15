@@ -1,0 +1,19 @@
+title: Unattended agent fleet
+who: |
+  We're a team of eight running a TypeScript monorepo on GitHub: a web app, an API and shared packages. We run about
+  ten coding agents overnight on our backlog: each takes an issue and opens a PR, and we review in the morning. A
+  preview is deployed for each PR, and CI runs the tests (good suite, 8 minutes). We have staging, production,
+  Sentry and Datadog logs. Model budget is generous, CI included. What hurts: agents stepping on each other's work,
+  PRs that claim to be done and aren't, an agent getting stuck and burning money all night, and the database.
+expect:
+  must: [afk-run-handoff, agent-branch-integration, stall-detector, approval-reviewer-agent, isolated-environment, verification-subagent, agent-code-review, triage, correction-becomes-rule, repo-health-agent]
+  must_not: []
+answers:
+  product: [web, backend]
+  path: [ci, preview, staging, servers, migrations]
+  observe: [errors, logs, metrics]
+  agent: [fleet]
+  review: team
+  risk: [data]
+  tests: [some, strong]
+  budget: anywhere

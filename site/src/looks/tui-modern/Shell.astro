@@ -41,7 +41,7 @@ if (view === 'card') {
   file = card ? `catalog/${card.file}` : path;
 }
 
-// Each section's key: its place in the tab bar, 1 to 5. A kind's tab also shows its count of cards.
+// Each section's key: its place in the tab bar, from 1. A kind's tab also shows its count of cards.
 const counts = Object.fromEntries(kinds.map((k) => [k, c[k].length]));
 const keyed = nav.map((item, i) => ({
   ...item,
@@ -189,7 +189,7 @@ const docHtml =
       <span class="statusbar-fill"></span>
       <button class="seg seg-key" type="button" data-open="finder"><kbd>/</kbd> find</button>
       <button class="seg seg-key" type="button" data-open="keys"><kbd>?</kbd> keys</button>
-      <span class="seg seg-key seg-last"><kbd>1-5</kbd> sections</span>
+      <span class="seg seg-key seg-last"><kbd>1-{keyed.length}</kbd> sections</span>
     </footer>
 
     <div class="overlay finder" id="finder" hidden>
@@ -225,7 +225,7 @@ const docHtml =
       <div class="pane pane-float pane-keys" role="dialog" aria-modal="true" aria-labelledby="keys-title">
         <span class="pane-title" id="keys-title"><kbd aria-hidden="true">[?]</kbd><span>keys</span></span>
         <dl class="keylist">
-          <div><dt><kbd>1</kbd>–<kbd>5</kbd></dt><dd>open a section: {keyed.map((item) => item.label).join(', ')}</dd></div>
+          <div><dt><kbd>1</kbd>–<kbd>{keyed.length}</kbd></dt><dd>open a section: {keyed.map((item) => item.label).join(', ')}</dd></div>
           <div><dt><kbd>/</kbd> <kbd>ctrl k</kbd></dt><dd>find a card by its name</dd></div>
           <div><dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>move down and up a list</dd></div>
           <div><dt><kbd>enter</kbd></dt><dd>open the selected card</dd></div>
@@ -566,7 +566,7 @@ const docHtml =
           keys.hidden ? open(keys) : close(keys);
         } else if (!keys.hidden) {
           return;
-        } else if (/^[1-5]$/.test(e.key) && sections[Number(e.key) - 1]) {
+        } else if (/^[1-9]$/.test(e.key) && sections[Number(e.key) - 1]) {
           e.preventDefault();
           location.href = sections[Number(e.key) - 1];
         } else if (rows.length && (e.key === 'j' || e.key === 'k')) {

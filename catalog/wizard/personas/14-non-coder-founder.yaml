@@ -1,0 +1,19 @@
+title: Founder who does not code
+who: |
+  I'm a founder, not a programmer. I'm building an internal tool for my sales team with Claude Code: a web app on
+  Supabase, deployed to Vercel. I can't really read the code; I judge it by clicking around. I don't know if there
+  are tests. Claude commits and pushes when I say it looks good, and Vercel puts it live. Ten people on my team use it
+  every day, and it holds our customer list. I give Claude a feature and check back later. I'm fine paying for model
+  calls if it saves me from breaking things, but I don't know what CI is.
+expect:
+  must: [plan-approval, result-demo, e2e-browser, risky-action-gates, secret-scanning]
+  must_not: [architecture-fitness-functions, mutation-testing, agent-branch-integration, load-testing]
+answers:
+  product: [web]
+  path: [preview, servers, migrations]
+  observe: [feedback]
+  agent: [handoff]
+  review: result
+  risk: [data, attack]
+  tests: [none]
+  budget: local

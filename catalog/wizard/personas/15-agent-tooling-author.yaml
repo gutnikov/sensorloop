@@ -1,0 +1,19 @@
+title: Agent-tooling author
+who: |
+  I write Claude Code plugins, skills and MCP servers, as open source and for my company. Most of the product is
+  prompts and descriptions; there's some TypeScript for the MCP servers. GitHub Actions runs the TypeScript tests
+  and validates the plugin manifests. I review my own work, and a colleague sometimes looks. I hand tasks to agents.
+  Model calls are fine anywhere. What hurts: a skill that silently stops loading, a prompt change that makes the
+  agent worse, and a third-party MCP server I depend on doing something it shouldn't.
+expect:
+  must: [skill-trigger-eval, llm-evals, third-party-extension-scan, agent-calibration, text-from-a-brief]
+  must_not: [e2e-browser, lighthouse-ci, load-testing, preview-environments]
+answers:
+  product: [agent-tools, library]
+  path: [ci, installed]
+  observe: [feedback]
+  agent: [handoff]
+  review: me
+  risk: [supply, wrong]
+  tests: [some]
+  budget: anywhere

@@ -12,7 +12,12 @@ The catalog of sensors, tools and loops, the plugins built from it, and the site
   The text names a product only to show how the role is used.
 - A relation is written once, on the more specific card: a tool lists the sensors it builds, a loop the sensors it
   reads. A sensor's tools and loops are computed, never written on its card.
-- `packages/catalog`: the only code that parses cards. The site and the plugin builders import it.
+- `catalog/wizard/`: the wizard at /wizard/. `tree.yaml` holds its questions (at most eight) and the rules that turn
+  answers into loops, checked against `catalog/schema/wizard.schema.json` and the catalog: every loop must be reachable.
+  `personas/` holds the projects it is tried on, each with the loops it must and must not get and its latest answers;
+  `npm run check` fails when one loses a loop it must have. How to change the tree and run a round: its `README.md`.
+- `packages/catalog`: the only code that parses cards and the wizard's tree. The site and the plugin builders import
+  it; the page runs its `wizard.js` in the browser.
 - `docs/metamodel.md`: the metamodel, imported above and rendered on the home page. `docs/get-started.md`: how to
   install and use the plugin, rendered at /get-started/.
 - A recorded terminal session in a doc is a line `<!-- cast: <name> | <caption> -->` and the file

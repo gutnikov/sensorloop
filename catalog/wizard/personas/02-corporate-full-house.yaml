@@ -1,0 +1,22 @@
+title: Large company with everything
+who: |
+  I'm a staff engineer at a company of about 200 engineers. We use GitHub Enterprise with Actions, Kubernetes, and a
+  preview stand is deployed for every pull request. The backend is dozens of Go microservices talking gRPC to each
+  other; the front end is Angular. We have staging and production, Prometheus, Loki, Tempo for tracing and Sentry.
+  Every PR needs two approving reviewers, and we keep an audit trail for SOC 2. The test suites are big, mostly
+  reliable, and take 10 to 20 minutes in CI. Engineers use Claude Code locally, and we also run an agent in GitHub
+  Actions that picks up labelled issues and opens PRs. The company pays for model usage, including in CI. What would
+  hurt: breaking other teams' services through a proto change, losing data in Postgres, outages under load, and
+  security: we're internet facing and hold personal data.
+expect:
+  must: [ci-clean-infra, agent-code-review, human-diff-review, preview-environments, health-checks-smoke, api-breaking-changes, architecture-fitness-functions, structured-logs, traces-opentelemetry, release-confirmation, dependency-scanning-sbom, agent-ci-hardening]
+  must_not: []
+answers:
+  product: [web, backend]
+  path: [ci, preview, staging, servers, migrations]
+  observe: [errors, logs, metrics, traces, alerts]
+  agent: [watched, ci]
+  review: strict
+  risk: [data, clients, load, attack, audit]
+  tests: [slow, strong]
+  budget: anywhere

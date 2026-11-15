@@ -1,0 +1,21 @@
+title: LLM agent product
+who: |
+  We're a team of five building an AI assistant product: retrieval over customers' documents, and an agent that calls
+  tools to act in their accounts. Python backend, Next.js front end, deployed on Vercel and a managed Postgres with
+  pgvector. Every PR gets a Vercel preview. GitHub Actions runs our tests. We change prompts and tool descriptions
+  almost daily, and switch models when a new one comes out. We trace everything with Langfuse and use Sentry. We
+  review each other's PRs. We hand tasks to agents and also run a couple overnight. Model calls are fine anywhere;
+  they're our business. Biggest fear: the agent doing something wrong in a customer's account, or answers getting
+  worse after a prompt change without anyone noticing.
+expect:
+  must: [llm-evals, scripted-model-tests, agent-calibration, traces-opentelemetry, verification-subagent]
+  must_not: []
+answers:
+  product: [web, backend, llm]
+  path: [ci, preview, servers, migrations]
+  observe: [errors, traces]
+  agent: [handoff, fleet]
+  review: team
+  risk: [agent-acts, wrong, data, attack]
+  tests: [some]
+  budget: anywhere
