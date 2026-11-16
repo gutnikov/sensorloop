@@ -14,12 +14,11 @@ interface Props {
 
 const { title, description, bodyClass } = Astro.props;
 
-// The masthead's links: the metamodel, how to start, the wizard, then a page per kind. The one for the page's own section is marked current.
+// The masthead's links: the metamodel, how to start, then a page per kind. The one for the page's own section is marked current.
 const path = Astro.url.pathname;
 const nav = [
   { href: '/', label: 'Metamodel', current: path === '/' },
   { href: '/get-started/', label: 'Get started', current: path.startsWith('/get-started/') },
-  { href: '/wizard/', label: 'Wizard', current: path.startsWith('/wizard/') },
   ...kinds.map((kind) => ({ href: kindHref(kind), label: KIND[kind].many, current: path.startsWith(kindHref(kind)) })),
 ];
 ---

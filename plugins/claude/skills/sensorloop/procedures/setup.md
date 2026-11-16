@@ -16,21 +16,23 @@ it takes; a command that does not run as found is not a command yet. Note what e
 deploy, previews, a browser, logs, metrics, traces, an error tracker. Note what is already in `.claude/settings.json`
 and `CLAUDE.md`. Check that `python3` runs (the stall detector needs it).
 
-## 2. Ask about the limits
+## 2. Interview the person
 
-Ask the person, in one round of short questions with options, only what the repository cannot tell you:
+Find out what the person needs before you choose anything: run the interview in
+[../../interview/SKILL.md](../../interview/SKILL.md). It asks, in rounds, only what the repository cannot tell you:
+first what is being built (when the code does not show it), how much the agent should do on its own, and when it may
+call the person; then what follows from those (which actions need a person, what would hurt if a change broke it,
+where they want to step in, what the loops may cost). It ends with needs and limits the person confirms. Start it
+once you know the stack and the commands; the rest of step 1 can go on beside it.
 
-- How the agent works here: watched in a session, or unattended (overnight, in CI)?
-- Which actions must never run without a person: pushes, deploys, migrations, deletes, messages sent outside?
-- Budget: may loops spend model calls (reviewers, judges)? In CI?
-- Anything that must not change: files, branches, settings.
-
-If the person is not available, assume: watched in a session; pushes, deploys, migrations and deletes need a person;
-no model calls in CI. Say what you assumed.
+If the person is not available, the interview takes its defaults (watched in a session, calling the person before
+what cannot be undone and when stuck; pushes, deploys, migrations and deletes need a person; no model calls in CI)
+and says what it assumed.
 
 ## 3. Propose
 
-Start from the loops you can wire ([wiring/](../wiring/)), and keep only those the project can run:
+Start from the needs the person confirmed and the loops you can wire ([wiring/](../wiring/)), and keep only those
+the project can run:
 
 | Loop | Needs |
 |---|---|
@@ -38,14 +40,16 @@ Start from the loops you can wire ([wiring/](../wiring/)), and keep only those t
 | red-green-tdd | a test command |
 | type-check-and-build | a type check or build command, fast enough after edits or at the end of a turn |
 | lint-with-fix-instructions | a lint command |
-| risky-action-gates | always; the gated commands come from step 2 |
+| risky-action-gates | always; the gated commands come from the interview |
 | stall-detector | `python3`; most useful when the agent works unattended |
 
-Then read [../catalog/index.md](../catalog/index.md) for loops the project's facts call for that you do not wire
-(CI results when there is CI, smoke tests when there is a deploy, and so on): at most three, as `proposed`.
+Then read [../catalog/index.md](../catalog/index.md) for loops the needs and the facts call for that you do not wire
+(a smoke test when there is a deploy and the person fears a broken release, and so on; the interview's
+[tree](../../interview/tree.md) says which loops each need decides): at most three, as `proposed`.
 
-Show the person one table: each loop, the failure it catches here, the command it uses, and the changes you will make
-(files, hooks, permissions). Get a yes, or the changes they want.
+Show the person one table: each loop, the need it serves or the failure it catches here, the command it uses, and the
+changes you will make (files, hooks, permissions). Say which needs no loop serves yet. Get a yes, or the changes they
+want.
 
 ## 4. Wire
 
@@ -61,5 +65,6 @@ active: say why.
 
 ## 6. Write down
 
-Write `.sensorloop/loops.yaml` and `.sensorloop/LOOPS.md` ([loops-file.md](loops-file.md)), and add the import line to
-`CLAUDE.md`. Show the person what changed, and end with what could be better (rule 7).
+Write `.sensorloop/loops.yaml`, with the wants and limits from the interview, and `.sensorloop/LOOPS.md`
+([loops-file.md](loops-file.md)), and add the import line to `CLAUDE.md`. Show the person what changed, and end with
+what could be better (rule 7).

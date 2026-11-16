@@ -20,9 +20,14 @@ project:
     lint: ruff check .
     format: ruff format .
   has: [ci]                       # what exists beyond the repo: ci, deploy, preview, browser, logs, metrics, traces, errors
-  limits:                         # what the person said, in their words
+  limits:                         # what the loops must not do or cost: from the interview, in the person's words
     - No paid model calls in CI.
     - Nobody watches the agent at night.
+  wants:                          # what the loops must protect, and where the person steps in: from the interview
+    - A broken checkout costs us orders; the cart must keep working.
+    - I approve a plan before the agent touches billing.
+    - Pushes, deploys and migrations wait for me (assumed; the person did not answer).
+  interviewed: 2026-11-13         # when the person last confirmed their wants and limits
 loops:
   - id: type-check-and-build      # a loop id from catalog/loops/
     status: active                # active | proposed | off
@@ -36,7 +41,9 @@ loops:
 ```
 
 Rules: one entry per loop id; `wiring` says exactly what runs where; `proved` is the date you made it fail on
-purpose and saw the signal; a loop that cannot run here is `proposed` with its `needs`, never `active`.
+purpose and saw the signal; a loop that cannot run here is `proposed` with its `needs`, never `active`. The project's
+`limits` and `wants` come from the interview ([../../interview/SKILL.md](../../interview/SKILL.md)), each in the
+person's words, with an answer nobody gave marked assumed; the next interview starts from them.
 
 ## `.sensorloop/LOOPS.md`: what an agent here must know
 
@@ -78,7 +85,8 @@ Leave out sections with nothing in them. Proposed loops do not go in `LOOPS.md`:
 ## `CLAUDE.md`
 
 Add one line, `@.sensorloop/LOOPS.md`, under a heading such as `## Loops`. If `CLAUDE.md` does not exist, create it
-with that heading and line. Do not copy the content of `LOOPS.md` into it, and do not rewrite anything else in it.
+with that heading and line and nothing else: what the project is, and what the interview found, belong in the
+registry. Do not copy the content of `LOOPS.md` into it, and do not rewrite anything else in it.
 
 ## Hooks in `.claude/settings.json`
 
