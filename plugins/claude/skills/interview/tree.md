@@ -27,7 +27,8 @@ else; every other branch hangs off them and waits for a later round.
 A root. Ask it only when the code does not show it; otherwise state what you found, and let the person correct it.
 
 - **Ask**: What are you building, and who uses what it produces: people in a browser or an app, other code through an
-  API or a package, players, devices, a model's users?
+  API or a package, players, devices, a model's users? Only that: who would notice a break, and what would hurt, are
+  **observe** and **harm**, in later rounds.
 - **Facts first**: the README, the manifests, the folders (an API spec, a mobile project, firmware, prompts).
 - **Opens**: **path**, **harm** and **tests**; a feature where a model answers or acts → **acts** (may it act in a
   user's account, call tools, change their data?); an API, a package, a file or event format that others use →

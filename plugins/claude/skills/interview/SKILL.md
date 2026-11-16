@@ -63,15 +63,20 @@ next round and say why.
 Number the questions, and put your recommendation on its own line, worded so that "yes" accepts it:
 
 ```
-❓ **Q1 · <short title>**: <the question in the person's words, the options when there are some, and the fact
-behind it, if there is one>
+❓ **Q1 · <short title>**: <one question, about this branch only, in the person's words: the options when there are
+some, and the fact behind it, if there is one>
 
-➡️ <your recommended answer, and what it rests on>
+➡️ <one answer, never "a or b", and what it rests on>
 
 ---
 
 ❓ **Q2 · <short title>**: …
 ```
+
+Keep each question to its own branch: a root's question does not carry a later one (what would hurt, who would
+notice a break, which actions wait) in its body or in its recommendation; that question gets its own round. A
+recommendation is one answer, not a choice between two: when no fact points to one, recommend the branch's default
+from tree.md, and say so.
 
 The person can then answer the round by number: "1 yes, 2 the second, 3 no, because …". A round of at most four
 questions, each with a few clear options, may go through the question tool instead, with the recommended option first
@@ -95,14 +100,17 @@ confirm or correct it. Set nothing up until they confirm.
 
 What they confirm goes into the registry, `.sensorloop/loops.yaml`: what the loops must not do or cost in
 `project.limits`, the rest in `project.wants`, and the date in `project.interviewed`
-([loops-file.md](../sensorloop/procedures/loops-file.md)). The procedure that called the interview writes it there
-with the loops. The next interview starts from it.
+([loops-file.md](../sensorloop/procedures/loops-file.md)), and nowhere else: not in `CLAUDE.md`, not in `LOOPS.md`.
+The procedure that called the interview writes it there with the loops. The next interview starts from it.
 
 ## When the needs change
 
 When the project changes, or the person wants the loops to do something else, start from the registry: its wants and
 limits are settled. Reopen only the branches the change touches ([tree.md](tree.md) says which) and the ones the
-person names, and say in one line that the rest stand. Work the reopened branches in rounds, and end as above.
+person names. A settled branch is not asked again, not even to confirm it: say in one line which wants and limits
+stand, and the person reopens one if they want. A recorded answer the change contradicts (a limit that the agent is
+always watched, when it will now work alone) is not settled: it belongs to the reopened branch. Work the reopened
+branches in rounds, and end as above.
 
 ## When nobody can answer
 

@@ -85,7 +85,8 @@ Leave out sections with nothing in them. Proposed loops do not go in `LOOPS.md`:
 ## `CLAUDE.md`
 
 Add one line, `@.sensorloop/LOOPS.md`, under a heading such as `## Loops`. If `CLAUDE.md` does not exist, create it
-with that heading and line. Do not copy the content of `LOOPS.md` into it, and do not rewrite anything else in it.
+with that heading and line and nothing else: what the project is, and what the interview found, belong in the
+registry. Do not copy the content of `LOOPS.md` into it, and do not rewrite anything else in it.
 
 ## Hooks in `.claude/settings.json`
 
