@@ -1,0 +1,57 @@
+# The before/after experiment of the loop text-from-a-brief. Run it with
+#   npm run experiment -- text-from-a-brief --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: text-from-a-brief
+question: >-
+  The person asks for the release notes of 0.5.0, for customers. Since 0.4.0, main has two features, a bug fix and a
+  new Node requirement, an internal refactor that changes no output, a CI change, and a feature added and then
+  reverted; the release date only the person knows. Do the notes hold every change a customer sees, and nothing the
+  release does not, with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+# The project's work here is a text: any change counts, so the person does not ask the agent to "go ahead" once the
+# notes are written, and first-reply.agent_had_changed_code says whether it wrote before the person spoke.
+code_paths: ['.']
+
+# The judge's checks are keywords; a model reads the notes once more for a measure (claims no keyword foresees), so
+# it gets the model's settings.
+judge_gets_model: true
+
+arms:
+  A:
+    about: The project as its team keeps it, with a CHANGELOG.md written for customers and the history since 0.4.0.
+    overlay: null
+
+person:
+  max_reports: 1
+  session_minutes: 30
+  # Said once, after the agent's first turn: an answer if it asked for the date, news if it did not.
+  first_reply: 0.5.0 goes out on Monday, 16 November.
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run, at the end, fails a `fact:` check (a change a customer sees, or the date the person
+  # gave, is missing from the 0.5.0 notes) or a `no claim:` check (the reverted business days, the whole-cents refactor
+  # told as a change, performance or security, or another date).
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+# The date comes from the person after the first turn, so it cannot be in the first hand-over; it is judged at the
+# end only, and does not count here.
+qualify:
+  - "check:fact: --customer for summary and aging"
+  - "check:fact: csv --unpaid"
+  - "check:fact: customers with the same name no longer added together"
+  - "check:fact: needs Node.js 22 or later"
+  - "check:no claim: business days (added and reverted)"
+  - "check:no claim: the whole-cents refactor as a change"
+  - "check:no claim: performance or security"

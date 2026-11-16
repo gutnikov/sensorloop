@@ -1,0 +1,17 @@
+[
+  { "id": "rn-version", "expected": "release-notes", "prompt": "write the release notes for 2.4" },
+  { "id": "rn-customers", "expected": "release-notes", "prompt": "what should we tell customers about this release? put it together from what changed since the last tag" },
+  { "id": "rn-friday", "expected": "release-notes", "prompt": "draft release notes for the version going out on friday, keep it non-technical" },
+  { "id": "vb-minor", "expected": "version-bump", "prompt": "bump the version, minor release" },
+  { "id": "vb-tag", "expected": "version-bump", "prompt": "we're releasing 2.4.0 today, bump it and tag it" },
+  { "id": "vb-patch", "expected": "version-bump", "prompt": "cut a patch release for the hotfix that just merged" },
+  { "id": "cl-export", "expected": "changelog", "prompt": "add a changelog entry for the CSV export I just built" },
+  { "id": "cl-branch", "expected": "changelog", "prompt": "update CHANGELOG.md with what this branch changes" },
+  { "id": "cl-login", "expected": "changelog", "prompt": "put the fix for the login loop in the changelog" },
+  { "id": "no-dependency", "expected": null, "prompt": "upgrade react-router to the latest version" },
+  { "id": "no-blame", "expected": null, "prompt": "who changed the login form last, and why?" },
+  { "id": "no-typo", "expected": null, "prompt": "fix the typo 'recieve' in CHANGELOG.md" },
+  { "id": "no-commit-message", "expected": null, "prompt": "write a commit message for my staged changes" },
+  { "id": "no-pr-description", "expected": null, "prompt": "summarize what this branch does for the PR description" },
+  { "id": "no-node", "expected": null, "prompt": "which node version does CI use?" }
+]

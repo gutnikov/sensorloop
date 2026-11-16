@@ -1,0 +1,6 @@
+{
+  "author": "Sam Okafor",
+  "email": "sam@invoicer.invalid",
+  "date": "2026-10-06T11:18:00Z",
+  "message": "csv: --unpaid lists only the invoices still owed\n\nCloses #36. Accounting imports only what is still owed into their collections sheet; until now\nthey deleted the paid rows by hand.\n"
+}

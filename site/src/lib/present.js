@@ -71,6 +71,9 @@ export const href = (card) => `/${card.kind}/${card.id}/`;
 export const source = (/** @type {{ file: string }} */ card) =>
   `${config.repository}/blob/${config.branch}/catalog/${card.file}`;
 
+/** A folder in the repository. */
+export const folder = (/** @type {string} */ repoPath) => `${config.repository}/tree/${config.branch}/${repoPath}`;
+
 const escape = (/** @type {string} */ text) =>
   text.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 

@@ -1,0 +1,53 @@
+# The before/after experiment of the loop agent-code-review. Run it with
+#   npm run experiment -- agent-code-review --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: agent-code-review
+question: >-
+  The new files are named after customer ids that come from an exported file, so an id such as `../../x` can write
+  outside the folder. The feature works and CI is green either way. Does the agent hand over code that keeps every
+  file inside the folder, with a fresh-context reviewer and without one?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop, built by hand from the card: a read-only reviewer subagent with a fresh context
+      (one lens, correctness) reads the committed diff, and a Stop hook keeps the turn going while the latest commit has
+      no review on record.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run fails the check "nothing written outside --out": with a customer id from the
+  # file such as ../escaped or an absolute path, the CLI wrote a file or folder outside the --out folder.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:nothing written outside --out"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`).
+cast_markers:
+  - match: '^(Edit|Write|MultiEdit) .*"file_path":"[^"]*src/(cli|export/csv)\.ts'
+    label: The agent starts on the feature
+  - match: '^Bash .*git commit'
+    label: The agent commits its work
+  - match: '^Agent .*code-reviewer'
+    label: The agent asks the reviewer for a review

@@ -2,8 +2,8 @@
 // A card's page: /sensors/<id>/, /tools/<id>/, /loops/<id>/, beside its kind's side navigation. Its title and facts,
 // with the cards it is linked to, then its text (a tool's ends with its vendors).
 import Section from '../../layouts/Section.astro';
-import { catalog, inline, kinds, markdown } from '../../lib/content.js';
-import { KIND, facts, kicker, source, vendors } from '../../lib/present.js';
+import { catalog, inline, kinds, markdown, showcase } from '../../lib/content.js';
+import { KIND, facts, folder, kicker, source, vendors } from '../../lib/present.js';
 
 export function getStaticPaths() {
   const c = catalog();
@@ -14,6 +14,14 @@ const { kind, id } = Astro.params;
 const c = catalog();
 const card = c.get(kind, id);
 const text = [card.body, vendors(card)].filter(Boolean).join('\n\n');
+// A loop's before/after: the same task without the loop and with it, when its experiment has one.
+const ab = kind === 'loops' ? showcase(id) : null;
+const arms = ab
+  ? [
+      { key: 'a', arm: 'A', name: 'Without the loop' },
+      { key: 'b', arm: 'B', name: 'With the loop' },
+    ].map((a) => ({ ...a, ...ab.data.arms[a.arm] }))
+  : [];
 ---
 
 <Section
@@ -48,5 +56,115 @@ const text = [card.body, vendors(card)].filter(Boolean).join('\n\n');
         <p class="after-note">Built from <a href={source(card)}><code>catalog/{card.file}</code></a>.</p>
       </div>
     </div>
+
+    {
+      ab && (
+        <section class="ab" aria-labelledby="ab-title">
+          <h2 id="ab-title">Before and after</h2>
+          <p class="ab-question">{ab.data.question}</p>
+          <p class="ab-conditions">
+            The same task, {ab.data.arms.A.runs} runs without the loop and {ab.data.arms.B.runs} with it: Claude Code{' '}
+            {String(ab.data.claude_code).replace(/ \(Claude Code\)$/, '')} on <code>{ab.data.model}</code>, effort{' '}
+            {ab.data.effort}, each run in a fresh container, judged by a program at the {ab.data.judged_at}.
+          </p>
+          {ab.task && (
+            <details class="ab-task">
+              <summary>The task the person gave</summary>
+              <pre>{ab.task}</pre>
+            </details>
+          )}
+          <div class="ab-pair">
+            {arms.map((a) => (
+              <figure class="ab-arm">
+                <figcaption>
+                  <span class="ab-arm-name">{a.name}</span>
+                  <span class="ab-arm-count">
+                    {a.made_the_mistake} of {a.runs} runs made the mistake
+                  </span>
+                </figcaption>
+                <div class="cast-player" data-cast={`/casts/loop-${id}-${a.key}.cast`}>
+                  <button type="button" class="cast-play">
+                    {`▶ ${a.name}: run ${a.shown.split('-').at(-1)}, ${a.shown_made_the_mistake ? 'made the mistake' : 'did not'}`}
+                  </button>
+                </div>
+              </figure>
+            ))}
+          </div>
+          <table class="ab-runs">
+            <caption>Every run</caption>
+            <thead>
+              <tr>
+                <th scope="col">Arm</th>
+                <th scope="col">Run</th>
+                <th scope="col">Made the mistake</th>
+                <th scope="col">Minutes</th>
+                <th scope="col">Person's messages</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ab.data.runs.map((r) => (
+                <tr class={r.shown ? 'is-shown' : undefined}>
+                  <td>{r.arm === 'A' ? 'without' : 'with'}</td>
+                  <td>
+                    {r.run}
+                    {r.shown ? ' (shown)' : ''}
+                  </td>
+                  <td>{r.made_the_mistake ? 'yes' : 'no'}</td>
+                  <td>{r.minutes}</td>
+                  <td>
+                    {`${r.person_messages}${r.permission_asks ? ` + ${r.permission_asks} prompt${r.permission_asks > 1 ? 's' : ''} answered` : ''}`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {ab.notes && <div class="prose ab-notes" set:html={ab.notes} />}
+          <p class="after-note">
+            The runs shown: {ab.data.rule.charAt(0).toLowerCase() + ab.data.rule.slice(1)} The experiment,
+            its judge and every run's scores: <a href={folder(ab.experiment)}><code>{ab.experiment}</code></a>.
+          </p>
+        </section>
+      )
+    }
   </article>
 </Section>
+
+<script>
+  // The before/after's two players. Until the reader presses play, each is a button: the player's script, its styles
+  // and the recording load on the first press, so a loop's page weighs what any other card's does.
+  import playerStyles from 'asciinema-player/dist/bundle/asciinema-player.css?url';
+
+  let player: Promise<typeof import('asciinema-player')> | undefined;
+  function loadPlayer() {
+    if (!player) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = playerStyles;
+      document.head.insertBefore(link, document.head.querySelector('link[rel="stylesheet"], style'));
+      player = import('asciinema-player');
+    }
+    return player;
+  }
+
+  for (const element of document.querySelectorAll<HTMLElement>('.ab .cast-player[data-cast]')) {
+    const button = element.querySelector('button');
+    button?.addEventListener(
+      'click',
+      async () => {
+        button.disabled = true;
+        const { create } = await loadPlayer();
+        element.replaceChildren();
+        create(element.dataset.cast!, element, {
+          fit: 'width',
+          theme: 'sensorloop',
+          terminalFontFamily: "'IBM Plex Mono', ui-monospace, Menlo, monospace",
+          idleTimeLimit: 2,
+          autoPlay: true,
+          cols: 90,
+          rows: 34,
+        });
+      },
+      { once: true },
+    );
+  }
+</script>

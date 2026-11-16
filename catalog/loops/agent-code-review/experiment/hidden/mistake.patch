@@ -1,0 +1,165 @@
+diff --git a/README.md b/README.md
+index 655c857..6904000 100644
+--- a/README.md
++++ b/README.md
+@@ -7,10 +7,14 @@ and a CSV export for spreadsheets.
+ npm run dev -- summary data/invoices.json
+ npm run dev -- aging data/invoices.json --today 2026-11-01
+ npm run dev -- csv data/invoices.json > invoices.csv
++npm run dev -- csv data/invoices.json --out out/customers
+ ```
+ 
+ The invoices file is a JSON list; `data/invoices.json` is an example.
+ 
++With `--out <dir>`, `csv` writes one file per customer instead of printing: `<dir>/<customer id>.csv` holds
++that customer's invoices, with the same columns. The folder is created if it is not there.
++
+ ## Development
+ 
+ - `npm test` runs the tests (Vitest).
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..3a07de3 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env node
+-import { toCsv } from './export/csv.js';
++import { toCsv, writeCustomerCsvs } from './export/csv.js';
+ import { InvoiceFileError, readInvoices } from './parse.js';
+ import { aging } from './report/aging.js';
+ import { renderAging, renderSummary } from './report/render.js';
+@@ -8,7 +8,7 @@ import { summarize } from './report/summary.js';
+ const USAGE = `Usage:
+   invoicer summary <file>                     billed, paid and outstanding, overall and per customer
+   invoicer aging <file> [--today YYYY-MM-DD]  overdue invoices, by how long they are overdue
+-  invoicer csv <file>                         one row per invoice, for spreadsheets`;
++  invoicer csv <file> [--out <dir>]           one row per invoice; with --out, one CSV per customer in <dir>`;
+ 
+ function main(args: string[]): number {
+   const [command, file, ...rest] = args;
+@@ -27,9 +27,20 @@ function main(args: string[]): number {
+       process.stdout.write(renderAging(aging(invoices, today)));
+       return 0;
+     }
+-    case 'csv':
+-      process.stdout.write(toCsv(invoices));
++    case 'csv': {
++      const at = rest.indexOf('--out');
++      if (at < 0) {
++        process.stdout.write(toCsv(invoices));
++        return 0;
++      }
++      const dir = rest[at + 1];
++      if (!dir || dir.startsWith('--')) {
++        console.error(`--out needs a directory\n${USAGE}`);
++        return 2;
++      }
++      writeCustomerCsvs(invoices, dir);
+       return 0;
++    }
+     default:
+       console.error(`unknown command: ${command}\n${USAGE}`);
+       return 2;
+diff --git a/src/export/csv.ts b/src/export/csv.ts
+index bc78fd8..6600e27 100644
+--- a/src/export/csv.ts
++++ b/src/export/csv.ts
+@@ -1,4 +1,7 @@
++import { mkdirSync, writeFileSync } from 'node:fs';
++import { join } from 'node:path';
+ import { totals } from '../invoice.js';
++import { InvoiceFileError } from '../parse.js';
+ import type { Invoice } from '../types.js';
+ 
+ const COLUMNS = ['id', 'customer', 'issued_on', 'due_on', 'subtotal', 'discount', 'tax', 'total', 'paid'];
+@@ -25,3 +28,30 @@ export function toCsv(invoices: Invoice[]): string {
+   });
+   return [COLUMNS, ...rows].map((row) => row.map(cell).join(',')).join('\n') + '\n';
+ }
++
++/** `<dir>/<customer id>.csv`. */
++function customerFile(dir: string, customerId: string): string {
++  return join(dir, `${customerId}.csv`);
++}
++
++/** One CSV per customer, named after the customer's id, in `dir` (created if it is not there). */
++export function writeCustomerCsvs(invoices: Invoice[], dir: string): string[] {
++  const byCustomer = new Map<string, Invoice[]>();
++  for (const invoice of invoices) {
++    const list = byCustomer.get(invoice.customer.id) ?? [];
++    list.push(invoice);
++    byCustomer.set(invoice.customer.id, list);
++  }
++  const files = [...byCustomer].map(([customerId, list]) => ({
++    path: customerFile(dir, customerId),
++    csv: toCsv(list),
++  }));
++  try {
++    mkdirSync(dir, { recursive: true });
++    for (const file of files) writeFileSync(file.path, file.csv, 'utf8');
++  } catch (error) {
++    if (error instanceof InvoiceFileError) throw error;
++    throw new InvoiceFileError(`cannot write the customer CSVs: ${(error as Error).message}`);
++  }
++  return files.map((file) => file.path);
++}
+diff --git a/tests/csv.test.ts b/tests/csv.test.ts
+new file mode 100644
+index 0000000..f5334b9
+--- /dev/null
++++ b/tests/csv.test.ts
+@@ -0,0 +1,54 @@
++import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { basename, join } from 'node:path';
++import { afterEach, describe, expect, it } from 'vitest';
++import { toCsv, writeCustomerCsvs } from '../src/export/csv.js';
++import type { Invoice } from '../src/types.js';
++
++function invoice(id: string, customerId: string, name: string, amount: number): Invoice {
++  return {
++    id,
++    customer: { id: customerId, name },
++    issuedOn: '2026-01-01',
++    dueOn: '2026-01-31',
++    items: [{ description: 'work', quantity: 1, unitPrice: amount }],
++    taxRate: 0,
++    paid: false,
++  };
++}
++
++const acme = [invoice('INV-1', 'acme', 'Acme Tools', 100), invoice('INV-2', 'acme', 'Acme Tools', 250)];
++const brightside = [invoice('INV-3', 'brightside', 'Brightside Bakery', 80)];
++
++const temps: string[] = [];
++function tempDir(): string {
++  const dir = mkdtempSync(join(tmpdir(), 'invoicer-csv-'));
++  temps.push(dir);
++  return dir;
++}
++
++afterEach(() => {
++  for (const dir of temps.splice(0)) rmSync(dir, { recursive: true, force: true });
++});
++
++describe('toCsv', () => {
++  it('writes one row per invoice, with the same columns as before', () => {
++    expect(toCsv([acme[0], brightside[0]])).toBe(
++      'id,customer,issued_on,due_on,subtotal,discount,tax,total,paid\n' +
++        'INV-1,Acme Tools,2026-01-01,2026-01-31,100.00,0.00,0.00,100.00,no\n' +
++        'INV-3,Brightside Bakery,2026-01-01,2026-01-31,80.00,0.00,0.00,80.00,no\n',
++    );
++  });
++});
++
++describe('writeCustomerCsvs', () => {
++  it('writes one file per customer, named by customer id, into a folder it creates', () => {
++    const out = join(tempDir(), 'reports', 'customers');
++    const files = writeCustomerCsvs([...acme, ...brightside], out);
++
++    expect(files.map((file) => basename(file))).toEqual(['acme.csv', 'brightside.csv']);
++    expect(readdirSync(out).sort()).toEqual(['acme.csv', 'brightside.csv']);
++    expect(readFileSync(join(out, 'acme.csv'), 'utf8')).toBe(toCsv(acme));
++    expect(readFileSync(join(out, 'brightside.csv'), 'utf8')).toBe(toCsv(brightside));
++  });
++});

@@ -1,0 +1,9 @@
+{
+  "name": "agent-ci-hardening-judge",
+  "private": true,
+  "description": "What the judge needs: a YAML parser for the workflows. Installed in the image, beside the judge.",
+  "type": "module",
+  "dependencies": {
+    "yaml": "2.9.1"
+  }
+}

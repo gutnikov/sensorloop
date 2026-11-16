@@ -1,0 +1,11 @@
+{
+  "name": "invoicer-cloud",
+  "version": "1.12.0",
+  "private": true,
+  "description": "The hosted invoicer: the API and its Postgres database.",
+  "type": "module",
+  "scripts": {
+    "migrate": "dbmate --migrations-dir db/migrations up",
+    "migrate:new": "dbmate --migrations-dir db/migrations new"
+  }
+}

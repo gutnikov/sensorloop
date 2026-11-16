@@ -1,0 +1,22 @@
+{
+  "name": "invoicer",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Reports on a file of invoices: what was billed, what is overdue, and a CSV for spreadsheets.",
+  "type": "module",
+  "bin": {
+    "invoicer": "dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "build": "tsup src/cli.ts --format esm --platform node --target node22 --clean"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "tsup": "8.5.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

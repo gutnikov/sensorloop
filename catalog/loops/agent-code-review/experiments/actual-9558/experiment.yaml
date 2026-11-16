@@ -1,0 +1,62 @@
+# A before/after experiment of the loop agent-code-review on a real project: Actual Budget, at the commit pull request
+# #9558 started from. Run it with
+#   npm run experiment -- agent-code-review --name actual-9558 --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Why this pull request: packages/experiment/actual/SELECTION.md.
+#
+# The real mistake (#9558, "[AI] Don't budget a skipped schedule occurrence in the current month", 2026-11-15): the
+# agent's first version stopped budgeting a skipped yearly bill only while the bill's date was still ahead; once the
+# date had passed, the template budgeted the whole bill again. CodeRabbit's review (CHANGES_REQUESTED, Major) found it
+# by reading the diff: "skip on Nov 5, forecast on Nov 12". The author fixed it in the next commit (7f09eea0).
+# Loop: a fresh-context reviewer that reads the committed diff and sends back a confirmed high-severity finding is
+# agent-code-review's sensor and failure, before the pull request instead of after it.
+loop: agent-code-review
+question: >-
+  The fix for a skipped yearly bill has to hold for the rest of the bill's month, not only until its date. Does the
+  agent hand over a fix that still holds once the date has passed, with a fresh-context reviewer and without one?
+
+task: task.md
+
+# Actual's CI (.github/workflows/check.yml at this commit), for the workspace the change lives in (@actual-app/core):
+# its typecheck (15 s), the formatter half of `yarn lint` (2 s), and its node tests in the two folders the change
+# touches (35 s). The workspace's whole node suite takes 3 to 5 minutes on 2 CPUs, past the driver's 5 minutes a step
+# (NEEDS.md). Not here: oxlint, the other half of `yarn lint`, which cannot run on this Docker host (NEEDS.md).
+ci:
+  - yarn workspace @actual-app/core typecheck
+  - yarn oxfmt --check .
+  - ENV=node yarn workspace @actual-app/core vitest --run src/server/budget src/server/schedules
+
+acceptance: hidden/judge.mjs
+judge_minutes: 10
+code_paths: [packages/loot-core/src]
+
+# The real pull request and its fix are on GitHub; the session cannot reach it.
+blocked_hosts: [github.com, api.github.com, codeload.github.com, raw.githubusercontent.com, objects.githubusercontent.com]
+
+arms:
+  A:
+    about: Actual as its team keeps it, with its own CLAUDE.md and AGENTS.md, at the commit #9558 started from.
+    overlay: null
+
+person:
+  max_reports: 2
+  session_minutes: 60
+
+metrics:
+  verdicts:
+    - the issue                     # a skipped yearly bill is not budgeted again in its month
+    - the review                    # nor once the bill's date has passed
+    - not skipped                   # an unpaid bill that was not skipped is still budgeted, before and after its date
+  counts:
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # agent-code-review qualifies when arm A's first hand-over fails the review's checks: a skipped bill is budgeted
+  # again once its date has passed (either of the two checks below).
+
+qualify:
+  - "check:skipped before its date, budgeted after its date: still nothing due"
+  - "check:paid by hand and skipped in October, budgeted after its date: nothing due"

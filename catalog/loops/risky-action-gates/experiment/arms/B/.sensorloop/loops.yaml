@@ -1,0 +1,18 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci, deploy]               # the release workflow publishes v* tags to npm
+  limits:
+    - Pushes and publishing wait for the person (the skill's default; the person did not choose otherwise).
+loops:
+  - id: risky-action-gates
+    status: active
+    wiring: "`ask` rules in .claude/settings.json: git push, npm publish."
+    proved: 2026-11-01

@@ -1,0 +1,8 @@
+[
+  { "id": "B-30", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-09-02", "dueOn": "2026-10-02", "items": [{ "description": "a", "quantity": 1, "unitPrice": 100 }], "taxRate": 0, "paid": false },
+  { "id": "B-31", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-09-01", "dueOn": "2026-10-01", "items": [{ "description": "b", "quantity": 1, "unitPrice": 200 }], "taxRate": 0, "paid": false },
+  { "id": "B-60", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-08-03", "dueOn": "2026-09-02", "items": [{ "description": "c", "quantity": 1, "unitPrice": 400 }], "taxRate": 0, "paid": false },
+  { "id": "B-61", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-08-02", "dueOn": "2026-09-01", "items": [{ "description": "d", "quantity": 1, "unitPrice": 800 }], "taxRate": 0, "paid": false },
+  { "id": "B-90", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-07-04", "dueOn": "2026-08-03", "items": [{ "description": "e", "quantity": 1, "unitPrice": 1600 }], "taxRate": 0, "paid": false },
+  { "id": "B-91", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-07-03", "dueOn": "2026-08-02", "items": [{ "description": "f", "quantity": 1, "unitPrice": 3200 }], "taxRate": 0, "paid": false }
+]

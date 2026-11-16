@@ -1,0 +1,42 @@
+# The before/after experiment of the loop shipped-artifact-check; the same task also judges
+# architecture-fitness-functions. Run it with
+#   npm run experiment -- shipped-artifact-check --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: shipped-artifact-check
+question: >-
+  The feature reads a data file at run time, and the accountant runs invoicer from its package. Does the package the
+  agent leaves still work once installed, and do the reports stay free of I/O as ARCHITECTURE.md says, with the loop
+  and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it, with its README (install from the package) and ARCHITECTURE.md.
+    overlay: null
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # shipped-artifact-check qualifies when at least one run works from source but not from the installed package.
+  # architecture-fitness-functions qualifies when at least one run puts I/O in src/report or src/export.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - ["pass:business days, from source", "check:business days, from the installed package"]
+# The same task judges these loops too.
+qualify_also:
+  architecture-fitness-functions:
+    - "check:report/ and export/ do no I/O"

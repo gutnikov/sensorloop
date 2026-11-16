@@ -1,0 +1,135 @@
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..b6796bb 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -2,13 +2,16 @@
+ import { toCsv } from './export/csv.js';
+ import { InvoiceFileError, readInvoices } from './parse.js';
+ import { aging } from './report/aging.js';
++import { reminders } from './report/reminders.js';
+ import { renderAging, renderSummary } from './report/render.js';
+ import { summarize } from './report/summary.js';
+ 
+ const USAGE = `Usage:
+   invoicer summary <file>                     billed, paid and outstanding, overall and per customer
+   invoicer aging <file> [--today YYYY-MM-DD]  overdue invoices, by how long they are overdue
+-  invoicer csv <file>                         one row per invoice, for spreadsheets`;
++  invoicer csv <file>                         one row per invoice, for spreadsheets
++  invoicer reminders <file> [--today YYYY-MM-DD]
++                                              overdue invoices to remind, as CSV`;
+ 
+ function main(args: string[]): number {
+   const [command, file, ...rest] = args;
+@@ -30,6 +33,12 @@ function main(args: string[]): number {
+     case 'csv':
+       process.stdout.write(toCsv(invoices));
+       return 0;
++    case 'reminders': {
++      const at = rest.indexOf('--today');
++      const today = at >= 0 ? rest[at + 1] : new Date().toISOString().slice(0, 10);
++      process.stdout.write(reminders(invoices, today));
++      return 0;
++    }
+     default:
+       console.error(`unknown command: ${command}\n${USAGE}`);
+       return 2;
+diff --git a/src/report/reminders.ts b/src/report/reminders.ts
+new file mode 100644
+index 0000000..afebda1
+--- /dev/null
++++ b/src/report/reminders.ts
+@@ -0,0 +1,31 @@
++import { isOverdue, totals } from '../invoice.js';
++import type { Invoice } from '../types.js';
++
++const DAY = 24 * 60 * 60 * 1000;
++/** Past this many days overdue, an invoice is with the collection agency. */
++const AGENCY_AFTER = 90;
++const HEADER = 'invoice,customer,due_on,days_overdue,amount';
++
++function cell(value: string): string {
++  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
++}
++
++function daysOverdue(invoice: Invoice, today: string): number {
++  return Math.round((Date.parse(today) - Date.parse(invoice.dueOn)) / DAY);
++}
++
++/**
++ * The reminder list as CSV (#58): unpaid invoices past their due date, most overdue first. A customer with an invoice
++ * at the collection agency is the agency's: none of their invoices is listed.
++ */
++export function reminders(invoices: Invoice[], today: string): string {
++  const overdue = invoices.filter((i) => isOverdue(i, today)).map((invoice) => ({ invoice, days: daysOverdue(invoice, today) }));
++  const atAgency = new Set(overdue.filter((o) => o.days > AGENCY_AFTER).map((o) => o.invoice.customer.id));
++  const rows = overdue
++    .filter((o) => !atAgency.has(o.invoice.customer.id))
++    .sort((a, b) => b.days - a.days || (a.invoice.id < b.invoice.id ? -1 : a.invoice.id > b.invoice.id ? 1 : 0));
++  const lines = rows.map(({ invoice, days }) =>
++    [invoice.id, invoice.customer.name, invoice.dueOn, String(days), totals(invoice).total.toFixed(2)].map(cell).join(','),
++  );
++  return [HEADER, ...lines].join('\n') + '\n';
++}
+diff --git a/tests/reminders.test.ts b/tests/reminders.test.ts
+new file mode 100644
+index 0000000..6fc5ad0
+--- /dev/null
++++ b/tests/reminders.test.ts
+@@ -0,0 +1,57 @@
++import { describe, expect, it } from 'vitest';
++import { invoice, runCli, writeInvoices } from './helpers/cli.js';
++
++// #58 A reminder list for accounting. Today is 2026-11-02 in every test.
++const HEADER = 'invoice,customer,due_on,days_overdue,amount';
++const remind = (invoices: object[]) => {
++  const r = runCli('reminders', writeInvoices(invoices), '--today', '2026-11-02');
++  expect(r.status).toBe(0);
++  return r.stdout.trimEnd().split('\n');
++};
++
++describe('invoicer reminders', () => {
++  it('AC1: lists unpaid invoices due before today, and no others', () => {
++    const lines = remind([
++      invoice({ id: 'A-1', customer: 'Alder', dueOn: '2026-10-30', amount: 100 }),
++      invoice({ id: 'A-2', customer: 'Alder', dueOn: '2026-11-02', amount: 100 }),
++      invoice({ id: 'B-1', customer: 'Birch', dueOn: '2026-10-01', amount: 100, paid: true }),
++    ]);
++    expect(lines.slice(1).map((l) => l.split(',')[0])).toEqual(['A-1']);
++  });
++
++  it('AC2: has the header, and the columns in their order', () => {
++    const lines = remind([invoice({ id: 'A-1', customer: 'Alder Works', dueOn: '2026-10-30', amount: 1250.5 })]);
++    expect(lines).toEqual([HEADER, 'A-1,Alder Works,2026-10-30,3,1250.50']);
++  });
++
++  it('AC3: lists the most overdue first, and ties by id', () => {
++    const lines = remind([
++      invoice({ id: 'C-2', customer: 'Cedar', dueOn: '2026-10-20', amount: 10 }),
++      invoice({ id: 'A-1', customer: 'Alder', dueOn: '2026-10-30', amount: 10 }),
++      invoice({ id: 'C-1', customer: 'Cedar', dueOn: '2026-10-20', amount: 10 }),
++      invoice({ id: 'B-1', customer: 'Birch', dueOn: '2026-09-15', amount: 10 }),
++    ]);
++    expect(lines.slice(1).map((l) => l.split(',')[0])).toEqual(['B-1', 'C-1', 'C-2', 'A-1']);
++  });
++
++  it('AC4: leaves out an invoice more than 90 days overdue, and keeps one at 90 days', () => {
++    const lines = remind([
++      invoice({ id: 'A-1', customer: 'Alder', dueOn: '2026-08-04', amount: 10 }),
++      invoice({ id: 'B-1', customer: 'Birch', dueOn: '2026-08-03', amount: 10 }),
++    ]);
++    expect(lines.slice(1).map((l) => l.split(',').slice(0, 4).join(','))).toEqual(['A-1,Alder,2026-08-04,90']);
++  });
++
++  it('AC4, as accounting answered: leaves out every invoice of a customer at the agency', () => {
++    const lines = remind([
++      invoice({ id: 'A-1', customer: 'Alder', dueOn: '2026-07-01', amount: 10 }),
++      invoice({ id: 'A-2', customer: 'Alder', dueOn: '2026-10-20', amount: 10 }),
++      invoice({ id: 'B-1', customer: 'Birch', dueOn: '2026-10-20', amount: 10 }),
++    ]);
++    expect(lines.slice(1).map((l) => l.split(',')[0])).toEqual(['B-1']);
++  });
++
++  it('AC5: prints the header alone when there is nothing to remind', () => {
++    expect(remind([invoice({ id: 'A-1', customer: 'Alder', dueOn: '2026-12-01', amount: 10 })])).toEqual([HEADER]);
++  });
++});

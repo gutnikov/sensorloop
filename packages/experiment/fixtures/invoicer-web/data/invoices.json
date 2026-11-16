@@ -1,0 +1,125 @@
+[
+  {
+    "id": "INV-1001",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-07-01",
+    "dueOn": "2026-07-31",
+    "items": [
+      { "description": "Workshop, two days", "quantity": 2, "unitPrice": 1200 },
+      { "description": "Travel", "quantity": 1, "unitPrice": 310.4 }
+    ],
+    "taxRate": 0.2,
+    "paid": true
+  },
+  {
+    "id": "INV-1002",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-09-01",
+    "dueOn": "2026-10-01",
+    "items": [{ "description": "Support, September", "quantity": 12, "unitPrice": 95 }],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "INV-1003",
+    "customer": { "id": "brightside", "name": "Brightside Bakery" },
+    "issuedOn": "2026-06-15",
+    "dueOn": "2026-07-15",
+    "items": [
+      { "description": "Point-of-sale setup", "quantity": 1, "unitPrice": 850 },
+      { "description": "Receipt printer", "quantity": 2, "unitPrice": 129.99 }
+    ],
+    "taxRate": 0.08,
+    "paid": false
+  },
+  {
+    "id": "INV-1004",
+    "customer": { "id": "brightside", "name": "Brightside Bakery" },
+    "issuedOn": "2026-08-20",
+    "dueOn": "2026-09-19",
+    "items": [{ "description": "Menu redesign", "quantity": 1, "unitPrice": 640 }],
+    "taxRate": 0.08,
+    "paid": true
+  },
+  {
+    "id": "INV-1005",
+    "customer": { "id": "corvid", "name": "Corvid Logistics" },
+    "issuedOn": "2026-10-05",
+    "dueOn": "2026-11-04",
+    "items": [
+      { "description": "Route planner licence", "quantity": 25, "unitPrice": 18.5 },
+      { "description": "Onboarding call", "quantity": 1, "unitPrice": 150 }
+    ],
+    "taxRate": 0.1,
+    "paid": false
+  },
+  {
+    "id": "INV-1006",
+    "customer": { "id": "corvid", "name": "Corvid Logistics" },
+    "issuedOn": "2026-08-01",
+    "dueOn": "2026-08-31",
+    "items": [{ "description": "Route planner licence", "quantity": 25, "unitPrice": 18.5 }],
+    "taxRate": 0.1,
+    "paid": true
+  },
+  {
+    "id": "INV-1007",
+    "customer": { "id": "dunmore", "name": "Dunmore Dental" },
+    "issuedOn": "2026-09-10",
+    "dueOn": "2026-10-10",
+    "items": [
+      { "description": "Booking site", "quantity": 1, "unitPrice": 2400 },
+      { "description": "Hosting, one year", "quantity": 1, "unitPrice": 240 }
+    ],
+    "taxRate": 0.2,
+    "paid": true
+  },
+  {
+    "id": "INV-1008",
+    "customer": { "id": "elm", "name": "Elm Street Books" },
+    "issuedOn": "2026-07-20",
+    "dueOn": "2026-08-19",
+    "items": [{ "description": "Stock sync, July", "quantity": 1, "unitPrice": 380 }],
+    "taxRate": 0.05,
+    "paid": true
+  },
+  {
+    "id": "INV-1009",
+    "customer": { "id": "fennel", "name": "Fennel & Finch Studio" },
+    "issuedOn": "2026-10-12",
+    "dueOn": "2026-10-26",
+    "items": [
+      { "description": "Portfolio site", "quantity": 1, "unitPrice": 1800 },
+      { "description": "Photo retouching", "quantity": 30, "unitPrice": 12 }
+    ],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "INV-1010",
+    "customer": { "id": "elm", "name": "Elm Street Books" },
+    "issuedOn": "2026-11-02",
+    "dueOn": "2027-01-31",
+    "items": [{ "description": "Stock sync, October", "quantity": 1, "unitPrice": 380 }],
+    "taxRate": 0.05,
+    "paid": false
+  },
+  {
+    "id": "INV-1011",
+    "customer": { "id": "dunmore", "name": "Dunmore Dental" },
+    "issuedOn": "2026-11-09",
+    "dueOn": "2027-02-08",
+    "items": [{ "description": "Reminder emails", "quantity": 1, "unitPrice": 450 }],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "INV-1012",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-11-03",
+    "dueOn": "2027-02-02",
+    "items": [{ "description": "Support, October", "quantity": 9, "unitPrice": 95 }],
+    "taxRate": 0.2,
+    "paid": false
+  }
+]

@@ -1,0 +1,85 @@
+# Invoices for the judge: data/invoices.json, as accounting writes it in YAML.
+- id: INV-1001
+  customer:
+    id: acme
+    name: Acme Tools
+  issuedOn: 2026-07-01
+  dueOn: 2026-07-31
+  items:
+    - description: Workshop, two days
+      quantity: 2
+      unitPrice: 1200
+    - description: Travel
+      quantity: 1
+      unitPrice: 310.4
+  taxRate: 0.2
+  paid: true
+- id: INV-1002
+  customer:
+    id: acme
+    name: Acme Tools
+  issuedOn: 2026-09-01
+  dueOn: 2026-10-01
+  items:
+    - description: Support, September
+      quantity: 12
+      unitPrice: 95
+  taxRate: 0.2
+  discountCode: LOYAL15
+  paid: false
+- id: INV-1003
+  customer:
+    id: brightside
+    name: Brightside Bakery
+  issuedOn: 2026-06-15
+  dueOn: 2026-07-15
+  items:
+    - description: Point-of-sale setup
+      quantity: 1
+      unitPrice: 850
+    - description: Receipt printer
+      quantity: 2
+      unitPrice: 129.99
+  taxRate: 0.08
+  paid: false
+- id: INV-1004
+  customer:
+    id: brightside
+    name: Brightside Bakery
+  issuedOn: 2026-08-20
+  dueOn: 2026-09-19
+  items:
+    - description: Menu redesign
+      quantity: 1
+      unitPrice: 640
+  taxRate: 0.08
+  discountCode: WELCOME10
+  paid: true
+- id: INV-1005
+  customer:
+    id: corvid
+    name: Corvid Logistics
+  issuedOn: 2026-10-05
+  dueOn: 2026-11-04
+  items:
+    - description: Route planner licence
+      quantity: 25
+      unitPrice: 18.5
+    - description: Onboarding call
+      quantity: 1
+      unitPrice: 150
+  taxRate: 0.1
+  paid: false
+- id: INV-1006
+  customer:
+    id: corvid
+    name: Corvid Logistics
+  issuedOn: 2026-05-02
+  dueOn: 2026-06-01
+  items:
+    - description: Data migration
+      quantity: 1
+      unitPrice: 2300
+  taxRate: 0.1
+  discountCode: PARTNER25
+  paid: false

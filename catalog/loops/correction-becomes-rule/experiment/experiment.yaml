@@ -1,0 +1,73 @@
+# The before/after experiment of the loop correction-becomes-rule. Run it with
+#   npm run experiment -- correction-becomes-rule --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: correction-becomes-rule
+question: >-
+  In a first session the person corrects the agent: a filtered report has to say at the top what it covers. In a
+  second session, a fresh Claude Code in the same project adds another filter. Does it make the same mistake again,
+  with the loop and without it?
+
+task: task.md
+# Two sessions one after the other, in the same project and the same home: each a fresh Claude Code, so what Claude
+# Code keeps in ~/.claude (its memory) carries over, as it would for a real person.
+sessions:
+  - task: task.md
+    person:
+      # Said after the agent's first turn, whatever it held. In the run-tests-first pilots of this same issue, no
+      # report said what it was filtered by (3 of 3).
+      first_reply: >-
+        Thanks. One thing to fix: a filtered report has to say at the top what it covers, e.g. "Customer: Acme Tools
+        (acme)" above the figures. Accounting prints these reports and files them, and a printout of one customer's
+        summary must never pass for the whole company's.
+  - task: task-2.md
+    # No correction here: the person runs CI and takes the work as it is. The judge reads whether it repeats the
+    # mistake the person corrected in the first session.
+
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it. Nobody turns a correction into a rule; Claude Code may keep its own memory.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop wired by the sensorloop skill, built by hand from its card (arms/B/README.md):
+      LOOPS.md, which every session reads through CLAUDE.md, has a section "Rules from corrections", and tells the
+      agent to add each correction there as a dated rule before it fixes the work, and to follow those rules.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+  # The card logs the first correction of a kind and makes a rule at the second, which a person approves; with two
+  # sessions and no reply that depends on the work (NEEDS.md), arm B writes the rule at the first correction, in the
+  # person's own words. The person is the same in both arms.
+
+person:
+  max_reports: 2
+  session_minutes: 30
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run fails `session 2 names its filter` (the month's summary does not say which month)
+  # after `session 1 needed the correction` is true (its first hand-over did not say which customer).
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+# Its mistake shows in session 2, after the first hand-over (which is in session 1): judged at the end.
+judge_at: end
+qualify:
+  - ["value:session 1 needed the correction", "check:session 2 names its filter"]
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`).
+cast_markers:
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/\.sensorloop/LOOPS\.md"'
+    label: The agent writes the correction as a rule
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/memory/'
+    label: The agent writes a memory
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/src/report/render\.ts"'
+    label: The agent changes how the reports print

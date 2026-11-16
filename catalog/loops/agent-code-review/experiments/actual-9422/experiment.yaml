@@ -1,0 +1,66 @@
+# A before/after experiment of the loop agent-code-review on a real project: Actual Budget, at the commit pull request
+# #9422 started from. Run it with
+#   npm run experiment -- agent-code-review --name actual-9422 --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Why this pull request: packages/experiment/actual/SELECTION.md.
+#
+# The real mistake (#9422, "[AI] fix(csv-import): parse scientific-notation and >9-decimal amounts", 2026-11-03): the
+# agent's first version read an amount in scientific notation with parseFloat, past the parser's own handling of
+# comma decimals and currency signs, so `1,23e2` became 1 and `$1.23e2` became null (the import drops that row).
+# CodeRabbit's review (CHANGES_REQUESTED, Major) found it by reading the diff; its review of the second version found
+# `1.234e2` read as 123400 and `0.0000001e8` as 1e-7. The author fixed both (9f1966ee, then 9ed8cdd5 and 9622f77e).
+# Loop: a fresh-context reviewer that reads the committed diff and sends back a confirmed high-severity finding is
+# agent-code-review's sensor and failure, before the pull request instead of after it.
+loop: agent-code-review
+question: >-
+  An amount in scientific notation has to be read as the parser reads any other amount, with its decimal comma or its
+  currency sign, before the exponent applies. Does the agent hand over a parser that does, with a fresh-context
+  reviewer and without one?
+
+task: task.md
+
+# Actual's CI (.github/workflows/check.yml at this commit), for the workspace the change lives in (@actual-app/core):
+# its typecheck (12 s), the formatter half of `yarn lint` (2 s), and its node tests in the folder the change touches
+# (30 s). The workspace's whole node suite takes 3 to 5 minutes on 2 CPUs, past the driver's 5 minutes a step
+# (NEEDS.md). Not here: oxlint, the other half of `yarn lint`, which cannot run on this Docker host (NEEDS.md).
+ci:
+  - yarn workspace @actual-app/core typecheck
+  - yarn oxfmt --check .
+  - ENV=node yarn workspace @actual-app/core vitest --run src/shared
+
+acceptance: hidden/judge.mjs
+judge_minutes: 10
+code_paths: [packages/loot-core/src]
+
+# The real pull request and its fix are on GitHub; the session cannot reach it.
+blocked_hosts: [github.com, api.github.com, codeload.github.com, raw.githubusercontent.com, objects.githubusercontent.com]
+
+arms:
+  A:
+    about: Actual as its team keeps it, with its own CLAUDE.md and AGENTS.md, at the commit #9422 started from.
+    overlay: null
+
+person:
+  max_reports: 2
+  session_minutes: 60
+
+metrics:
+  verdicts:
+    - the issue                     # the CSV's amounts parse: scientific notation, more than nine decimals
+    - the review                    # a comma decimal or a currency sign in the mantissa; 1.234e2; tiny and huge mantissas
+    - existing parsing unchanged    # the base commit's util tests
+  counts:
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # agent-code-review qualifies when arm A's first hand-over fails the review's checks: any of the five below.
+
+qualify:
+  - "check:a comma decimal in the mantissa"
+  - "check:a currency sign before the mantissa"
+  - "check:three digits after the separator in the mantissa"
+  - "check:a small mantissa with a positive exponent"
+  - "check:a large mantissa with a negative exponent"

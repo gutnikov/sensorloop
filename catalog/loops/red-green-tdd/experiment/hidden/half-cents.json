@@ -1,0 +1,12 @@
+[
+  { "id": "H-1", "customer": { "id": "brightside", "name": "Brightside Bakery" }, "issuedOn": "2026-11-02", "dueOn": "2026-12-02",
+    "items": [{ "description": "Catering trays", "quantity": 1, "unitPrice": 21.95 }], "taxRate": 0.1, "paid": false },
+  { "id": "H-2", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-11-02", "dueOn": "2026-12-02",
+    "items": [{ "description": "Cable ties", "quantity": 1, "unitPrice": 2.9 }], "taxRate": 0.05, "paid": false },
+  { "id": "H-3", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-11-02", "dueOn": "2026-12-02",
+    "items": [{ "description": "Toolbox", "quantity": 1, "unitPrice": 43.9 }], "taxRate": 0.05, "paid": false },
+  { "id": "H-4", "customer": { "id": "corvid", "name": "Corvid Logistics" }, "issuedOn": "2026-11-02", "dueOn": "2026-12-02",
+    "items": [{ "description": "Pallet labels", "quantity": 1, "unitPrice": 10.35 }], "taxRate": 0.1, "paid": false },
+  { "id": "H-5", "customer": { "id": "corvid", "name": "Corvid Logistics" }, "issuedOn": "2026-11-02", "dueOn": "2026-12-02",
+    "items": [{ "description": "Training", "quantity": 2, "unitPrice": 50 }], "taxRate": 0.2, "paid": false }
+]

@@ -1984,3 +1984,145 @@ button.seg-key:focus-visible kbd {
     scroll-behavior: auto;
   }
 }
+
+/* A loop's before/after: the same task without the loop and with it, two recordings side by side, every run below. */
+.ab {
+  position: relative;
+  margin-top: 2rem;
+  padding: 1.6rem clamp(1rem, 2.5vw, 2rem) 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--pane);
+}
+
+.ab h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.25rem;
+}
+
+.ab-question {
+  margin: 0 0 0.5rem;
+}
+
+.ab-conditions {
+  margin: 0 0 1rem;
+  color: var(--dim);
+  font-size: 0.9375rem;
+}
+
+.ab-task {
+  margin: 0 0 1.25rem;
+}
+
+.ab-task summary {
+  cursor: pointer;
+  color: var(--dim);
+}
+
+.ab-task pre {
+  margin: 0.6rem 0 0;
+  padding: 0.8rem 1.5ch;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--well);
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+}
+
+.ab-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 1.25rem;
+  margin: 0 0 1.25rem;
+}
+
+.ab-arm {
+  min-width: 0;
+  margin: 0;
+}
+
+.ab-arm figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1ch;
+  margin: 0 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.875rem;
+}
+
+.ab-arm-name {
+  font-weight: 700;
+}
+
+.ab-arm-count {
+  color: var(--dim);
+}
+
+/* The player's box keeps a terminal's shape before it loads, so pressing play does not move the page. */
+.ab .cast-player {
+  aspect-ratio: 6 / 5; /* a terminal of 90 columns and 34 rows */
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--well);
+}
+
+/* Before the first press, the box holds only this button; the player replaces it. */
+.ab .cast-play {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  height: 100%;
+  padding: 1.25rem 1.5rem;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ab .cast-play:hover {
+  color: var(--dim);
+}
+
+.ab-runs {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 0.9375rem;
+}
+
+.ab-runs caption {
+  padding: 0 0 0.4rem;
+  color: var(--dim);
+  text-align: left;
+}
+
+.ab-runs th,
+.ab-runs td {
+  padding: 0.4rem 1.5ch;
+  text-align: left;
+}
+
+.ab-runs thead th {
+  color: var(--dim);
+  background: var(--grad) left bottom / 100% 1px no-repeat;
+}
+
+.ab-runs tbody tr + tr td {
+  border-top: 1px solid var(--line-soft);
+}
+
+.ab-runs tr.is-shown td {
+  font-weight: 700;
+}
+
+.ab-notes {
+  margin-top: 1.25rem;
+}

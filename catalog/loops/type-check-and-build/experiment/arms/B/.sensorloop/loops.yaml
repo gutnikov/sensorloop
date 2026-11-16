@@ -1,0 +1,19 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npx tsc --noEmit     # from CI: the project's scripts do not check types
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits: []
+loops:
+  - id: type-check-and-build
+    status: active
+    wiring: >-
+      PostToolUse on Edit|Write|MultiEdit runs `npx tsc --noEmit` (.sensorloop/hooks/check.sh typecheck).
+      Stop runs `npm run build` (.sensorloop/hooks/check.sh build).
+    proved: 2026-11-15

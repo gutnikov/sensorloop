@@ -1,0 +1,97 @@
+diff --git a/package-lock.json b/package-lock.json
+index 86f1b9e..a029032 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -7,6 +7,9 @@
+     "": {
+       "name": "invoicer",
+       "version": "0.4.0",
++      "dependencies": {
++        "yaml": "2.9.1"
++      },
+       "bin": {
+         "invoicer": "dist/cli.js"
+       },
+@@ -1651,6 +1654,21 @@
+       "engines": {
+         "node": ">=8"
+       }
++    },
++    "node_modules/yaml": {
++      "version": "2.9.1",
++      "resolved": "https://registry.npmjs.org/yaml/-/yaml-2.9.1.tgz",
++      "integrity": "sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==",
++      "license": "ISC",
++      "bin": {
++        "yaml": "bin.mjs"
++      },
++      "engines": {
++        "node": ">= 14.6"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/eemeli"
++      }
+     }
+   }
+ }
+diff --git a/package.json b/package.json
+index ad55bcf..1816bd9 100644
+--- a/package.json
++++ b/package.json
+@@ -18,5 +18,8 @@
+     "tsx": "4.23.15",
+     "typescript": "5.9.3",
+     "vitest": "3.2.7"
++  },
++  "dependencies": {
++    "yaml": "2.9.1"
+   }
+ }
+diff --git a/src/parse.ts b/src/parse.ts
+index 5aa805e..7893d5e 100644
+--- a/src/parse.ts
++++ b/src/parse.ts
+@@ -1,4 +1,5 @@
+ import { readFileSync } from 'node:fs';
++import { parse as parseYaml } from 'yaml';
+ import type { Customer, Invoice, LineItem } from './types.js';
+ 
+ /** A problem with the invoices file, reported to the user as it is. */
+@@ -56,6 +57,11 @@ export function parseInvoice(raw: any, where: string): Invoice {
+   };
+ }
+ 
++function invoiceList(data: unknown): Invoice[] {
++  if (!Array.isArray(data)) throw new InvoiceFileError('expected a list of invoices');
++  return data.map((raw, i) => parseInvoice(raw, `invoice #${i + 1}`));
++}
++
+ export function parseInvoices(json: string): Invoice[] {
+   let data: unknown;
+   try {
+@@ -63,10 +69,22 @@ export function parseInvoices(json: string): Invoice[] {
+   } catch (error) {
+     throw new InvoiceFileError(`not JSON: ${(error as Error).message}`);
+   }
+-  if (!Array.isArray(data)) throw new InvoiceFileError('expected a list of invoices');
+-  return data.map((raw, i) => parseInvoice(raw, `invoice #${i + 1}`));
++  return invoiceList(data);
++}
++
++/** The same invoices, written in YAML. */
++export function parseInvoicesYaml(text: string): Invoice[] {
++  let data: unknown;
++  try {
++    data = parseYaml(text);
++  } catch (error) {
++    throw new InvoiceFileError(`not YAML: ${(error as Error).message}`);
++  }
++  return invoiceList(data);
+ }
+ 
++/** A .yaml or .yml file is read as YAML, anything else as JSON. */
+ export function readInvoices(path: string): Invoice[] {
+-  return parseInvoices(readFileSync(path, 'utf8'));
++  const text = readFileSync(path, 'utf8');
++  return /\.ya?ml$/i.test(path) ? parseInvoicesYaml(text) : parseInvoices(text);
+ }

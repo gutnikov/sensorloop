@@ -1,0 +1,38 @@
+# The before/after experiment of the loop scripted-model-tests. Run it with
+#   npm run experiment -- scripted-model-tests --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: scripted-model-tests
+question: >-
+  The agent moves categorize from parsing the model's text to a tool call. Its tests script the model with a fake.
+  Does the code it leaves handle the replies the model really gives (a thinking block before the call, a call cut off
+  at max_tokens, no call at all, a refusal), with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it, with its README, CI, and tests that script the model's text replies.
+    overlay: null
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run passes the judge's `plain tool call` check and fails one of the reply checks
+  # (`reply: ...`): a valid reply it does not use, or an unusable one that crashes it, returns wrong categories or
+  # loops. The `request the provider accepts` check is reported, and does not count.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - ["pass:plain tool call", "check:reply: *"]

@@ -1,0 +1,8 @@
+[
+  { "id": "OK-1", "customer": { "id": "acme", "name": "Acme Tools" }, "currency": "EUR",
+    "issuedOn": "2026-08-01", "dueOn": "2026-08-31", "items": [{ "description": "Training", "quantity": 1, "unitPrice": 100 }],
+    "taxRate": 0.2, "paid": true },
+  { "id": "BAD-7", "customer": { "id": "kyoto", "name": "Kyoto Ceramics" }, "currency": "JPY",
+    "issuedOn": "2026-08-01", "dueOn": "2026-08-31", "items": [{ "description": "Glaze", "quantity": 1, "unitPrice": 12000 }],
+    "taxRate": 0.1, "paid": false }
+]

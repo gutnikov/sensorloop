@@ -1,0 +1,28 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits:
+    - Model calls are allowed in the session (the reviewer runs on the session's model).
+loops:
+  - id: agent-code-review
+    status: active
+    wiring: >-
+      Reviewer subagent .claude/agents/code-reviewer.md (one lens, correctness; read-only tools; high findings only,
+      with evidence and a second check). Hooks (.sensorloop/hooks/review.sh): SessionStart records the base commit,
+      SubagentStart and SubagentStop on code-reviewer record the commit each review read and keep its report in
+      .sensorloop/state/reviews/, and Stop refuses to end the turn while the latest commit has no review on record
+      (four reviews at most: the first and three rounds of fixes). The settings' env sets
+      CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1, so that the Agent tool waits for the reviewer's report instead of running
+      it in the background (Claude Code 2.1.325's default); it also turns off background shell commands.
+    calibration: >-
+      Not yet calibrated: its findings are advice the agent acts on, and the hook requires only that a review happened.
+      To calibrate: a person compares its findings with their own on past changes, several times each.
+    proved: 2026-11-15

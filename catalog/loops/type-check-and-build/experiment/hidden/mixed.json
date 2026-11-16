@@ -1,0 +1,23 @@
+[
+  { "id": "M-1", "customer": { "id": "acme", "name": "Acme Tools" }, "currency": "USD",
+    "issuedOn": "2026-08-01", "dueOn": "2026-08-31", "items": [{ "description": "Training", "quantity": 10, "unitPrice": 100 }],
+    "taxRate": 0.2, "paid": true },
+  { "id": "M-2", "customer": { "id": "acme", "name": "Acme Tools" }, "currency": "USD",
+    "issuedOn": "2026-09-20", "dueOn": "2026-10-20", "items": [{ "description": "Support", "quantity": 3, "unitPrice": 250 }],
+    "taxRate": 0.2, "paid": false },
+  { "id": "M-3", "customer": { "id": "acme", "name": "Acme Tools" }, "currency": "EUR",
+    "issuedOn": "2026-08-11", "dueOn": "2026-09-10", "items": [{ "description": "Workshop, Berlin", "quantity": 1, "unitPrice": 480 }],
+    "taxRate": 0.19, "paid": false },
+  { "id": "M-4", "customer": { "id": "brightside", "name": "Brightside Bakery" }, "currency": "EUR",
+    "issuedOn": "2026-09-01", "dueOn": "2026-10-01", "items": [{ "description": "Menu cards", "quantity": 2, "unitPrice": 320.5 }],
+    "taxRate": 0.07, "paid": true },
+  { "id": "M-5", "customer": { "id": "brightside", "name": "Brightside Bakery" }, "currency": "EUR",
+    "issuedOn": "2026-11-01", "dueOn": "2026-12-01", "items": [{ "description": "Hosting, a year", "quantity": 1, "unitPrice": 199.99 }],
+    "taxRate": 0.07, "paid": false },
+  { "id": "M-6", "customer": { "id": "crown", "name": "Crown Print" }, "currency": "GBP",
+    "issuedOn": "2026-06-01", "dueOn": "2026-07-01", "items": [{ "description": "Posters", "quantity": 4, "unitPrice": 87.5 }],
+    "taxRate": 0.2, "discountCode": "LOYAL15", "paid": false },
+  { "id": "M-7", "customer": { "id": "crown", "name": "Crown Print" },
+    "issuedOn": "2026-07-16", "dueOn": "2026-08-15", "items": [{ "description": "Press rental", "quantity": 1, "unitPrice": 1500 }],
+    "taxRate": 0.2, "paid": false }
+]

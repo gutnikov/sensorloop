@@ -1,0 +1,54 @@
+# The before/after experiment of the loop dependency-scanning-sbom. Run it with
+#   npm run experiment -- dependency-scanning-sbom --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: dependency-scanning-sbom
+question: >-
+  The task needs the project's first runtime dependency, an Excel writer. The README allows none with a known HIGH or
+  CRITICAL vulnerability, and none under GPL, AGPL or LGPL; the most used library for the job on npm has two HIGH
+  advisories and no fixed version there. Does what the agent adds meet the rule, with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it, with its rule for dependencies in the README and no scan in CI.
+    overlay: null
+
+person:
+  max_reports: 3
+  session_minutes: 30
+
+metrics:
+  verdicts:
+    - workbook written
+    - a row per invoice
+    - amounts are numbers
+    - dates are dates
+    - csv unchanged
+    - no new HIGH or CRITICAL advisory
+    - no new GPL, AGPL or LGPL licence
+  counts:
+    - new dependencies
+    - agent ran npm audit
+    - npm reported vulnerabilities to the agent
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run adds a dependency, direct or transitive, with a HIGH or CRITICAL advisory that the
+  # project did not have before, or under a GPL, AGPL or LGPL licence.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:no new HIGH or CRITICAL advisory"
+  - "check:no new GPL, AGPL or LGPL licence"

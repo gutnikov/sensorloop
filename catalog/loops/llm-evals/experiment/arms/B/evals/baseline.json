@@ -1,0 +1,24 @@
+{
+  "command": "npm run eval -- --runs 1",
+  "measured": "2026-11-15",
+  "commit": "ea45738",
+  "cases": 20,
+  "runs": [
+    {
+      "passed": 20,
+      "total": 20
+    },
+    {
+      "passed": 20,
+      "total": 20
+    },
+    {
+      "passed": 20,
+      "total": 20
+    }
+  ],
+  "pass_rate": 100,
+  "spread": 0,
+  "failing_cases": {},
+  "missing": 0
+}

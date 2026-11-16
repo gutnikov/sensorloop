@@ -1,0 +1,28 @@
+[
+  {
+    "id": "NL-1",
+    "customer": { "id": "tulip", "name": "Tulip Studio", "country": "NL" },
+    "issuedOn": "2026-11-02",
+    "dueOn": "2026-12-02",
+    "items": [{ "description": "Design sprint", "quantity": 1, "unitPrice": 1000 }],
+    "paid": false
+  },
+  {
+    "id": "NL-2",
+    "customer": { "id": "tulip", "name": "Tulip Studio", "country": "NL" },
+    "issuedOn": "2026-11-02",
+    "dueOn": "2026-12-02",
+    "items": [{ "description": "Printed style guides", "quantity": 10, "unitPrice": 50 }],
+    "taxRate": 0.09,
+    "paid": false
+  },
+  {
+    "id": "US-1",
+    "customer": { "id": "brightside", "name": "Brightside Bakery", "country": "US" },
+    "issuedOn": "2026-11-02",
+    "dueOn": "2026-12-02",
+    "items": [{ "description": "Menu update", "quantity": 1, "unitPrice": 100 }],
+    "taxRate": 0.08,
+    "paid": false
+  }
+]

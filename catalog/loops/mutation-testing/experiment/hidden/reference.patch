@@ -1,0 +1,113 @@
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..c50d56e 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -1,16 +1,32 @@
+ #!/usr/bin/env node
++import { realpathSync } from 'node:fs';
++import { fileURLToPath } from 'node:url';
+ import { toCsv } from './export/csv.js';
+ import { InvoiceFileError, readInvoices } from './parse.js';
+ import { aging } from './report/aging.js';
+ import { renderAging, renderSummary } from './report/render.js';
+ import { summarize } from './report/summary.js';
++import type { Invoice } from './types.js';
+ 
+ const USAGE = `Usage:
+-  invoicer summary <file>                     billed, paid and outstanding, overall and per customer
+-  invoicer aging <file> [--today YYYY-MM-DD]  overdue invoices, by how long they are overdue
+-  invoicer csv <file>                         one row per invoice, for spreadsheets`;
++  invoicer summary <file> [--customer <id>]                     billed, paid and outstanding, overall and per customer
++  invoicer aging <file> [--today YYYY-MM-DD] [--customer <id>]  overdue invoices, by how long they are overdue
++  invoicer csv <file>                                           one row per invoice, for spreadsheets`;
+ 
+-function main(args: string[]): number {
++function option(args: string[], name: string): string | undefined {
++  const at = args.indexOf(name);
++  return at >= 0 ? args[at + 1] : undefined;
++}
++
++/** Only one customer's invoices, when --customer names one. */
++function forCustomer(invoices: Invoice[], id: string | undefined): Invoice[] {
++  if (id === undefined) return invoices;
++  const theirs = invoices.filter((invoice) => invoice.customer.id === id);
++  if (theirs.length === 0) throw new InvoiceFileError(`no invoices for customer ${id}`);
++  return theirs;
++}
++
++export function main(args: string[]): number {
+   const [command, file, ...rest] = args;
+   if (!command || !file) {
+     console.error(USAGE);
+@@ -19,12 +35,12 @@ function main(args: string[]): number {
+   const invoices = readInvoices(file);
+   switch (command) {
+     case 'summary':
+-      process.stdout.write(renderSummary(summarize(invoices)));
++      process.stdout.write(renderSummary(summarize(forCustomer(invoices, option(rest, '--customer')))));
+       return 0;
+     case 'aging': {
+       const at = rest.indexOf('--today');
+       const today = at >= 0 ? rest[at + 1] : new Date().toISOString().slice(0, 10);
+-      process.stdout.write(renderAging(aging(invoices, today)));
++      process.stdout.write(renderAging(aging(forCustomer(invoices, option(rest, '--customer')), today)));
+       return 0;
+     }
+     case 'csv':
+@@ -36,8 +52,10 @@ function main(args: string[]): number {
+   }
+ }
+ 
++// The command line runs main; a test imports it and calls main itself.
++const isCommand = process.argv[1] !== undefined && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url);
+ try {
+-  process.exitCode = main(process.argv.slice(2));
++  if (isCommand) process.exitCode = main(process.argv.slice(2));
+ } catch (error) {
+   if (!(error instanceof InvoiceFileError)) throw error;
+   console.error(`invoicer: ${error.message}`);
+diff --git a/tests/cli.test.ts b/tests/cli.test.ts
+new file mode 100644
+index 0000000..4e7a307
+--- /dev/null
++++ b/tests/cli.test.ts
+@@ -0,0 +1,39 @@
++import { describe, expect, it, vi } from 'vitest';
++import { main } from '../src/cli.js';
++
++const INVOICES = 'data/invoices.json';
++
++/** What the command prints, and checks that it succeeds. */
++function output(...args: string[]): string {
++  const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
++  try {
++    expect(main(args)).toBe(0);
++    return write.mock.calls.map(([chunk]) => String(chunk)).join('');
++  } finally {
++    write.mockRestore();
++  }
++}
++
++describe('--customer', () => {
++  it('limits the summary to that customer', () => {
++    const summary = output('summary', INVOICES, '--customer', 'acme');
++    expect(summary).toContain('Acme Tools');
++    expect(summary).not.toContain('Corvid');
++    expect(summary).not.toContain('Brightside');
++  });
++
++  it('limits the aging report to that customer', () => {
++    const report = output('aging', INVOICES, '--today', '2026-11-01', '--customer', 'corvid');
++    expect(report).toContain('$1,897.50');
++    expect(report).not.toContain('$4,259.08');
++  });
++
++  it('leaves the reports as they were without it', () => {
++    const summary = output('summary', INVOICES);
++    for (const name of ['Acme Tools', 'Brightside Bakery', 'Corvid Logistics']) expect(summary).toContain(name);
++  });
++
++  it('refuses an id no invoice has, and names it', () => {
++    expect(() => main(['summary', INVOICES, '--customer', 'nobody'])).toThrow('no invoices for customer nobody');
++  });
++});

@@ -1,0 +1,8 @@
+[
+  { "id": "G-1", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-08-01", "dueOn": "2026-08-31",
+    "items": [{ "description": "Training", "quantity": 10, "unitPrice": 100 }], "taxRate": 0.2, "paid": true },
+  { "id": "BAD-3", "customer": { "id": "acme", "name": "Acme Tools" }, "issuedOn": "2026-09-31x", "dueOn": "2026-10-31",
+    "items": [{ "description": "Support", "quantity": 1, "unitPrice": 250 }], "taxRate": 0.2, "paid": false },
+  { "id": "G-2", "customer": { "id": "corvid", "name": "Corvid Logistics" }, "issuedOn": "2026-09-01", "dueOn": "2026-10-01",
+    "items": [{ "description": "Labels", "quantity": 3, "unitPrice": 250 }], "taxRate": 0.2, "paid": false }
+]

@@ -1,0 +1,85 @@
+# A before/after experiment of the loop agent-code-review on a real project: Actual Budget, at the commit pull request
+# #9477 started from. Run it with
+#   npm run experiment -- agent-code-review --name actual-9477 --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Why this pull request: packages/experiment/actual/SELECTION.md.
+#
+# The real mistake (#9477, "[AI] Declare location permissions in the iOS and Android apps", 2026-11-08): the agent
+# declared the permissions in the two apps' manifests and said no web code had to change. CodeRabbit's review
+# (CHANGES_REQUESTED, Major) found by reading the code that when the app's web view cannot query the permission status,
+# useLocationPermission reports no access and the screen hides Request Location, so the button still cannot work; and
+# that a permission granted earlier is not restored when the screen opens again. The author fixed both in the hook,
+# with tests (1a14824c to 3ce2c874).
+# Loop: a fresh-context reviewer that reads the committed diff and sends back a confirmed high-severity finding is
+# agent-code-review's sensor and failure, before the pull request instead of after it.
+loop: agent-code-review
+question: >-
+  "Request Location does nothing in the iOS app" needs more than the app's permission declaration: the page must keep
+  offering the request when the web view cannot tell it the permission's status. Does the agent hand over a fix that
+  does, with a fresh-context reviewer and without one?
+
+task: task.md
+
+# Actual's CI (.github/workflows/check.yml at this commit), for the workspace the change lives in (@actual-app/web): its
+# typecheck (105 s on 2 CPUs), the formatter half of `yarn lint` (2 s), and its tests in the folders of the hook and the
+# location service (40 s). The workspace's whole suite does not fit the driver's 5 minutes a step (NEEDS.md). Not here:
+# oxlint, the other half of `yarn lint`, which cannot run on this Docker host (NEEDS.md); the native apps' builds.
+ci:
+  - yarn workspace @actual-app/web typecheck
+  - yarn oxfmt --check .
+  - yarn workspace @actual-app/web vitest --run src/hooks src/payees
+
+acceptance: hidden/judge.mjs
+judge_minutes: 10
+code_paths: [packages/desktop-client/src, packages/mobile-client]
+
+# The real pull request and its fix are on GitHub; the session cannot reach it.
+blocked_hosts: [github.com, api.github.com, codeload.github.com, raw.githubusercontent.com, objects.githubusercontent.com]
+
+arms:
+  A:
+    about: Actual as its team keeps it, with its own CLAUDE.md and AGENTS.md, at the commit #9477 started from.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop, built by hand from the card: a read-only reviewer subagent with a fresh context
+      (one lens, correctness) reads the committed diff, and a Stop hook keeps the turn going while the latest commit has
+      no review on record. Its hooks are merged with the project's own.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 2
+  session_minutes: 60
+
+metrics:
+  verdicts:
+    - the issue                     # Info.plist declares why the app uses location; a request that succeeds grants it
+    - the review                    # no status to query: the request is still offered, and a grant restored on reopening
+    - unchanged                     # granted, prompt and denied statuses read as before; a refused request is not offered again
+  counts:
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # agent-code-review qualifies when arm A's first hand-over fails the review's checks: any of the three below.
+
+# The issue's own case, the iOS app (hidden/location-permission.app.judge.test.ts), whichever way a version reaches the
+# device's permission. The browser checks stay as checks, not as the mistake: see hidden/CALIBRATION.md.
+qualify:
+  - "check:in the app: Request Location is offered"
+  - "check:in the app: a request that succeeds grants location"
+  - "check:in the app: reopening the screen after a grant restores location"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`).
+cast_markers:
+  - match: '^(Edit|Write|MultiEdit) .*"file_path":"[^"]*(Info\.plist|AndroidManifest\.xml)'
+    label: The agent declares the permission in an app's manifest
+  - match: '^(Edit|Write|MultiEdit) .*"file_path":"[^"]*useLocationPermission'
+    label: The agent changes the hook behind Request Location
+  - match: '^Bash .*git commit'
+    label: The agent commits its work
+  - match: '^Agent .*code-reviewer'
+    label: The agent asks the reviewer for a review

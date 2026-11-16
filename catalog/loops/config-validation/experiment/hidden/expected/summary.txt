@@ -1,0 +1,29 @@
+USD
+
+Invoices     2
+Billed       $1,820.86
+Paid         $622.08
+Outstanding  $1,198.78
+
+Customer           Invoices     Billed  Outstanding
+Brightside Bakery         2  $1,820.86    $1,198.78
+
+GBP
+
+Invoices     2
+Billed       £4,415.28
+Paid         £3,252.48
+Outstanding  £1,162.80
+
+Customer    Invoices     Billed  Outstanding
+Acme Tools         2  £4,415.28    £1,162.80
+
+CAD
+
+Invoices     2
+Billed       CA$2,454.38
+Paid         CA$0.00
+Outstanding  CA$2,454.38
+
+Customer          Invoices       Billed  Outstanding
+Corvid Logistics         2  CA$2,454.38  CA$2,454.38

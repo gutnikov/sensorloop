@@ -1,0 +1,245 @@
+diff --git a/src/categorize/categorize.ts b/src/categorize/categorize.ts
+index 140ac9b..61af810 100644
+--- a/src/categorize/categorize.ts
++++ b/src/categorize/categorize.ts
+@@ -1,6 +1,6 @@
+ import Anthropic from '@anthropic-ai/sdk';
+ import type { Invoice } from '../types.js';
+-import { type Category, isCategory } from './categories.js';
++import { CATEGORIES, type Category, isCategory } from './categories.js';
+ import { linesMessage, SYSTEM_PROMPT } from './prompt.js';
+ import { settings } from './settings.js';
+ 
+@@ -20,37 +20,54 @@ export interface CategorizedLine {
+   category: Category;
+ }
+ 
++/** The tool the model answers with: the categories of the lines, in their order. */
++export const SAVE_CATEGORIES: Anthropic.Tool = {
++  name: 'save_categories',
++  description: 'Save the category of each line of the invoice, in the order of the lines.',
++  input_schema: {
++    type: 'object',
++    properties: {
++      categories: {
++        type: 'array',
++        description: 'One category per line, in the order of the lines.',
++        items: { type: 'string', enum: [...CATEGORIES] },
++      },
++    },
++    required: ['categories'],
++  },
++};
++
+ export function defaultClient(): ModelClient {
+   return new Anthropic();
+ }
+ 
+ /** The category of each line, in the order of the lines. One request to the model. */
+ export async function categorizeLines(lines: string[], client: ModelClient = defaultClient()): Promise<Category[]> {
++  // tool_choice stays auto: DeepSeek refuses a forced tool while thinking is on, and the prompt asks for the call.
+   const reply = await client.messages.create({
+     model: settings.model,
+     max_tokens: settings.maxTokens,
+     temperature: settings.temperature,
+     system: SYSTEM_PROMPT,
++    tools: [SAVE_CATEGORIES],
+     messages: [{ role: 'user', content: linesMessage(lines) }],
+   });
+   if (reply.stop_reason === 'max_tokens') {
+     throw new CategorizeError(`the answer was cut off at ${settings.maxTokens} tokens`);
+   }
+-  const text = reply.content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join('\n');
+-  return parseAnswer(text, lines.length);
++  const call = reply.content.find(
++    (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use' && block.name === SAVE_CATEGORIES.name,
++  );
++  if (!call) {
++    const said = reply.content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join(' ');
++    throw new CategorizeError(`the model did not call ${SAVE_CATEGORIES.name} (stop: ${reply.stop_reason}): ${excerpt(said)}`);
++  }
++  return checkCategories((call.input as { categories?: unknown } | null)?.categories, lines.length);
+ }
+ 
+-/** The categories in the model's answer: its last ```json block, or else its last JSON list. */
+-export function parseAnswer(text: string, count: number): Category[] {
+-  const fenced = [...text.matchAll(/```json\s*([\s\S]*?)```/g)].at(-1)?.[1];
+-  const json = fenced ?? text.slice(text.lastIndexOf('['), text.lastIndexOf(']') + 1);
+-  let list: unknown;
+-  try {
+-    list = JSON.parse(json);
+-  } catch {
+-    throw new CategorizeError(`no JSON list of categories in the answer: ${excerpt(text)}`);
+-  }
+-  if (!Array.isArray(list)) throw new CategorizeError(`the answer's JSON is not a list: ${excerpt(json)}`);
++/** The categories of a save_categories call, checked: a list of known categories, one per line. */
++export function checkCategories(list: unknown, count: number): Category[] {
++  if (!Array.isArray(list)) throw new CategorizeError(`save_categories got no list of categories: ${excerpt(JSON.stringify(list) ?? '')}`);
+   if (list.length !== count) throw new CategorizeError(`expected ${count} categories, the answer has ${list.length}`);
+   const unknown = list.find((category) => !isCategory(category));
+   if (unknown !== undefined) throw new CategorizeError(`unknown category in the answer: ${JSON.stringify(unknown)}`);
+diff --git a/src/categorize/prompt.ts b/src/categorize/prompt.ts
+index 1a5ea47..e3c4529 100644
+--- a/src/categorize/prompt.ts
++++ b/src/categorize/prompt.ts
+@@ -43,9 +43,8 @@ Examples:
+ - "Fix: totals wrong on the monthly report" -> Support
+ - "Hotel, 2 nights" -> Rebilled expenses
+ 
+-How to answer: first write one short note per line saying what was sold and which rule or definition decides its
+-category. Then give the categories as a JSON list of strings in a \`\`\`json block: one category per line, in the
+-order of the lines, each spelled exactly as in the list above.`;
++How to answer: call the tool save_categories once, with the categories of all the lines: one category per line, in
++the order of the lines, each spelled exactly as in the list above.`;
+ 
+ /** The user message: the invoice's lines, numbered from 1. */
+ export function linesMessage(lines: string[]): string {
+diff --git a/tests/categorize.test.ts b/tests/categorize.test.ts
+index 086d212..73e289b 100644
+--- a/tests/categorize.test.ts
++++ b/tests/categorize.test.ts
+@@ -1,8 +1,8 @@
+ import { describe, expect, it } from 'vitest';
+-import { CategorizeError, categorizeInvoices, categorizeLines, parseAnswer } from '../src/categorize/categorize.js';
++import { CategorizeError, categorizeInvoices, categorizeLines } from '../src/categorize/categorize.js';
+ import { SYSTEM_PROMPT } from '../src/categorize/prompt.js';
+ import type { Invoice } from '../src/types.js';
+-import { answer, fakeModel, textReply } from './fake-model.js';
++import { call, fakeModel, reply, text, thinking, toolReply } from './fake-model.js';
+ 
+ function invoice(id: string, ...descriptions: string[]): Invoice {
+   return {
+@@ -17,53 +17,67 @@ function invoice(id: string, ...descriptions: string[]): Invoice {
+ }
+ 
+ describe('categorizeLines', () => {
+-  it('puts each line in the category the model answers', async () => {
+-    const model = fakeModel(textReply(answer(['Hardware', 'Consulting'])));
++  it('puts each line in the category of the save_categories call', async () => {
++    const model = fakeModel(toolReply(['Hardware', 'Consulting']));
+     const categories = await categorizeLines(['Receipt printer', 'Installation of the printer'], model);
+     expect(categories).toEqual(['Hardware', 'Consulting']);
+     expect(model.unused()).toBe(0);
+   });
+ 
+-  it('sends the prompt as the system message and the lines numbered', async () => {
+-    const model = fakeModel(textReply(answer(['Software'])));
++  it('offers the tool, with the prompt as the system message and the lines numbered', async () => {
++    const model = fakeModel(toolReply(['Software']));
+     await categorizeLines(['Route planner licence, 12 months'], model);
+     expect(model.requests).toHaveLength(1);
+     expect(model.requests[0].system).toBe(SYSTEM_PROMPT);
++    expect(model.requests[0].tools?.map((t) => ('name' in t ? t.name : t))).toEqual(['save_categories']);
+     expect(model.requests[0].messages).toEqual([
+       { role: 'user', content: 'The lines of the invoice:\n\n1. Route planner licence, 12 months' },
+     ]);
+   });
+ 
++  it('finds the call after text, or with no thinking before it', async () => {
++    const withText = fakeModel(reply([thinking(), text('Saving them.'), call({ categories: ['Support'] })], 'tool_use'));
++    expect(await categorizeLines(['Printer maintenance'], withText)).toEqual(['Support']);
++    const bare = fakeModel(reply([call({ categories: ['Support'] })], 'tool_use'));
++    expect(await categorizeLines(['Printer maintenance'], bare)).toEqual(['Support']);
++  });
++
+   it('refuses a category it does not know', async () => {
+-    const model = fakeModel(textReply(answer(['Services'])));
++    const model = fakeModel(toolReply(['Services']));
+     await expect(categorizeLines(['Data migration'], model)).rejects.toThrow(CategorizeError);
+   });
+ 
+-  it('refuses an answer with fewer categories than lines', async () => {
+-    const model = fakeModel(textReply(answer(['Hardware'])));
++  it('refuses a call with fewer categories than lines', async () => {
++    const model = fakeModel(toolReply(['Hardware']));
+     await expect(categorizeLines(['Receipt printer', 'Hotel, 2 nights'], model)).rejects.toThrow(/expected 2 categories/);
+   });
+ 
+-  it('refuses an answer with no JSON list', async () => {
+-    const model = fakeModel(textReply('Line 1 is a printer, so Hardware.'));
+-    await expect(categorizeLines(['Receipt printer'], model)).rejects.toThrow(/no JSON list/);
++  it('refuses a call whose categories are not a list', async () => {
++    const model = fakeModel(toolReply('Hardware'));
++    await expect(categorizeLines(['Receipt printer'], model)).rejects.toThrow(/no list of categories/);
++  });
++
++  it('refuses an answer with no call', async () => {
++    const model = fakeModel(reply([thinking(), text('Line 1 is a printer, so Hardware.')], 'end_turn'));
++    await expect(categorizeLines(['Receipt printer'], model)).rejects.toThrow(/did not call save_categories/);
+   });
+-});
+ 
+-describe('parseAnswer', () => {
+-  it('takes the last json block when the notes hold another list', () => {
+-    const text = `Notes: candidates were ["Hardware", "Support"].\n\n\`\`\`json\n["Support"]\n\`\`\``;
+-    expect(parseAnswer(text, 1)).toEqual(['Support']);
++  it('refuses a refusal', async () => {
++    const model = fakeModel(reply([], 'refusal'));
++    await expect(categorizeLines(['Receipt printer'], model)).rejects.toThrow(CategorizeError);
+   });
+ 
+-  it('takes a bare JSON list when there is no block', () => {
+-    expect(parseAnswer('["Training", "Rebilled expenses"]', 2)).toEqual(['Training', 'Rebilled expenses']);
++  it('refuses an answer cut off at max_tokens, while thinking or inside the call', async () => {
++    const thinkingOnly = fakeModel(reply([thinking()], 'max_tokens'));
++    await expect(categorizeLines(['Receipt printer'], thinkingOnly)).rejects.toThrow(/cut off/);
++    const emptyCall = fakeModel(reply([call({})], 'max_tokens'));
++    await expect(categorizeLines(['Receipt printer'], emptyCall)).rejects.toThrow(/cut off/);
+   });
+ });
+ 
+ describe('categorizeInvoices', () => {
+   it('keeps the order of the file, one request per invoice', async () => {
+-    const model = fakeModel(textReply(answer(['Hardware', 'Rebilled expenses'])), textReply(answer(['Training'])));
++    const model = fakeModel(toolReply(['Hardware', 'Rebilled expenses']), toolReply(['Training']));
+     const lines = await categorizeInvoices([invoice('INV-1', 'Receipt printer', 'Courier'), invoice('INV-2', 'Onboarding session')], model);
+     expect(lines).toEqual([
+       { invoice: 'INV-1', line: 'Receipt printer', category: 'Hardware' },
+@@ -74,7 +88,7 @@ describe('categorizeInvoices', () => {
+   });
+ 
+   it('names the invoice whose answer it could not use', async () => {
+-    const model = fakeModel(textReply(answer(['Gadgets'])));
++    const model = fakeModel(toolReply(['Gadgets']));
+     await expect(categorizeInvoices([invoice('INV-7', 'Scanner')], model)).rejects.toThrow(/invoice INV-7: unknown category/);
+   });
+ });
+diff --git a/tests/fake-model.ts b/tests/fake-model.ts
+index 8f00994..73c8633 100644
+--- a/tests/fake-model.ts
++++ b/tests/fake-model.ts
+@@ -26,15 +26,15 @@ export function fakeModel(...replies: Anthropic.Message[]): FakeModel {
+   };
+ }
+ 
+-/** A reply of one text block, as the model gives when it is done. */
+-export function textReply(text: string): Anthropic.Message {
++/** A reply with these blocks. */
++export function reply(content: unknown[], stop_reason: Anthropic.StopReason = 'end_turn'): Anthropic.Message {
+   return {
+     id: 'msg_fake',
+     type: 'message',
+     role: 'assistant',
+     model: 'deepseek-flash',
+-    content: [{ type: 'text', text, citations: null }],
+-    stop_reason: 'end_turn',
++    content,
++    stop_reason,
+     stop_sequence: null,
+     usage: {
+       input_tokens: 900,
+@@ -47,7 +47,11 @@ export function textReply(text: string): Anthropic.Message {
+   } as Anthropic.Message;
+ }
+ 
+-/** The answer the prompt asks for: notes, then the categories in a json block. */
+-export function answer(categories: string[], notes = 'Notes on each line.'): string {
+-  return `${notes}\n\n\`\`\`json\n${JSON.stringify(categories)}\n\`\`\``;
++export const thinking = (text = 'Looking at each line.') => ({ type: 'thinking', thinking: text, signature: 'sig' });
++export const text = (t: string) => ({ type: 'text', text: t, citations: null });
++export const call = (input: unknown) => ({ type: 'tool_use', id: 'call_fake', name: 'save_categories', input });
++
++/** The answer the prompt asks for, as deepseek-flash gives it: its thinking, then the save_categories call. */
++export function toolReply(categories: unknown): Anthropic.Message {
++  return reply([thinking(), call({ categories })], 'tool_use');
+ }

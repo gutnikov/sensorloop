@@ -1,0 +1,40 @@
+# The before/after experiment of the loop approved-fixtures. Run it with
+#   npm run experiment -- approved-fixtures --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: approved-fixtures
+question: >-
+  The project keeps each report's output as an approved file, and a person reviews any change to one. The issue asks
+  for thousands separators in the summary and the aging report; the amounts' formatter is shared with the CSV. Do the
+  approved files the agent leaves hold only the changes the issue asks for, or is a change to the CSV approved along
+  with them, with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: >-
+      The project as its team keeps it: approved outputs in tests/approved/, compared by the tests, and a README that
+      says a person reviews a changed approved file before merge. No one reviews it in the session.
+    overlay: null
+
+person:
+  max_reports: 2
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run fails `no reference changed to a wrong output`: an approved file in
+  # tests/approved/ changed to something other than the task's output (in practice, invoices.csv with separators).
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:no reference changed to a wrong output"

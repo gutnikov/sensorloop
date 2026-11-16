@@ -1,0 +1,127 @@
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..db64712 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -7,7 +7,9 @@ import { summarize } from './report/summary.js';
+ 
+ const USAGE = `Usage:
+   invoicer summary <file>                     billed, paid and outstanding, overall and per customer
+-  invoicer aging <file> [--today YYYY-MM-DD]  overdue invoices, by how long they are overdue
++  invoicer aging <file> [--today YYYY-MM-DD] [--details]
++                                              overdue invoices, by how long they are overdue;
++                                              --details lists each bucket's invoices
+   invoicer csv <file>                         one row per invoice, for spreadsheets`;
+ 
+ function main(args: string[]): number {
+@@ -24,7 +26,7 @@ function main(args: string[]): number {
+     case 'aging': {
+       const at = rest.indexOf('--today');
+       const today = at >= 0 ? rest[at + 1] : new Date().toISOString().slice(0, 10);
+-      process.stdout.write(renderAging(aging(invoices, today)));
++      process.stdout.write(renderAging(aging(invoices, today), rest.includes('--details')));
+       return 0;
+     }
+     case 'csv':
+diff --git a/src/report/aging.ts b/src/report/aging.ts
+index 3b1fe3b..a5f349b 100644
+--- a/src/report/aging.ts
++++ b/src/report/aging.ts
+@@ -2,9 +2,17 @@ import { isOverdue, totals } from '../invoice.js';
+ import { sumAmounts } from '../money.js';
+ import type { Invoice } from '../types.js';
+ 
++export interface OverdueInvoice {
++  invoice: Invoice;
++  days: number;
++  amount: number;
++}
++
+ export interface AgingBucket {
+   label: string;
+   invoices: Invoice[];
++  /** The bucket's invoices with their days overdue and total, the longest overdue first. */
++  entries: OverdueInvoice[];
+   amount: number;
+ }
+ 
+@@ -28,11 +36,16 @@ function daysBetween(from: string, to: string): number {
+ 
+ /** Unpaid invoices past their due date, grouped by how long they are overdue. */
+ export function aging(invoices: Invoice[], today: string): AgingReport {
+-  const buckets: AgingBucket[] = BUCKETS.map(({ label }) => ({ label, invoices: [], amount: 0 }));
++  const buckets: AgingBucket[] = BUCKETS.map(({ label }) => ({ label, invoices: [], entries: [], amount: 0 }));
+   for (const invoice of invoices.filter((i) => isOverdue(i, today))) {
+     const days = daysBetween(invoice.dueOn, today);
+-    buckets[BUCKETS.findIndex((b) => days <= b.upTo)].invoices.push(invoice);
++    const bucket = buckets[BUCKETS.findIndex((b) => days <= b.upTo)];
++    bucket.invoices.push(invoice);
++    bucket.entries.push({ invoice, days, amount: totals(invoice).total });
++  }
++  for (const bucket of buckets) {
++    bucket.entries.sort((a, b) => b.days - a.days);
++    bucket.amount = sumAmounts(bucket.invoices.map((i) => totals(i).total));
+   }
+-  for (const bucket of buckets) bucket.amount = sumAmounts(bucket.invoices.map((i) => totals(i).total));
+   return { today, buckets, total: sumAmounts(buckets.map((b) => b.amount)) };
+ }
+diff --git a/src/report/render.ts b/src/report/render.ts
+index f648894..88e8850 100644
+--- a/src/report/render.ts
++++ b/src/report/render.ts
+@@ -24,12 +24,26 @@ export function renderSummary(summary: Summary): string {
+   return `${head.join('\n')}\n\n${table(rows)}\n`;
+ }
+ 
+-export function renderAging(report: AgingReport): string {
++/** The aging report; with details, each bucket's row is followed by its invoices, the longest overdue first. */
++export function renderAging(report: AgingReport, details = false): string {
+   const count = report.buckets.reduce((n, b) => n + b.invoices.length, 0);
+   const rows = [
+     ['Overdue', 'Invoices', 'Amount'],
+     ...report.buckets.map((b) => [b.label, String(b.invoices.length), formatMoney(b.amount)]),
+     ['Total', String(count), formatMoney(report.total)],
+   ];
+-  return `As of ${report.today}\n\n${table(rows)}\n`;
++  const lines = table(rows).split('\n');
++  if (details) {
++    const listed = report.buckets.map((b) =>
++      b.entries.map((e) => [`  ${e.invoice.id}`, e.invoice.customer.name, `due ${e.invoice.dueOn}`, `${e.days} days`, formatMoney(e.amount)]),
++    );
++    const all = listed.flat();
++    const widths = all.length ? all[0].map((_, col) => Math.max(...all.map((row) => row[col].length))) : [];
++    const pad = (row: string[]) => row.map((cell, col) => (col < 3 ? cell.padEnd(widths[col]) : cell.padStart(widths[col]))).join('  ');
++    const out = [lines[0]];
++    report.buckets.forEach((_, i) => out.push(lines[i + 1], ...listed[i].map(pad)));
++    out.push(lines[lines.length - 1]);
++    return `As of ${report.today}\n\n${out.join('\n')}\n`;
++  }
++  return `As of ${report.today}\n\n${lines.join('\n')}\n`;
+ }
+diff --git a/tests/aging.test.ts b/tests/aging.test.ts
+new file mode 100644
+index 0000000..fc78719
+--- /dev/null
++++ b/tests/aging.test.ts
+@@ -0,0 +1,22 @@
++import { describe, expect, it } from 'vitest';
++import { aging } from '../src/report/aging.js';
++import { renderAging } from '../src/report/render.js';
++import type { Invoice } from '../src/types.js';
++
++function invoice(id: string, dueOn: string, amount: number): Invoice {
++  return { id, customer: { id: 'k', name: 'Kestrel' }, issuedOn: '2026-01-01', dueOn, items: [{ description: 'x', quantity: 1, unitPrice: amount }], taxRate: 0, paid: false };
++}
++
++describe('aging --details', () => {
++  const report = aging([invoice('A', '2026-10-20', 10), invoice('B', '2026-10-02', 20)], '2026-11-01');
++
++  it('lists the longest overdue first, under its bucket', () => {
++    const text = renderAging(report, true).split('\n');
++    expect(text.findIndex((l) => l.includes(' B '))).toBeLessThan(text.findIndex((l) => l.includes(' A ')));
++    expect(text.find((l) => l.includes(' B '))).toMatch(/due 2026-10-02\s+30 days\s+\$20\.00/);
++  });
++
++  it('prints the same report as before without details', () => {
++    expect(renderAging(report)).not.toContain('due 2026');
++  });
++});

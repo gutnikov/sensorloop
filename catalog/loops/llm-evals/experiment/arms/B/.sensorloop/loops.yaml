@@ -1,0 +1,28 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node, anthropic-sdk]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+    eval: npm run eval            # calls the real model; nothing ran it automatically before this loop
+  has: [ci]
+  limits:
+    - Model calls are allowed in the session, not in CI: the card's CI job and nightly run are not set up.
+loops:
+  - id: llm-evals
+    status: active
+    wiring: >-
+      Stop hook: `node .sensorloop/hooks/evals.mjs --hook`. When src/categorize/, src/cli.ts, scripts/eval.ts or the
+      package files changed since evals/baseline.json was stored, it runs `npm run eval -- --runs 1` three times; when
+      the mean pass rate is below the baseline by more than the baseline's spread, it runs the set four more times and
+      fails on a regressed case (failed three of the four reruns, passed in the baseline). It refuses a change to
+      evals/, withholds the comparison when more than 10% of the case runs got no answer, and hands over after three
+      failing rounds.
+    baseline: >-
+      evals/baseline.json, measured on the base commit with `node .sensorloop/hooks/evals.mjs --baseline` (three runs
+      of the 20 cases) and reviewed by a person.
+    proved: 2026-11-15

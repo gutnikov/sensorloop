@@ -1,0 +1,24 @@
+{
+  "name": "invoicer-cloud",
+  "private": true,
+  "description": "The hosted invoicer: an HTTP API over a Postgres database.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "migrate": "dbmate --migrations-dir db/migrations --no-dump-schema up",
+    "migrate:new": "dbmate --migrations-dir db/migrations new"
+  },
+  "dependencies": {
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.10",
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

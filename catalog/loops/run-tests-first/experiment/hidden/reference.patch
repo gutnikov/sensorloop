@@ -1,0 +1,49 @@
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..97e651e 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -4,11 +4,25 @@ import { InvoiceFileError, readInvoices } from './parse.js';
+ import { aging } from './report/aging.js';
+ import { renderAging, renderSummary } from './report/render.js';
+ import { summarize } from './report/summary.js';
++import type { Invoice } from './types.js';
+ 
+ const USAGE = `Usage:
+-  invoicer summary <file>                     billed, paid and outstanding, overall and per customer
+-  invoicer aging <file> [--today YYYY-MM-DD]  overdue invoices, by how long they are overdue
+-  invoicer csv <file>                         one row per invoice, for spreadsheets`;
++  invoicer summary <file> [--customer <id>]                     billed, paid and outstanding, overall and per customer
++  invoicer aging <file> [--today YYYY-MM-DD] [--customer <id>]  overdue invoices, by how long they are overdue
++  invoicer csv <file>                                           one row per invoice, for spreadsheets`;
++
++function option(args: string[], name: string): string | undefined {
++  const at = args.indexOf(name);
++  return at >= 0 ? args[at + 1] : undefined;
++}
++
++/** Only one customer's invoices, when --customer names one. */
++function forCustomer(invoices: Invoice[], id: string | undefined): Invoice[] {
++  if (id === undefined) return invoices;
++  const theirs = invoices.filter((invoice) => invoice.customer.id === id);
++  if (theirs.length === 0) throw new InvoiceFileError(`no invoices for customer ${id}`);
++  return theirs;
++}
+ 
+ function main(args: string[]): number {
+   const [command, file, ...rest] = args;
+@@ -19,12 +33,11 @@ function main(args: string[]): number {
+   const invoices = readInvoices(file);
+   switch (command) {
+     case 'summary':
+-      process.stdout.write(renderSummary(summarize(invoices)));
++      process.stdout.write(renderSummary(summarize(forCustomer(invoices, option(rest, '--customer')))));
+       return 0;
+     case 'aging': {
+-      const at = rest.indexOf('--today');
+-      const today = at >= 0 ? rest[at + 1] : new Date().toISOString().slice(0, 10);
+-      process.stdout.write(renderAging(aging(invoices, today)));
++      const today = option(rest, '--today') ?? new Date().toISOString().slice(0, 10);
++      process.stdout.write(renderAging(aging(forCustomer(invoices, option(rest, '--customer')), today)));
+       return 0;
+     }
+     case 'csv':

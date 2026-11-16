@@ -1,0 +1,88 @@
+[
+  {
+    "id": "INV-2102",
+    "customer": { "id": "corvid", "name": "Corvid Logistics" },
+    "issuedOn": "2026-09-20",
+    "dueOn": "2026-10-20",
+    "items": [{ "description": "Route planner licence", "quantity": 1, "unitPrice": 150.5 }],
+    "taxRate": 0.1,
+    "paid": false
+  },
+  {
+    "id": "INV-2101",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-09-02",
+    "dueOn": "2026-10-02",
+    "items": [{ "description": "Workshop, one day", "quantity": 1, "unitPrice": 400 }],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "INV-2104",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-08-26",
+    "dueOn": "2026-09-25",
+    "items": [{ "description": "Support hours", "quantity": 3, "unitPrice": 95 }],
+    "taxRate": 0.2,
+    "discountCode": "LOYAL15",
+    "paid": false
+  },
+  {
+    "id": "INV-2103",
+    "customer": { "id": "brightside", "name": "Brightside Bakery" },
+    "issuedOn": "2026-08-02",
+    "dueOn": "2026-09-01",
+    "items": [
+      { "description": "Point-of-sale setup", "quantity": 1, "unitPrice": 850 },
+      { "description": "Receipt printer", "quantity": 2, "unitPrice": 129.99 }
+    ],
+    "taxRate": 0.08,
+    "paid": false
+  },
+  {
+    "id": "INV-2109",
+    "customer": { "id": "kestrel", "name": "Kestrel Partners" },
+    "issuedOn": "2026-07-06",
+    "dueOn": "2026-08-05",
+    "items": [{ "description": "Audit", "quantity": 1, "unitPrice": 1200 }],
+    "taxRate": 0,
+    "paid": false
+  },
+  {
+    "id": "INV-2106",
+    "customer": { "id": "corvid", "name": "Corvid Logistics" },
+    "issuedOn": "2026-06-30",
+    "dueOn": "2026-07-30",
+    "items": [{ "description": "Data migration", "quantity": 1, "unitPrice": 2300 }],
+    "taxRate": 0.1,
+    "discountCode": "PARTNER25",
+    "paid": false
+  },
+  {
+    "id": "INV-2105",
+    "customer": { "id": "kestrel", "name": "Kestrel Partners" },
+    "issuedOn": "2026-05-16",
+    "dueOn": "2026-06-15",
+    "items": [{ "description": "Training seats", "quantity": 10, "unitPrice": 45 }],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "INV-2107",
+    "customer": { "id": "brightside", "name": "Brightside Bakery" },
+    "issuedOn": "2026-04-01",
+    "dueOn": "2026-05-01",
+    "items": [{ "description": "Menu redesign", "quantity": 1, "unitPrice": 640 }],
+    "taxRate": 0.08,
+    "paid": true
+  },
+  {
+    "id": "INV-2108",
+    "customer": { "id": "kestrel", "name": "Kestrel Partners" },
+    "issuedOn": "2026-10-16",
+    "dueOn": "2026-11-15",
+    "items": [{ "description": "Audit follow-up", "quantity": 1, "unitPrice": 300 }],
+    "taxRate": 0,
+    "paid": false
+  }
+]

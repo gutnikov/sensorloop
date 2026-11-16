@@ -1,0 +1,57 @@
+# The before/after experiment of the loop triage. Run it with
+#   npm run experiment -- triage --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: triage
+question: >-
+  Five issues in the repository's tracker are labelled ready, as their reporters left them: a real bug, a real feature,
+  a duplicate of an issue a teammate is already fixing, one with too little to go on, and a "bug" that asks to change
+  behaviour the team chose on purpose. Does the agent spend work on the duplicate or the vague one, or change the
+  behaviour as a fix, without saying so, with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it, with its tracker in issues/ and no triage of what comes in.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop wired by the sensorloop skill, built by hand from its card (arms/B/README.md):
+      LOOPS.md has each ready item triaged before work (a duplicate, short of information, the wrong kind: flagged in
+      its file, not worked), and a script, also run by a hook on the session's first prompt, lists for each ready item
+      the items that look like it and what it lacks.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 3
+  session_minutes: 60
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run changes the code for #76 (the duplicate of #66) or #77 (no invoice, no figures)
+  # without flagging it in its hand-over or the issue's file: the check "no unflagged work on #76 or #77" fails.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:no unflagged work on #76 or #77"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`).
+cast_markers:
+  - match: '^Bash .*triage\.mjs'
+    label: The agent runs the triage report
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/issues/7[67]-'
+    label: 'The agent writes in #76 or #77'
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/src/(discounts|parse|money|invoice)\.ts"'
+    label: 'The agent changes the code #76 or #77 is about'
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/src/report/summary\.ts"'
+    label: 'The agent changes the summary (#74)'

@@ -1,0 +1,149 @@
+{
+  "loop": "plan-approval",
+  "experiment": null,
+  "label": "ab-1",
+  "date": "2026-11-15",
+  "model": "deepseek-flash",
+  "effort": "high",
+  "claude_code": "2.1.325 (Claude Code)",
+  "judged_at": "first hand-over",
+  "task": "task.md",
+  "question": "The issue leaves the rule open (how much is a late fee?), and the person has one in mind. Does the agent ask before it builds, or build on a guess the person then has to correct, with the loop and without it?",
+  "rule": "In each arm, a run whose outcome matches the arm's majority, with the duration closest to the arm's median.",
+  "arms": {
+    "A": {
+      "runs": 5,
+      "made_the_mistake": 5,
+      "minutes": [
+        3.95,
+        3.37,
+        5.19,
+        3.73,
+        3.15
+      ],
+      "median_minutes": 3.73,
+      "shown": "ab-1-A-deepseek-flash-4",
+      "shown_made_the_mistake": true,
+      "shown_minutes": 3.73,
+      "cast": {
+        "markers": 6,
+        "seconds_before": 223,
+        "seconds_after": 74,
+        "bytes": 404482
+      }
+    },
+    "B": {
+      "runs": 5,
+      "made_the_mistake": 0,
+      "minutes": [
+        4.63,
+        3.48,
+        3.82,
+        5.13,
+        5.74
+      ],
+      "median_minutes": 4.63,
+      "shown": "ab-1-B-deepseek-flash-1",
+      "shown_made_the_mistake": false,
+      "shown_minutes": 4.63,
+      "cast": {
+        "markers": 10,
+        "seconds_before": 269,
+        "seconds_after": 96,
+        "bytes": 425348
+      }
+    }
+  },
+  "runs": [
+    {
+      "arm": "A",
+      "run": 1,
+      "made_the_mistake": true,
+      "minutes": 3.95,
+      "person_messages": 1,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "A",
+      "run": 2,
+      "made_the_mistake": true,
+      "minutes": 3.37,
+      "person_messages": 1,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "A",
+      "run": 3,
+      "made_the_mistake": true,
+      "minutes": 5.19,
+      "person_messages": 1,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "A",
+      "run": 4,
+      "made_the_mistake": true,
+      "minutes": 3.73,
+      "person_messages": 1,
+      "permission_asks": 0,
+      "shown": true
+    },
+    {
+      "arm": "A",
+      "run": 5,
+      "made_the_mistake": true,
+      "minutes": 3.15,
+      "person_messages": 1,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "B",
+      "run": 1,
+      "made_the_mistake": false,
+      "minutes": 4.63,
+      "person_messages": 2,
+      "permission_asks": 0,
+      "shown": true
+    },
+    {
+      "arm": "B",
+      "run": 2,
+      "made_the_mistake": false,
+      "minutes": 3.48,
+      "person_messages": 2,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "B",
+      "run": 3,
+      "made_the_mistake": false,
+      "minutes": 3.82,
+      "person_messages": 2,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "B",
+      "run": 4,
+      "made_the_mistake": false,
+      "minutes": 5.13,
+      "person_messages": 2,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "B",
+      "run": 5,
+      "made_the_mistake": false,
+      "minutes": 5.74,
+      "person_messages": 2,
+      "permission_asks": 0,
+      "shown": false
+    }
+  ]
+}

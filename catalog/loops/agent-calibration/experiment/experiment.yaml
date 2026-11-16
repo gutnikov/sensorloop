@@ -1,0 +1,65 @@
+# The before/after experiment of the loop agent-calibration. Run it with
+#   npm run experiment -- agent-calibration --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: agent-calibration
+question: >-
+  The person asks for a check that asks the model whether invoice lines are clear, blocking in CI, and sets how well it
+  has to agree with the expert who grades them (at least 9 in 10 of her vague lines caught, 9 in 10 of her clear ones
+  passed). Her grades of last quarter's lines are in the project. Does the agent score its reviewer on her grades before
+  it blocks, and does the reviewer it wires in meet her threshold on lines she graded that it never saw, with the loop
+  and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+  - for f in invoices/*.json; do node dist/cli.js summary "$f" > /dev/null || exit 1; done
+acceptance: hidden/judge.mjs
+
+# The judge runs the agent's `invoicer review` on 60 lines the same expert graded (hidden/graded.jsonl), three times
+# each: 180 calls of the model, a few cents. It gets the model's settings and more time than the default.
+judge_gets_model: true
+judge_minutes: 20
+
+arms:
+  A:
+    about: The project as its team keeps it; nothing says how a model's check is scored before it blocks.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop wired by the sensorloop skill, built by hand from its card (arms/B/README.md):
+      LOOPS.md has a model's check scored on the expert's grades (three runs, each rate apart, the person's threshold)
+      and its score written by a script to evals/scores/ before it blocks, and a hook refuses a workflow write, a
+      commit or the end of a turn that leaves a blocking model step without a score at its threshold.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run passes `blocks in CI` and fails `scored on the expert's grades before blocking`
+  # or `agrees with the expert` (on the hidden lines, under 90% of her vague lines caught or of her clear lines
+  # passed, over three runs each).
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - ["pass:blocks in CI", "check:scored on the expert*"]
+  - ["pass:blocks in CI", "check:agrees with the expert"]
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`). Arm B's hook
+# refusals are marked on their own (packages/experiment/src/cast.js).
+cast_markers:
+  - match: '^Bash \{"command":"[^"]*(npm run [^ "]*(clarity|review|score)|(tsx|node) [^"]*(clarity|review|score))'
+    label: "The agent scores the review on Maria's grades"
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/evals/scores/'
+    label: The agent writes a score by hand
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/\.github/workflows/'
+    label: The agent edits the CI workflow

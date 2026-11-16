@@ -1,0 +1,23 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits:
+    - Model calls cost money; `npm run eval` is run by hand, and CI runs no model today.
+loops:
+  - id: agent-calibration
+    status: active
+    wiring: >-
+      Instruction in LOOPS.md: a model's check is scored on the expert's grades (three runs, each rate apart, against
+      the person's threshold) before it blocks, and a script records the score in evals/scores/. `.sensorloop/hooks/
+      calibration.mjs` refuses a write to .github/workflows/ (PreToolUse on Edit|Write|MultiEdit), a `git commit`
+      (PreToolUse on Bash) and the end of a turn (Stop) that leave a blocking step asking a model without a score at
+      its threshold, and refuses hand-written edits to evals/scores/.
+    proved: 2026-11-15

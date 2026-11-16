@@ -1,0 +1,9 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR\"/.sensorloop/hooks/evals.mjs --hook", "timeout": 600 }]
+      }
+    ]
+  }
+}

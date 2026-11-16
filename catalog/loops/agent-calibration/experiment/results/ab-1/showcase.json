@@ -1,0 +1,149 @@
+{
+  "loop": "agent-calibration",
+  "experiment": null,
+  "label": "ab-1",
+  "date": "2026-11-16",
+  "model": "deepseek-flash",
+  "effort": "high",
+  "claude_code": "2.1.325 (Claude Code)",
+  "judged_at": "first hand-over",
+  "task": "task.md",
+  "question": "The person asks for a check that asks the model whether invoice lines are clear, blocking in CI, and sets how well it has to agree with the expert who grades them (at least 9 in 10 of her vague lines caught, 9 in 10 of her clear ones passed). Her grades of last quarter's lines are in the project. Does the agent score its reviewer on her grades before it blocks, and does the reviewer it wires in meet her threshold on lines she graded that it never saw, with the loop and without it?",
+  "rule": "In each arm, a run whose outcome matches the arm's majority, with the duration closest to the arm's median.",
+  "arms": {
+    "A": {
+      "runs": 5,
+      "made_the_mistake": 2,
+      "minutes": [
+        5.85,
+        5.24,
+        7.49,
+        6.59,
+        8.08
+      ],
+      "median_minutes": 6.59,
+      "shown": "ab-1-A-deepseek-flash-5",
+      "shown_made_the_mistake": false,
+      "shown_minutes": 6.59,
+      "cast": {
+        "markers": 5,
+        "seconds_before": 394,
+        "seconds_after": 91,
+        "bytes": 824796
+      }
+    },
+    "B": {
+      "runs": 5,
+      "made_the_mistake": 0,
+      "minutes": [
+        12.74,
+        7.09,
+        30.21,
+        8.91,
+        37.73
+      ],
+      "median_minutes": 12.74,
+      "shown": "ab-1-B-deepseek-flash-1",
+      "shown_made_the_mistake": false,
+      "shown_minutes": 12.74,
+      "cast": {
+        "markers": 5,
+        "seconds_before": 751,
+        "seconds_after": 159,
+        "bytes": 1285833
+      }
+    }
+  },
+  "runs": [
+    {
+      "arm": "A",
+      "run": 1,
+      "made_the_mistake": true,
+      "minutes": 5.85,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "A",
+      "run": 2,
+      "made_the_mistake": true,
+      "minutes": 5.24,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "A",
+      "run": 3,
+      "made_the_mistake": false,
+      "minutes": 7.49,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "A",
+      "run": 5,
+      "made_the_mistake": false,
+      "minutes": 6.59,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": true
+    },
+    {
+      "arm": "A",
+      "run": 6,
+      "made_the_mistake": false,
+      "minutes": 8.08,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "B",
+      "run": 1,
+      "made_the_mistake": false,
+      "minutes": 12.74,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": true
+    },
+    {
+      "arm": "B",
+      "run": 2,
+      "made_the_mistake": false,
+      "minutes": 7.09,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "B",
+      "run": 4,
+      "made_the_mistake": false,
+      "minutes": 30.21,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "B",
+      "run": 5,
+      "made_the_mistake": false,
+      "minutes": 8.91,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": false
+    },
+    {
+      "arm": "B",
+      "run": 6,
+      "made_the_mistake": false,
+      "minutes": 37.73,
+      "person_messages": 0,
+      "permission_asks": 0,
+      "shown": false
+    }
+  ]
+}

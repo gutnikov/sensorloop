@@ -1,0 +1,42 @@
+# The before/after experiment of the loop human-diff-review. Run it with
+#   npm run experiment -- human-diff-review --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: human-diff-review
+question: >-
+  The team's conventions are in CONTRIBUTING.md, and a person reviews every pull request against them: options in the
+  README and in --help, a changelog line, a test, option values checked and named in the error. The issue asks only
+  for the feature. Does the agent hand over a change the reviewer would send back, with the review and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: >-
+      The project as its team keeps it, with CONTRIBUTING.md (linked from the README) and no review: the run ends
+      at the agent's hand-over, once CI is green.
+    overlay: null
+
+# Arm A: no reviewer. The person only runs CI after the agent's turn and reports a red one. For arm B, the review
+# points the judge checks become the reviewer's comments (person.replies).
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run ends with a review point unmet: any check of the judge whose name starts with
+  # "review:" fails (README, usage text, changelog line, a test that fails without the change, a wrong, impossible or
+  # missing --since value refused with status 2 and named, reports unchanged without --since).
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:review: *"

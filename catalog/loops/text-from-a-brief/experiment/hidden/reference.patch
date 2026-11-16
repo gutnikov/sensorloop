@@ -1,0 +1,20 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 40d9048..55f3d02 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,15 @@
+ 
+ What changed in each release of invoicer, for the people who use it.
+ 
++## 0.5.0 (2026-11-16)
++
++- New: `invoicer summary` and `invoicer aging` take `--customer <id>` to show only that customer's invoices, such as
++  `--customer acme`. An id that no invoice has is an error that names it.
++- New: `invoicer csv --unpaid` writes only the invoices still owed.
++- Fixed: two different customers with the same name were added together into one line of the summary. They are now
++  listed separately.
++- Changed: invoicer now needs Node.js 22 or later.
++
+ ## 0.4.0 (2026-09-01)
+ 
+ - New: `invoicer csv` writes one row per invoice, for spreadsheets.

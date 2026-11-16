@@ -1,0 +1,47 @@
+[
+  {
+    "id": "M-1",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-09-03",
+    "dueOn": "2026-10-03",
+    "items": [{ "description": "Support, September", "quantity": 1, "unitPrice": 1000 }],
+    "taxRate": 0.2,
+    "paid": true
+  },
+  {
+    "id": "M-2",
+    "customer": { "id": "brightside", "name": "Brightside Bakery" },
+    "issuedOn": "2026-09-15",
+    "dueOn": "2026-10-15",
+    "items": [{ "description": "Receipt printer", "quantity": 2, "unitPrice": 129.99 }],
+    "taxRate": 0.08,
+    "paid": false
+  },
+  {
+    "id": "M-3",
+    "customer": { "id": "corvid", "name": "Corvid Logistics" },
+    "issuedOn": "2026-09-30",
+    "dueOn": "2026-10-30",
+    "items": [{ "description": "Route planner licence", "quantity": 1, "unitPrice": 600 }],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "M-4",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-08-31",
+    "dueOn": "2026-09-30",
+    "items": [{ "description": "Data migration", "quantity": 1, "unitPrice": 500 }],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "M-5",
+    "customer": { "id": "dunlin", "name": "Dunlin Books" },
+    "issuedOn": "2026-10-01",
+    "dueOn": "2026-10-31",
+    "items": [{ "description": "Shop setup", "quantity": 1, "unitPrice": 400 }],
+    "taxRate": 0,
+    "paid": false
+  }
+]

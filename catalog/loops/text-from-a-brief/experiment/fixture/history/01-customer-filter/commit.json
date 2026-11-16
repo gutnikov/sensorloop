@@ -1,0 +1,6 @@
+{
+  "author": "Sam Okafor",
+  "email": "sam@invoicer.invalid",
+  "date": "2026-09-08T14:12:00Z",
+  "message": "summary, aging: --customer <id> shows one customer's invoices\n\nCloses #21. Without --customer the reports print what they printed before. An id that no\ninvoice has is an error that names the id.\n"
+}

@@ -1,0 +1,7 @@
+{
+  "name": "shipit",
+  "version": "1.2.0",
+  "description": "Release chores for our web apps: release notes, and version bumps with their tag.",
+  "author": { "name": "Acme web team" },
+  "license": "MIT"
+}

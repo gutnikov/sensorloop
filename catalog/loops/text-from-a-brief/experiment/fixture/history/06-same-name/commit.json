@@ -1,0 +1,6 @@
+{
+  "author": "Lee Varga",
+  "email": "lee@invoicer.invalid",
+  "date": "2026-10-13T15:02:00Z",
+  "message": "summary: customers with the same name are listed separately\n\nFixes #41. Two different customers with the same name (an Acme Tools in Leeds and one in Austin)\nwere added together into one line of the summary, with one total for both. The summary now keeps\ncustomers apart by their id.\n"
+}

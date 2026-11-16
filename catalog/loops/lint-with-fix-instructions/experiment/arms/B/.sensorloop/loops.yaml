@@ -1,0 +1,19 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: npm run lint
+    format: null
+  has: [ci]
+  limits: []
+loops:
+  - id: lint-with-fix-instructions
+    status: active
+    wiring: >-
+      PreToolUse on Bash runs `npm run lint` before each `git commit` (.sensorloop/hooks/check.sh --on-git-commit lint).
+      The house rule on console calls carries its fix in its message (eslint.config.js), agreed with the person.
+    proved: 2026-11-01

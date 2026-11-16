@@ -1,0 +1,6 @@
+{
+  "author": "Sam Okafor",
+  "email": "sam@invoicer.invalid",
+  "date": "2026-09-22T09:05:00Z",
+  "message": "aging: --business-days counts only weekdays\n\nCloses #33. With --business-days, Saturdays and Sundays do not count towards how long an invoice\nis overdue.\n"
+}

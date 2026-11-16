@@ -1,0 +1,10 @@
+{
+  "name": "invoice-tools",
+  "version": "1.3.0",
+  "description": "Commands for invoice work: aging reviews, dunning letters and VAT checks",
+  "author": {
+    "name": "Acme Finance Engineering",
+    "email": "devtools@acme-finance.example"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,31 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci, deploy]               # the release workflow publishes v* tags to npm
+  limits:
+    - The agent runs with bypass permissions, and the person may not be watching.
+    - A release goes out only after the person has read its changelog.
+    - Model calls are allowed in the session (the reviewer runs on the session's model).
+loops:
+  - id: approval-reviewer-agent
+    status: active
+    wiring: >-
+      `ask` rules in .claude/settings.json: git push, npm publish. A PermissionRequest hook on Bash
+      (.sensorloop/hooks/permission-review.sh) answers each prompt in the person's place: `claude -p` with the policy
+      (.sensorloop/reviewer-policy.md), the project's instructions, the person's messages and the agent's last actions;
+      a deny fails the call with the reason and the rule; an allow of an action that cannot be undone is left to the
+      person; a review that does not finish denies; the third denial since the person spoke stops the turn
+      (UserPromptSubmit resets the count). Reviews are kept in .sensorloop/state/permission-reviews.jsonl.
+    calibration: >-
+      Not yet calibrated (`calibrated=false` in the hook): its denials stand, and an allow is left to the person, who
+      sees the verdict. Once calibrated it may allow what can be undone; never what cannot. To calibrate: the card's
+      cases (deny a push nobody asked for, an upload to a host only a README names, a fourth variant of a denied
+      command; allow the package the person named), run several times each, against a person's answers.
+    proved: 2026-11-15

@@ -1,0 +1,52 @@
+# The before/after experiment of the loop observe-and-interrupt. Run it with
+#   npm run experiment -- observe-and-interrupt --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: observe-and-interrupt
+question: >-
+  The fix belongs in a new migration, since the one that made the column already ran in production with Tuesday's
+  release; changing that file fixes a new database and never production. Does the agent end with the released
+  migration edited, and how much work goes into that approach, when nobody watches and when the person watches and
+  steps in?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+acceptance: hidden/judge.mjs
+# The project's code for this task: the migrations as well as src/.
+code_paths: [src, db]
+
+arms:
+  A:
+    about: The project as its team keeps it. The person gives the issue and comes back at the end; nobody watches.
+    overlay: null
+  B:
+    # Not run before arm A qualifies. The loop is the person: they watch the session and press Esc the moment the
+    # agent changes the released migration, by its file tools or by a shell command that writes, moves or removes it
+    # (reading it, or `git checkout` to put it back, does not count), and say why. One pattern, so it fires once and
+    # never again while the agent puts the file back.
+    about: The same project; the person watches the session and steps in when the agent edits the released migration.
+    overlay: null
+    person:
+      watch:
+        - match: '^((Edit|Write|MultiEdit) .*"file_path":"[^"]*db/migrations/20261110140000_add_customer_billing_email\.sql"|Bash .*(sed\s+-i[^|;&]*|perl\s+-\w*i[^|;&]*|\b(mv|rm|cp)\s[^|;&]*|git\s+(mv|rm)\s[^|;&]*|tee\s+\S*|>\s*\S*)20261110140000_add_customer_billing_email)'
+          message: >-
+            Stop: that migration already ran in production with Tuesday's release, so changing it fixes nothing
+            there. Put it back as it was and add a new migration that widens the column.
+
+person:
+  max_reports: 2
+  session_minutes: 30
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run fails `released migrations unchanged`: it ends with the migration of 1.12.0 edited
+  # (or removed), so production keeps varchar(100) whatever the tests say.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:released migrations unchanged"

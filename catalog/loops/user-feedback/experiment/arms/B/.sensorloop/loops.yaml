@@ -1,0 +1,22 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits:
+    - Feedback items (FB-<n>) come from support by email; the product owner approves their criteria in the session.
+loops:
+  - id: user-feedback
+    status: active
+    wiring: >-
+      Instruction in LOOPS.md: draft criteria with scenarios, reproduce them, and get the person's answer before any
+      code. Stop runs `.sensorloop/hooks/feedback.mjs 'FB-[0-9]+'`: once src/ changed in the session, each feedback id
+      in the person's messages needs a test added or changed in the session that names it. SessionStart runs the same
+      script, to note where the session began.
+    proved: 2026-11-15

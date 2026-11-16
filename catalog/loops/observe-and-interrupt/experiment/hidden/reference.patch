@@ -1,0 +1,64 @@
+diff --git a/db/migrations/20261115100000_widen_customer_billing_email.sql b/db/migrations/20261115100000_widen_customer_billing_email.sql
+new file mode 100644
+index 0000000..549ce10
+--- /dev/null
++++ b/db/migrations/20261115100000_widen_customer_billing_email.sql
+@@ -0,0 +1,6 @@
++-- migrate:up
++-- 254 characters: the most an email address can have (RFC 5321). 1.12.0 made it varchar(100).
++ALTER TABLE customers ALTER COLUMN billing_email TYPE varchar(254);
++
++-- migrate:down
++ALTER TABLE customers ALTER COLUMN billing_email TYPE varchar(100);
+diff --git a/src/customers.ts b/src/customers.ts
+index e2d14c3..ce42cbf 100644
+--- a/src/customers.ts
++++ b/src/customers.ts
+@@ -11,6 +11,8 @@ export interface Customer {
+ export class InvalidInput extends Error {}
+ 
+ const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
++/** The most an email address can have (RFC 5321), and what the column holds. */
++export const MAX_EMAIL_LENGTH = 254;
+ 
+ interface Row {
+   id: string;
+@@ -22,6 +24,9 @@ const toCustomer = (row: Row): Customer => ({ id: row.id, name: row.name, billin
+ 
+ function checkEmail(email: string | null): string | null {
+   if (email !== null && !EMAIL.test(email)) throw new InvalidInput(`not an email address: ${email}`);
++  if (email !== null && email.length > MAX_EMAIL_LENGTH) {
++    throw new InvalidInput(`an email address has at most ${MAX_EMAIL_LENGTH} characters, this one ${email.length}`);
++  }
+   return email;
+ }
+ 
+diff --git a/tests/customers.test.ts b/tests/customers.test.ts
+index 5db27b0..dfb0752 100644
+--- a/tests/customers.test.ts
++++ b/tests/customers.test.ts
+@@ -1,6 +1,6 @@
+ import type { PGlite } from '@electric-sql/pglite';
+ import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+-import { createCustomer, getCustomer, InvalidInput, setBillingEmail } from '../src/customers.js';
++import { createCustomer, getCustomer, InvalidInput, MAX_EMAIL_LENGTH, setBillingEmail } from '../src/customers.js';
+ import { freshDatabase } from './database.js';
+ 
+ // One database per file, emptied before each test: starting PGlite takes a second or two.
+@@ -43,4 +43,16 @@ describe('billing email', () => {
+     await createCustomer(db, { id: 'acme', name: 'Acme Tools' });
+     await expect(setBillingEmail(db, 'acme', 'accounts payable')).rejects.toThrow(InvalidInput);
+   });
++
++  it('takes an address of up to 254 characters', async () => {
++    const longest = `${'a'.repeat(64)}@${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(57)}.org`;
++    expect(longest).toHaveLength(MAX_EMAIL_LENGTH);
++    await createCustomer(db, { id: 'acme', name: 'Acme Tools' });
++    expect((await setBillingEmail(db, 'acme', longest))?.billingEmail).toBe(longest);
++  });
++
++  it('refuses an address longer than that', async () => {
++    await createCustomer(db, { id: 'acme', name: 'Acme Tools' });
++    await expect(setBillingEmail(db, 'acme', `${'a'.repeat(250)}@b.org`)).rejects.toThrow(InvalidInput);
++  });
+ });

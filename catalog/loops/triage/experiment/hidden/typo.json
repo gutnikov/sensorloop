@@ -1,0 +1,12 @@
+[
+  {
+    "id": "INV-7",
+    "customer": { "id": "kestrel", "name": "Kestrel Partners" },
+    "issuedOn": "2026-10-01",
+    "dueOn": "2026-10-31",
+    "items": [{ "description": "Audit", "quantity": 1, "unitPrice": 500 }],
+    "taxRate": 0.2,
+    "discountCode": "LOYAL51",
+    "paid": false
+  }
+]

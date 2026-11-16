@@ -1,0 +1,6 @@
+invoice,customer,due_on,days_overdue,amount
+R-401,Delta Freight,2026-08-04,90,12480.00
+R-101,Acme Tools,2026-10-01,32,1162.80
+R-102,Acme Tools,2026-10-20,13,1440.00
+R-302,Corvid Logistics,2026-10-20,13,508.75
+R-601,Fir and Sons,2026-10-31,2,1199.93

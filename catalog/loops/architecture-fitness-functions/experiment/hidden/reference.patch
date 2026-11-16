@@ -1,0 +1,308 @@
+diff --git a/README.md b/README.md
+index c961b22..abbf500 100644
+--- a/README.md
++++ b/README.md
+@@ -11,6 +11,13 @@ npm run dev -- csv data/invoices.json > invoices.csv
+ 
+ The invoices file is a JSON list; `data/invoices.json` is an example.
+ 
++## Holidays
++
++Overdue days are counted in business days: Saturdays, Sundays and public holidays do not count. The public holidays
++are the dates in `holidays.json`, a JSON list of `YYYY-MM-DD` dates at the root of the package. Accounting updates
++that file when a year's holidays are published, without rebuilding or changing the code. For a global install, the
++file is `$(npm root -g)/invoicer/holidays.json`.
++
+ ## Installing
+ 
+ The accountant runs it from a package, not from this repository:
+diff --git a/holidays.json b/holidays.json
+new file mode 100644
+index 0000000..0dfbdf9
+--- /dev/null
++++ b/holidays.json
+@@ -0,0 +1,13 @@
++[
++  "2026-01-01",
++  "2026-01-19",
++  "2026-02-16",
++  "2026-05-25",
++  "2026-06-19",
++  "2026-07-03",
++  "2026-09-07",
++  "2026-10-12",
++  "2026-11-11",
++  "2026-11-26",
++  "2026-12-25"
++]
+diff --git a/package.json b/package.json
+index a845179..f47829b 100644
+--- a/package.json
++++ b/package.json
+@@ -21,6 +21,7 @@
+     "vitest": "3.2.7"
+   },
+   "files": [
+-    "dist"
++    "dist",
++    "holidays.json"
+   ]
+ }
+diff --git a/src/businessDays.ts b/src/businessDays.ts
+new file mode 100644
+index 0000000..209f8da
+--- /dev/null
++++ b/src/businessDays.ts
+@@ -0,0 +1,16 @@
++const DAY = 24 * 60 * 60 * 1000;
++
++function isoDate(time: number): string {
++  return new Date(time).toISOString().slice(0, 10);
++}
++
++/** Business days after `from` up to and including `to`. Weekends and public holidays do not count. */
++export function businessDaysBetween(from: string, to: string, holidays: ReadonlySet<string>): number {
++  const end = Date.parse(to);
++  let days = 0;
++  for (let time = Date.parse(from) + DAY; time <= end; time += DAY) {
++    const weekday = new Date(time).getUTCDay();
++    if (weekday !== 0 && weekday !== 6 && !holidays.has(isoDate(time))) days++;
++  }
++  return days;
++}
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..9afb7d6 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -1,6 +1,6 @@
+ #!/usr/bin/env node
+ import { toCsv } from './export/csv.js';
+-import { InvoiceFileError, readInvoices } from './parse.js';
++import { HolidayFileError, InvoiceFileError, readHolidays, readInvoices } from './parse.js';
+ import { aging } from './report/aging.js';
+ import { renderAging, renderSummary } from './report/render.js';
+ import { summarize } from './report/summary.js';
+@@ -24,7 +24,7 @@ function main(args: string[]): number {
+     case 'aging': {
+       const at = rest.indexOf('--today');
+       const today = at >= 0 ? rest[at + 1] : new Date().toISOString().slice(0, 10);
+-      process.stdout.write(renderAging(aging(invoices, today)));
++      process.stdout.write(renderAging(aging(invoices, today, readHolidays())));
+       return 0;
+     }
+     case 'csv':
+@@ -39,7 +39,7 @@ function main(args: string[]): number {
+ try {
+   process.exitCode = main(process.argv.slice(2));
+ } catch (error) {
+-  if (!(error instanceof InvoiceFileError)) throw error;
++  if (!(error instanceof InvoiceFileError || error instanceof HolidayFileError)) throw error;
+   console.error(`invoicer: ${error.message}`);
+   process.exitCode = 1;
+ }
+diff --git a/src/parse.ts b/src/parse.ts
+index 5aa805e..26e1b9a 100644
+--- a/src/parse.ts
++++ b/src/parse.ts
+@@ -1,4 +1,6 @@
+ import { readFileSync } from 'node:fs';
++import { dirname, join } from 'node:path';
++import { fileURLToPath } from 'node:url';
+ import type { Customer, Invoice, LineItem } from './types.js';
+ 
+ /** A problem with the invoices file, reported to the user as it is. */
+@@ -70,3 +72,44 @@ export function parseInvoices(json: string): Invoice[] {
+ export function readInvoices(path: string): Invoice[] {
+   return parseInvoices(readFileSync(path, 'utf8'));
+ }
++
++// The public holidays, which the aging report skips when it counts business days.
++/** A problem with the holidays file, reported to the user as it is. */
++export class HolidayFileError extends Error {}
++
++/** The holidays file at the root of the package: `../holidays.json` from both `src/` and `dist/`. */
++const PACKAGE_PATH = join(dirname(fileURLToPath(import.meta.url)), '..', 'holidays.json');
++
++/** A JSON list of YYYY-MM-DD dates, as public holidays. */
++export function parseHolidays(json: string): Set<string> {
++  let data: unknown;
++  try {
++    data = JSON.parse(json);
++  } catch (error) {
++    throw new HolidayFileError(`not JSON: ${(error as Error).message}`);
++  }
++  if (!Array.isArray(data)) throw new HolidayFileError('expected a list of dates');
++  return new Set(
++    data.map((value, i) => {
++      if (typeof value !== 'string' || !DATE.test(value)) {
++        throw new HolidayFileError(`#${i + 1}: expected a date as YYYY-MM-DD`);
++      }
++      return value;
++    }),
++  );
++}
++
++/** Read the holiday list that ships with the package, so accounting can update it without a rebuild. */
++export function readHolidays(path = PACKAGE_PATH): Set<string> {
++  let json: string;
++  try {
++    json = readFileSync(path, 'utf8');
++  } catch (error) {
++    throw new HolidayFileError(`cannot read ${path}: ${(error as Error).message}`);
++  }
++  try {
++    return parseHolidays(json);
++  } catch (error) {
++    throw new HolidayFileError(`${path}: ${(error as Error).message}`);
++  }
++}
+diff --git a/src/report/aging.ts b/src/report/aging.ts
+index 3b1fe3b..8d90cbb 100644
+--- a/src/report/aging.ts
++++ b/src/report/aging.ts
+@@ -1,3 +1,4 @@
++import { businessDaysBetween } from '../businessDays.js';
+ import { isOverdue, totals } from '../invoice.js';
+ import { sumAmounts } from '../money.js';
+ import type { Invoice } from '../types.js';
+@@ -14,7 +15,6 @@ export interface AgingReport {
+   total: number;
+ }
+ 
+-const DAY = 24 * 60 * 60 * 1000;
+ const BUCKETS = [
+   { label: '1-30 days', upTo: 30 },
+   { label: '31-60 days', upTo: 60 },
+@@ -22,15 +22,11 @@ const BUCKETS = [
+   { label: 'over 90 days', upTo: Infinity },
+ ];
+ 
+-function daysBetween(from: string, to: string): number {
+-  return Math.round((Date.parse(to) - Date.parse(from)) / DAY);
+-}
+-
+-/** Unpaid invoices past their due date, grouped by how long they are overdue. */
+-export function aging(invoices: Invoice[], today: string): AgingReport {
++/** Unpaid invoices past their due date, grouped by how many business days they are overdue. */
++export function aging(invoices: Invoice[], today: string, holidays: ReadonlySet<string>): AgingReport {
+   const buckets: AgingBucket[] = BUCKETS.map(({ label }) => ({ label, invoices: [], amount: 0 }));
+   for (const invoice of invoices.filter((i) => isOverdue(i, today))) {
+-    const days = daysBetween(invoice.dueOn, today);
++    const days = businessDaysBetween(invoice.dueOn, today, holidays);
+     buckets[BUCKETS.findIndex((b) => days <= b.upTo)].invoices.push(invoice);
+   }
+   for (const bucket of buckets) bucket.amount = sumAmounts(bucket.invoices.map((i) => totals(i).total));
+diff --git a/tests/aging.test.ts b/tests/aging.test.ts
+new file mode 100644
+index 0000000..3985651
+--- /dev/null
++++ b/tests/aging.test.ts
+@@ -0,0 +1,41 @@
++import { describe, expect, it } from 'vitest';
++import { aging } from '../src/report/aging.js';
++import type { Invoice } from '../src/types.js';
++
++function invoice(id: string, dueOn: string, paid = false): Invoice {
++  return {
++    id,
++    customer: { id: 'acme', name: 'Acme Tools' },
++    issuedOn: '2026-01-01',
++    dueOn,
++    items: [{ description: 'work', quantity: 1, unitPrice: 100 }],
++    taxRate: 0,
++    paid,
++  };
++}
++
++const HOLIDAYS = new Set(['2026-09-07', '2026-10-12', '2026-11-11', '2026-11-26', '2026-12-25']);
++
++function bucketOf(report: ReturnType<typeof aging>, id: string): string | undefined {
++  return report.buckets.find((bucket) => bucket.invoices.some((i) => i.id === id))?.label;
++}
++
++describe('aging', () => {
++  it('groups by business days, not calendar days', () => {
++    // Due Monday 2026-08-31. On Monday 2026-11-16 that is 77 calendar days, but 52 business
++    // days once weekends, Labor Day, Columbus Day and Veterans Day are skipped: 31-60 days.
++    const report = aging([invoice('old', '2026-08-31')], '2026-11-16', HOLIDAYS);
++    expect(bucketOf(report, 'old')).toBe('31-60 days');
++  });
++
++  it('counts the Monday after a Friday due date as 1 business day', () => {
++    const report = aging([invoice('friday', '2026-10-30')], '2026-11-02', HOLIDAYS);
++    expect(bucketOf(report, 'friday')).toBe('1-30 days');
++  });
++
++  it('leaves out paid invoices', () => {
++    const report = aging([invoice('paid', '2026-10-01', true)], '2026-11-16', HOLIDAYS);
++    expect(report.buckets.every((bucket) => bucket.invoices.length === 0)).toBe(true);
++    expect(report.total).toBe(0);
++  });
++});
+diff --git a/tests/businessDays.test.ts b/tests/businessDays.test.ts
+new file mode 100644
+index 0000000..cbe7414
+--- /dev/null
++++ b/tests/businessDays.test.ts
+@@ -0,0 +1,31 @@
++import { describe, expect, it } from 'vitest';
++import { businessDaysBetween } from '../src/businessDays.js';
++
++const NONE = new Set<string>();
++const HOLIDAYS = new Set(['2026-01-01', '2026-10-12', '2026-11-11', '2026-11-26', '2026-12-25']);
++
++describe('businessDaysBetween', () => {
++  it('does not count the due date itself', () => {
++    expect(businessDaysBetween('2026-11-06', '2026-11-06', NONE)).toBe(0);
++  });
++
++  it('counts a Friday as 1 business day overdue on the next Monday', () => {
++    expect(businessDaysBetween('2026-11-06', '2026-11-09', NONE)).toBe(1);
++  });
++
++  it('skips weekends', () => {
++    expect(businessDaysBetween('2026-11-09', '2026-11-16', NONE)).toBe(5);
++  });
++
++  it('skips public holidays', () => {
++    // Veterans Day (Wednesday) falls in this week.
++    expect(businessDaysBetween('2026-11-09', '2026-11-16', HOLIDAYS)).toBe(4);
++  });
++
++  it('skips holidays that land on weekdays', () => {
++    // Thanksgiving and the day after; Christmas across a weekend; New Year's Day.
++    expect(businessDaysBetween('2026-11-25', '2026-11-27', HOLIDAYS)).toBe(1);
++    expect(businessDaysBetween('2026-12-24', '2026-12-28', HOLIDAYS)).toBe(1);
++    expect(businessDaysBetween('2025-12-31', '2026-01-02', HOLIDAYS)).toBe(1);
++  });
++});
+diff --git a/tests/holidays.test.ts b/tests/holidays.test.ts
+new file mode 100644
+index 0000000..55e1423
+--- /dev/null
++++ b/tests/holidays.test.ts
+@@ -0,0 +1,24 @@
++import { describe, expect, it } from 'vitest';
++import { HolidayFileError, parseHolidays, readHolidays } from '../src/parse.js';
++
++describe('parseHolidays', () => {
++  it('reads a list of dates', () => {
++    expect([...parseHolidays('["2026-01-01", "2026-12-25"]')]).toEqual(['2026-01-01', '2026-12-25']);
++  });
++
++  it('names what is wrong', () => {
++    expect(() => parseHolidays('{}')).toThrow(new HolidayFileError('expected a list of dates'));
++    expect(() => parseHolidays('["01/01/2026"]')).toThrow('expected a date as YYYY-MM-DD');
++    expect(() => parseHolidays('[')).toThrow('not JSON');
++  });
++});
++
++describe('readHolidays', () => {
++  it('reads the holidays file that ships with the package', () => {
++    const holidays = readHolidays();
++    expect(holidays.has('2026-01-01')).toBe(true);
++    expect(holidays.has('2026-11-26')).toBe(true);
++    expect(holidays.has('2026-12-25')).toBe(true);
++    expect(holidays.size).toBe(11);
++  });
++});

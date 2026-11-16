@@ -1,0 +1,38 @@
+[
+  {
+    "id": "N-101",
+    "customer": {
+      "id": "acme",
+      "name": "Acme Tools"
+    },
+    "issuedOn": "2026-06-01",
+    "dueOn": "2026-11-30",
+    "items": [
+      {
+        "description": "Support, November",
+        "quantity": 10,
+        "unitPrice": 95
+      }
+    ],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "N-102",
+    "customer": {
+      "id": "acme",
+      "name": "Acme Tools"
+    },
+    "issuedOn": "2026-06-01",
+    "dueOn": "2026-10-01",
+    "items": [
+      {
+        "description": "Support, September",
+        "quantity": 10,
+        "unitPrice": 95
+      }
+    ],
+    "taxRate": 0.2,
+    "paid": true
+  }
+]

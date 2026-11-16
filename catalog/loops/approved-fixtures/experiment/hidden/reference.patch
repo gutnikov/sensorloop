@@ -1,0 +1,74 @@
+diff --git a/src/money.ts b/src/money.ts
+index 7af9c53..0e165ff 100644
+--- a/src/money.ts
++++ b/src/money.ts
+@@ -14,8 +14,10 @@ export function formatAmount(amount: number): string {
+   return digits.format(Math.abs(amount));
+ }
+ 
+-/** An amount as the reports print it: $1234.50, or -$20.00. */
++const grouped = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
++
++/** An amount as the reports print it: $1,234.50, or -$20.00. */
+ export function formatMoney(amount: number): string {
+   const sign = amount < 0 ? '-' : '';
+-  return `${sign}$${formatAmount(amount)}`;
++  return `${sign}$${grouped.format(Math.abs(amount))}`;
+ }
+diff --git a/tests/approved/aging.txt b/tests/approved/aging.txt
+index 4008aeb..aa9de8b 100644
+--- a/tests/approved/aging.txt
++++ b/tests/approved/aging.txt
+@@ -1,8 +1,8 @@
+ As of 2026-11-01
+ 
+-Overdue       Invoices     Amount
+-1-30 days            0      $0.00
+-31-60 days           1   $1162.80
+-61-90 days           1  $12480.00
+-over 90 days         2   $3096.28
+-Total                4  $16739.08
++Overdue       Invoices      Amount
++1-30 days            0       $0.00
++31-60 days           1   $1,162.80
++61-90 days           1  $12,480.00
++over 90 days         2   $3,096.28
++Total                4  $16,739.08
+diff --git a/tests/approved/summary.txt b/tests/approved/summary.txt
+index e79ee60..f2b19b1 100644
+--- a/tests/approved/summary.txt
++++ b/tests/approved/summary.txt
+@@ -1,10 +1,10 @@
+ Invoices     7
+-Billed       $21287.39
+-Paid         $3874.56
+-Outstanding  $17412.83
++Billed       $21,287.39
++Paid         $3,874.56
++Outstanding  $17,412.83
+ 
+-Customer           Invoices     Billed  Outstanding
+-Delta Freight             1  $12480.00    $12480.00
+-Corvid Logistics          2   $2571.25     $2571.25
+-Brightside Bakery         2   $1820.86     $1198.78
+-Acme Tools                2   $4415.28     $1162.80
++Customer           Invoices      Billed  Outstanding
++Delta Freight             1  $12,480.00   $12,480.00
++Corvid Logistics          2   $2,571.25    $2,571.25
++Brightside Bakery         2   $1,820.86    $1,198.78
++Acme Tools                2   $4,415.28    $1,162.80
+diff --git a/tests/money.test.ts b/tests/money.test.ts
+index 89e2929..fbce925 100644
+--- a/tests/money.test.ts
++++ b/tests/money.test.ts
+@@ -16,8 +16,8 @@ describe('sumAmounts', () => {
+ });
+ 
+ describe('formatMoney', () => {
+-  it('prints dollars and cents', () => {
+-    expect(formatMoney(1234.5)).toBe('$1234.50');
++  it('prints dollars with thousands separators and cents', () => {
++    expect(formatMoney(1234.5)).toBe('$1,234.50');
+     expect(formatMoney(0)).toBe('$0.00');
+   });
+ 

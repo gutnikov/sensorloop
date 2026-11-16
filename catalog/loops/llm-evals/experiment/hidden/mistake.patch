@@ -1,0 +1,91 @@
+diff --git a/src/categorize/categorize.ts b/src/categorize/categorize.ts
+index 140ac9b..08d3ff3 100644
+--- a/src/categorize/categorize.ts
++++ b/src/categorize/categorize.ts
+@@ -30,6 +30,7 @@ export async function categorizeLines(lines: string[], client: ModelClient = def
+     model: settings.model,
+     max_tokens: settings.maxTokens,
+     temperature: settings.temperature,
++    thinking: settings.thinking,
+     system: SYSTEM_PROMPT,
+     messages: [{ role: 'user', content: linesMessage(lines) }],
+   });
+diff --git a/src/categorize/prompt.ts b/src/categorize/prompt.ts
+index 1a5ea47..681adeb 100644
+--- a/src/categorize/prompt.ts
++++ b/src/categorize/prompt.ts
+@@ -1,51 +1,18 @@
+ // The system prompt of `invoicer categorize`. The rules are accounting's: each one settles a kind of line that was
+ // booked to the wrong category before. The eval set (evals/categorize.jsonl) holds cases for them.
+-export const SYSTEM_PROMPT = `You help the accounting team of a small IT services company. Each invoice the company sends
+-has line items, and accounting books every line to one category. You are given the lines of one invoice; put each
+-line in its category.
++export const SYSTEM_PROMPT = `Put each line item of an IT services company's invoice in one accounting category:
+ 
+-The categories:
++- Consulting: project work: analysis, design, development, installation, setup, configuration, migration,
++  integration, workshops.
++- Training: courses, training days, onboarding.
++- Support: support plans, maintenance, warranties, on-call, bug fixes, health checks.
++- Software: licences, subscriptions, hosting, SaaS seats, usage-based services (SMS, API calls, storage).
++- Hardware: devices and parts.
++- Rebilled expenses: travel, hotels, mileage, meals, shipping, courier, customs, third-party fees.
+ 
+-- Consulting: project work we do for the customer: analysis, design, development, installation, setup,
+-  configuration, data migration, integration, and workshops where we gather requirements or design with them.
+-- Training: teaching the customer's staff: courses, training days, onboarding sessions, train-the-trainer,
+-  e-learning seats.
+-- Support: keeping something we delivered running: support plans, maintenance, extended warranties, on-call, bug
+-  fixes in work we delivered, health checks of a system we installed.
+-- Software: licences, subscriptions, hosting, SaaS seats, and services billed by volume, such as SMS credits, API
+-  calls or storage.
+-- Hardware: devices and parts we sell: terminals, printers, scanners, cables, card readers, spare parts.
+-- Rebilled expenses: costs we pass on to the customer at cost: travel, hotels, mileage, meals on site, shipping,
+-  courier, customs fees, third-party fees.
++Installing or configuring hardware or software is Consulting. Shipping and customs are Rebilled expenses.
+ 
+-Rules:
+-
+-1. Installing, setting up or configuring hardware or software is Consulting, not Hardware or Software.
+-2. A workshop is Training only when it teaches the customer's staff. A discovery, kickoff or design workshop is
+-   Consulting.
+-3. Maintenance, warranties and repairs of hardware are Support, not Hardware.
+-4. Fixing a defect in something we delivered is Support. New features or changes the customer asks for are
+-   Consulting.
+-5. Shipping, delivery and customs for hardware are Rebilled expenses, not Hardware.
+-6. Hosting and usage-based services are Software, even when they are billed monthly like a support plan.
+-7. A line that bundles several things goes to the category of the main thing sold.
+-
+-Examples:
+-
+-- "Receipt printer" -> Hardware
+-- "Installation of 3 receipt printers" -> Consulting
+-- "Printer maintenance, annual" -> Support
+-- "Express delivery of the printers" -> Rebilled expenses
+-- "Kickoff workshop" -> Consulting
+-- "Staff training on the new tills, half day" -> Training
+-- "Route planner licence, 12 months" -> Software
+-- "Hosting, October" -> Software
+-- "Fix: totals wrong on the monthly report" -> Support
+-- "Hotel, 2 nights" -> Rebilled expenses
+-
+-How to answer: first write one short note per line saying what was sold and which rule or definition decides its
+-category. Then give the categories as a JSON list of strings in a \`\`\`json block: one category per line, in the
+-order of the lines, each spelled exactly as in the list above.`;
++Answer with only a JSON list of the categories, one per line, in order, spelled as above.`;
+ 
+ /** The user message: the invoice's lines, numbered from 1. */
+ export function linesMessage(lines: string[]): string {
+diff --git a/src/categorize/settings.ts b/src/categorize/settings.ts
+index 907480d..a4d776a 100644
+--- a/src/categorize/settings.ts
++++ b/src/categorize/settings.ts
+@@ -6,6 +6,8 @@ export const settings = {
+   model: 'deepseek-flash',
+   maxTokens: 4096,
+   temperature: 0,
++  /** No reasoning: the categories do not need it, and it is billed as output. */
++  thinking: { type: 'disabled' } as const,
+   /** Invoices sent to the model at the same time. */
+   concurrency: 4,
+ };

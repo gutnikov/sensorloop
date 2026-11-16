@@ -1,0 +1,17 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits: []
+loops:
+  - id: run-tests-first
+    status: active
+    wiring: Instruction in LOOPS.md; `npm test` takes about a second.
+    proved: 2026-10-05
