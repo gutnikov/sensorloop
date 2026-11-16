@@ -1,6 +1,7 @@
 ---
 title: A complete spec before the tests
 summary: Tests are derived only from a spec with nothing left to guess. Each requirement is traced to the spec elements and tests that cover it, and each functional one names the production signal that confirms it after the release.
+motivation: I want every requirement written down completely and traced to its tests before any code is written, so the agent writing the tests and the one writing the code do not each fill a gap with a different guess.
 sensors: [requirement-trace, spec-completeness, human-answer]
 when: After every edit to the requirements or the spec, before tests are derived from it; again once the tests are written, and in CI on every pull request that touches the spec or the tests.
 failure: The requirement trace reads anything but Traced, or spec completeness anything but Complete. Nothing checked is a failure too.

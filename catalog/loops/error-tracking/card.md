@@ -1,6 +1,7 @@
 ---
 title: Fix the errors users hit
 summary: The agent takes an issue from the top of the error tracker, reproduces it with a failing test, then fixes the code, and the fix counts only once the issue stops under the release that carries it.
+motivation: I want my agent to work on the errors my users actually hit in production, reproduce each one with a test, and count a fix as done only once the error stops after the release.
 sensors: [error-tracker]
 when: Every day, when a scheduled job collects the top new issues, the escalating ones and the ones that came back after a fix; and after the release that carries a fix, once a window of real traffic has passed (at least a set time and a set number of runs of the issue's path, up to a cap).
 failure: "A new issue among the top ones, an escalating one, or one that came back after a fix. After a fix, any result but stopped: the issue came back under the release that carries the fix, its path ran too rarely to judge, or the fix is not deployed yet."

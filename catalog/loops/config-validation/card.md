@@ -1,6 +1,7 @@
 ---
 title: Validate the configuration
 summary: A validator checks every configuration file and profile against its schema, a link check confirms that each URL they name leads to a server, and a smoke start runs the app with each profile.
+motivation: I want every configuration file checked against its schema and the app started once with each environment's settings, so a typo in a config, which neither the compiler nor the tests see, does not break the app at deploy.
 sensors: [structure-check, smoke-probe]
 when: "Structure check: the schema after each edit of the configuration and at each commit; the links on each pull request that changes the configuration, and daily. Smoke and health probe: the smoke start on each pull request that changes the configuration."
 failure: A value that breaks the schema, such as a misspelled key or a port given as a string. A URL that is gone or leads to no server. A profile that does not start the app in time, or starts it on values other than its own.

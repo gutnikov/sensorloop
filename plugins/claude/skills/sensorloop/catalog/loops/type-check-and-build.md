@@ -1,6 +1,7 @@
 ---
 title: Type check and build
 summary: After an edit, the agent runs the type checker and the build, and fixes each new error at its file and line until neither reports one.
+motivation: I want my agent to run the type checker and the build after every edit and fix the errors right away, so code that does not even compile never reaches the tests, a review or a commit.
 sensors: [build-and-types]
 when: After each edit (the type checker, or the language server's diagnostics), and before the turn ends (the build).
 failure: A type or compile error the change brings in, and any new suppression of one without its reason on the same line, such as an ignore comment or a cast to an untyped value.

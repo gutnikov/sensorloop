@@ -1,6 +1,7 @@
 ---
 title: Calibrate before it blocks
 summary: An expert grades a sample of results pass or fail, each with a critique, and the grades become the cases a judge or reviewer agent is scored against. The agent may block only once it agrees with them at a rate a person approved.
+motivation: I want an AI reviewer scored against an expert's verdicts on real examples before I let it block my agent's work, so I know how often it is right instead of trusting a guess.
 sensors: [human-review, eval-set]
 when: When a loop's judge, reviewer or refuter is written; again whenever its prompt, its model or the agent that writes its prompt changes, before it blocks again; and on a schedule, when the expert grades a fresh sample of its verdicts in real use.
 failure: Over at least three runs, the agent catches fewer of the expert's fails, or lets through fewer of the expert's passes, than the threshold a person approved, each measured apart. Also an agent that blocks with no score, or with a prompt or model newer than its score, and each verdict in real use that a person overrules or a later check proves wrong.

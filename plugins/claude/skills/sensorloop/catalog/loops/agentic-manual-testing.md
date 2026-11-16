@@ -1,6 +1,7 @@
 ---
 title: Try it by hand
 summary: The agent runs what it just wrote the way a user of that code would, and turns each defect it finds into a test that fails before the fix and passes after it.
+motivation: I want my agent to try what it built the way a user would, and turn every bug it finds into a test, so problems nobody wrote a test for get caught and cannot come back.
 sensors: [manual-probe]
 when: After the agent has written a change and before it says it is done, and again after each fix. Before the turn ends, the defect check reads the task's defects.
 failure: What comes back is not what a user of the code should get, such as a wrong value, an error or a broken page. A defect stays a failure until it has a test that failed before the fix and passes after it, or until it is handed to a person.

@@ -1,6 +1,7 @@
 ---
 title: Agents in CI keep their guards
 summary: "A CI check finds every workflow job that runs a coding agent, and fails when one lacks a guard: a filtered network, a permission mode that reviews calls, a tool list and a turn cap, or a job with no write token where the agent reads text anyone can write."
+motivation: I want every CI job that runs a coding agent to keep its safety limits, such as a filtered network, a short list of allowed tools and no write access when it reads text strangers wrote, so one careless edit to a workflow file cannot quietly remove them.
 sensors: [structure-check, security-scanner]
 when: On every pull request and every push to the main branch, over all the workflows and the actions they call.
 failure: "An agent job on a runner whose outbound traffic is not filtered, or with an allow list that is missing, empty, not enforced or names a host with `*`. An agent step that turns permission checks off, sets a default permission mode, loads a policy that allows shell commands and file writes outright, or names a model too old for the chosen mode. A step with no tool list or no turn cap. In a job whose trigger carries text anyone can write: a token that can write, a checkout that keeps its credentials, or that text pasted into a prompt or a command. A third-party step not pinned to a commit. Fewer agent jobs found than the repository lists."

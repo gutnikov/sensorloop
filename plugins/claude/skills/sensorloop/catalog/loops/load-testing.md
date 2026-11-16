@@ -1,6 +1,7 @@
 ---
 title: Load test a preview
 summary: The agent runs a load scenario against the preview environment of its change, and when the response time or the rate of failed requests goes over its threshold, it finds the bottleneck in the traces and fixes it.
+motivation: I want each change put under the load of many users before release, so I find out it slows down while it is still on a preview deployment, and my agent can see where the bottleneck is.
 sensors: [performance-measure, traces]
 when: In a CI job after each deploy of a pull request's preview environment, or on a schedule against staging; the agent may also run a scenario against its own preview while it works. The traces are read when a threshold fails.
 failure: A threshold of the scenario fails, such as the 95th percentile of response time or the rate of failed requests, and the load tool exits non-zero. A run that did not finish has measured nothing, and fails too.

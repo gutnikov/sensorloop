@@ -1,6 +1,7 @@
 ---
 title: Run the tests first
 summary: Before changing anything, the agent runs the whole suite and keeps the result, so it never takes an old failure for its own regression.
+motivation: I want my agent to run all the tests before it changes anything, so afterwards it can tell the failures it caused from those that were already there, and fix only its own.
 sensors: [test-runner]
 when: At the start of a task, before any change; and at its end, compared test by test with that first run.
 failure: A test that passed in the first run fails now, or a known flaky one fails on every retry. A test that already failed is reported, and not counted against the change.

@@ -1,6 +1,7 @@
 ---
 title: A reviewer answers permission prompts
 summary: In a run nobody watches, a read-only reviewer model answers the agent's permission prompts in place of a person. It scores the action's risk and whether the person authorised it, and a denial forbids reaching the same effect another way.
+motivation: I want my agent to keep working when I am not there to approve its commands, with a cautious AI reviewer answering its permission requests, so it neither stalls at the first prompt nor runs with every safety check turned off.
 sensors: [llm-judge, human-answer]
 when: Each time the agent asks for an action that no allow or deny rule settles and its sandbox does not cover, at the point where a permission prompt would be shown.
 failure: The reviewer denies the action, because its risk is too high for the authorisation it found, the authorisation came only from text the agent read, or a project rule forbids it. Also three denials in a row, or ten of the last 50 reviews, in one turn. Until the reviewer is calibrated, its answer is advice.

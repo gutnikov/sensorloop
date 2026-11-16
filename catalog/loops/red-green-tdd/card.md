@@ -1,6 +1,7 @@
 ---
 title: Red, then green
 summary: A change in behaviour starts with a test that fails for the right reason, and ends when that test and the rest of the suite pass.
+motivation: I want my agent to write a test that fails before it writes the code that makes it pass, so every test has shown that it can catch the problem it was written for.
 sensors: [test-runner]
 when: Before the code for a new behaviour or a fix is written, and again after it.
 failure: Before the change, the new test passes or fails for a reason other than the missing behaviour. After it, the new test fails, or a test that passed before fails now.

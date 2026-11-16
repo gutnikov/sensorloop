@@ -1,6 +1,7 @@
 ---
 title: Smoke test after a deploy
 summary: After each deploy to a preview environment or to staging, a job checks that the new version is ready and runs a few smoke checks against it, and a red result stops the release there.
+motivation: I want every deploy checked at once to see that the new version starts and its main paths work, so a missing setting or an unreachable database stops the release there instead of reaching users.
 sensors: [smoke-probe, logs]
 when: Right after each deploy to a preview environment or to staging, before the release is promoted to the next stage.
 failure: The rollout does not complete, the new version gives no answer or is not healthy within the time limit, or a smoke step fails.

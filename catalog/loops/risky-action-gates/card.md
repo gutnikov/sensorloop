@@ -1,6 +1,7 @@
 ---
 title: Ask before the irreversible
 summary: Before an action that cannot be undone, the agent stops, and a person confirms or refuses it.
+motivation: I want my agent to stop and ask me before anything that cannot be undone, like deleting data or sending a message, so such a mistake never happens without my say.
 sensors: [human-answer]
 when: Before an action that cannot be undone, such as a deploy, a migration, deleting data, a push to a protected branch, or a message sent outside the project. In CI, a check confirms that the gates are still in place.
 failure: The person answers no. Or the CI check finds a command on the list of gated commands that would run without asking.

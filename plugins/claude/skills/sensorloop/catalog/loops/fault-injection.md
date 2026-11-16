@@ -1,6 +1,7 @@
 ---
 title: When a dependency fails
 summary: A test makes a dependency slow, time out or go down through a fault proxy, and the agent fixes retries, timeouts and error handling until the code copes.
+motivation: I want my code tested against a database or service that is slow, times out or goes down, so I learn whether its retries, timeouts and error handling work before an outage teaches me.
 sensors: [input-fault-injection]
 when: Each time the suite runs, locally while the agent works and again in CI, since the fault tests are part of it.
 failure: "A failure under a fault: a fault test fails because the code does not do what the spec names for that fault, such as retry, fall back, give up within its time budget or return the right error. A failure of the harness, such as a proxy that did not start, does not count against the code."

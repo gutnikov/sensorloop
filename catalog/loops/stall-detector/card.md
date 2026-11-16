@@ -1,6 +1,7 @@
 ---
 title: Stall detector
 summary: A hook tells the agent to step back when it repeats the same call, or the same cycle of calls, five times, and a second stall stops it for a person. The hook also caps the subagents a task can start.
+motivation: I want my agent stopped when it keeps repeating the same steps without progress, or starts too many helper agents, so it does not burn its whole budget going in circles before I find out.
 sensors: [agent-activity]
 when: After every tool call, and before every spawn, a call that starts a subagent. A new prompt from the person starts a new task and resets the counts.
 failure: The last five calls are the same, or are one cycle of two to five calls repeated five times. Or a subagent that is not an orchestrator tries to spawn, or a task tries its eleventh spawn.

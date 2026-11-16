@@ -1,6 +1,7 @@
 ---
 title: Confirm the release in production
 summary: After a release reaches production, a job judges a window of real traffic, and the change is confirmed only if production runs it, its own signal appeared often enough, and nothing is worse than under the previous version.
+motivation: I want a release counted as done only when real traffic in production shows the change working and nothing worse than before, because passing every test before the release does not prove it works for users.
 sensors: [logs, metrics, error-tracker]
 when: After each deploy to production, once a window of real traffic has passed (at least a set time and a set number of events on the changed path, up to a cap).
 failure: "Any verdict but confirmed: production does not run the change yet, its signal is missing or too rare, something is worse than under the previous version, or the window ended with too few events, or no data, to judge."

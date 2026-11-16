@@ -1,6 +1,7 @@
 ---
 title: Write from a brief, review once
 summary: For a text a person will decide on, the agent writes a brief in which every fact has a source, and a separate writer turns it into the text. The text is checked against the brief and against a catalogue of plain-language errors, revised once, and handed to a person.
+motivation: I want any text I will decide on, such as a plan or a report, written from a list of facts with their sources and reviewed once for invented claims and unclear language, so I can trust what I read.
 sensors: [llm-reviewer, human-answer, linter]
 when: "Whenever the agent writes a text a person will decide on: documentation, a pull request's description, release notes, a message that asks for a decision. The brief is checked before writing and the text once after it; a text written again from a completed brief is checked once too. The revision is checked once more, for invented claims only."
 failure: A gap in the brief that has no answer yet; an invented claim, one in the text but not in the brief; a missing fact, one in the brief that the reader needs but the text leaves out; a critical or serious review finding. A lint hit counts only once the review confirms it.

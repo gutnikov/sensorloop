@@ -1,6 +1,7 @@
 ---
 title: An unattended run ends in a hand-off or a reason
 summary: After an agent runs with nobody watching, a wrapper reads git, not the agent's report, and either hands the work on or blocks the item with the reason and the one step that retries it. No item stays in progress after its run.
+motivation: I want every run my agent makes while nobody is watching to end either with its work handed on or with the reason it failed and the step that retries it, so no task stays marked in progress after a run that quietly went wrong.
 sensors: [repository-state]
 when: Before an unattended run starts, on the item it was given; and after the agent's process exits, whether it finished, crashed or ran out of time.
 failure: "Before the run: the item is a spec with sub-items, waits on an open blocker, is closed or done, or an open pull request from the project's own people already closes it. After it: no commit ahead of the base branch, conflicts left in the tree, a plan file that does not parse against its schema, a push the lease refuses because someone else moved the branch, or a run that crashed, timed out or fell silent."

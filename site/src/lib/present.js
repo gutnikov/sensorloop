@@ -116,6 +116,7 @@ export function facts(catalog, card) {
       return [['Produces', sensors()]];
     case 'loops':
       return [
+        ['Motivation', inline(card.data.motivation)],
         ['Reads', sensors()],
         ['When', inline(card.data.when)],
         ['Failure', inline(card.data.failure)],

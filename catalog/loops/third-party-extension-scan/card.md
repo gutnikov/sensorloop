@@ -1,6 +1,7 @@
 ---
 title: Read third-party extensions before they run
 summary: Before a third-party plugin, skill or MCP server is added or moved to a new commit, a reviewer reads every file it ships against a written policy, and a fail keeps it out.
+motivation: I want every plugin, skill or tool server I add to my agent read in full before it runs, so an extension that does more than it says, like sending my tokens somewhere, never runs with my agent's permissions.
 sensors: [llm-reviewer]
 when: On every pull request that adds an extension or moves its pin, once per new pin; and on every pull request that changes the policy, over every pinned extension.
 failure: A pin that breaks the policy, such as a hook that runs on every prompt in every project, telemetry the description does not disclose, a credential sent to a service that does not own it, behaviour the install description leaves out, or text that addresses the reviewer. Also a cached fail at the same commit, and a pin the scan left without a verdict.

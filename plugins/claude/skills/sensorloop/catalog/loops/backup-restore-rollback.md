@@ -1,6 +1,7 @@
 ---
 title: Restore and rollback drills
 summary: On a schedule, a job restores the database from a real backup into a throwaway place and checks the data, and rolls a release back on staging; when a check fails, the agent fixes the procedure. A backup never restored may not restore on the day it is needed, and then the data is lost.
+motivation: I want my backups actually restored and my rollbacks actually run on a schedule, so I find out they are broken during a drill, not on the day I need them to save my data or undo a bad release.
 sensors: [smoke-probe]
 when: The restore weekly, and after every change to the backup job or its configuration; the rollback nightly on staging, against the latest release candidate.
 failure: A restore that errors, takes longer than the recovery time the project promises, or brings back tables with too few rows or a newest row older than the backup interval allows. A rollback after which the previous release does not come up or fails its smoke checks. A change whose read-back shows it did not happen. A drill that did not run on schedule.

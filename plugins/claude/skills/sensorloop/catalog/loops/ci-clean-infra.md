@@ -1,6 +1,7 @@
 ---
 title: Fix what fails in CI
 summary: The agent pushes, CI runs the checks on clean machines, and the agent fixes what fails; after the second red round, a person takes over.
+motivation: I want my agent to push its work, wait for CI to run the checks on clean machines and fix whatever fails there, so a change never passes only because of something left on the agent's own machine.
 sensors: [ci-results]
 when: After each push, once CI has finished the run for the branch's latest commit.
 failure: A required job that failed or was cancelled, or is missing or skipped, for the branch's latest commit.

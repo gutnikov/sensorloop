@@ -1,6 +1,7 @@
 ---
 title: Lint with fix instructions
 summary: Every lint violation reaches the agent with a text that says how to fix it, so the agent fixes the cause instead of silencing the rule.
+motivation: I want every lint error to tell my agent how to fix the problem, so it fixes the cause instead of switching off the rule to make the error go away.
 sensors: [linter]
 when: At each commit, and again in CI as the final run.
 failure: A violation of any rule set to fail the run, and any suppression that does not give its reason.

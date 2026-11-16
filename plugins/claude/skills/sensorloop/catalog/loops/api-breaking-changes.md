@@ -1,6 +1,7 @@
 ---
 title: Keep the API compatible
 summary: When the agent changes an API description, a library's public API or data that released clients read, a check compares the change with what callers already have, and the agent restores compatibility.
+motivation: I want to know when a change would break the apps and clients that already call my API, so my agent keeps it compatible while the change is still a pull request, before anyone's integration fails.
 sensors: [api-compatibility]
 when: Before each commit that changes an API description, a library's public API or data that released clients read; and again in CI as the final run.
 failure: Any change that breaks an existing caller, or that the check cannot rule out as a break. An addition that callers can ignore passes.

@@ -1,6 +1,7 @@
 ---
 title: Walk the feature in a browser
 summary: The agent starts the app and walks the feature through a real browser as a user would, which shows a feature broken end to end even when the unit tests pass.
+motivation: I want my agent to open the app in a real browser and click through the feature as a user would, so it never reports a feature done whose parts work alone but not together.
 sensors: [browser-run]
 when: After the unit tests pass on a change to a feature users reach in a browser, before the agent says it is done; and again in CI, on a fresh server.
 failure: "A step of the scenario fails: it does not reach what a user should see, such as a button with no effect or an error where the result should be. In CI, any failed spec."

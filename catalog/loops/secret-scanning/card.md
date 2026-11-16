@@ -1,6 +1,7 @@
 ---
 title: No secrets in commits
 summary: A secret scanner checks every commit before it is made and again in CI, and the agent moves each key it finds out of the code. A secret that has already been pushed goes to a person, who revokes it.
+motivation: I want every commit checked for passwords and API keys before it is made, so my agent cannot leak a secret into the git history, where deleting it later no longer helps.
 sensors: [security-scanner]
 when: Before each commit, on the staged changes; in CI, on the commits of every pull request; and on a schedule, over the whole history.
 failure: A finding in the staged changes or in the pull request's commits. A new allow comment or ignore entry, which a person has not yet seen. A scan that failed, or wrote no report.

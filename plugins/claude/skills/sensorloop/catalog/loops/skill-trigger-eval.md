@@ -1,6 +1,7 @@
 ---
 title: Does the skill load when it should
 summary: Realistic requests that should and should not use a skill, a subagent or a command run several times each, and the eval counts how often the agent loads it. A rewritten description is kept only if it does better on requests it was not tuned on.
+motivation: I want to know that my agent picks up a skill or a command when a request calls for it, and leaves it alone when it does not, so the instructions I wrote do not silently go unused.
 sensors: [eval-set]
 when: On every change to the description of a skill, a subagent or a command, to the coding agent or to the model it runs on; and on demand, when a person asks to tune a description.
 failure: A request that should load it does so in fewer than half its runs, where a load after other work has started counts as none; a request that should not load it does so in half its runs or more. Also a description that does not parse, or never reaches the model.

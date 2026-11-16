@@ -1,6 +1,7 @@
 ---
 title: Show the result
 summary: Once the automated checks pass, the agent shows a person the working feature, with screenshots, a recording or the real output of a command, and the person judges the behaviour, not the code.
+motivation: I want my agent to show me the working result, with screenshots, a recording or real output, before it calls the work done, so I can judge whether it is what I wanted without reading the code.
 sensors: [human-review, screenshot]
 when: As the task's last step before the merge, once its automated checks pass; the evidence is checked in CI on the pull request.
 failure: The person answers fail, with what differs from what they wanted. Or the evidence check marks a criterion `no evidence`, `text only` (only the agent's description of the result) or `file missing` (a listed file that does not exist).

@@ -1,6 +1,7 @@
 ---
 title: Architecture rules
 summary: Rules for the direction of imports between layers fail as soon as the agent adds an import that breaks them, and each message describes the layers, so the agent moves the code where it belongs.
+motivation: I want my agent stopped as soon as it adds an import that crosses the layers of my architecture, with a message that says where the code belongs, so the structure does not erode one shortcut at a time.
 sensors: [linter, dependency-graph]
 when: After the agent adds or moves an import, at each commit, and in CI as the final run.
 failure: An import in a forbidden direction, a new cycle, or a test that imports a module's internals. A new file outside the predefined folders. A count of known violations or a baseline file that grew, a new per-file override, or a disable comment outside the reviewed list. An exception that no longer matches any code.

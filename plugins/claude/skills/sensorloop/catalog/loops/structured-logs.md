@@ -1,6 +1,7 @@
 ---
 title: Read the logs
 summary: After running a scenario, the agent queries the structured logs of its own run for errors and fixes the cause, until the query finds none or the agent hands the error to a person.
+motivation: I want my agent to search the logs of its own test run for errors, so an error the app caught and logged, or a background job that crashed, does not hide behind tests that passed.
 sensors: [logs]
 when: After the agent runs a scenario through the app in its worktree, before it says the work is done; and in CI, after the end-to-end job, against CI's own log store.
 failure: An error-level event in the run that is not on the allow-list. A run that left no lines at all in the store fails as well, since then an empty result has observed nothing.
