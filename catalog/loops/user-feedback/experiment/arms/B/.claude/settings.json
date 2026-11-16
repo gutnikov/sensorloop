@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.sensorloop/hooks/feedback.mjs 'FB-[0-9]+'",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.sensorloop/hooks/feedback.mjs 'FB-[0-9]+'",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

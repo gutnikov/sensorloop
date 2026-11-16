@@ -1,0 +1,17 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits: []
+loops:
+  - id: red-green-tdd
+    status: active
+    wiring: Instruction in LOOPS.md; one test runs with `npx vitest run <file> -t "<name>"`.
+    proved: 2026-11-01

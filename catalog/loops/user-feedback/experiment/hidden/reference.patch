@@ -1,0 +1,116 @@
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..8909c16 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -2,12 +2,15 @@
+ import { toCsv } from './export/csv.js';
+ import { InvoiceFileError, readInvoices } from './parse.js';
+ import { aging } from './report/aging.js';
+-import { renderAging, renderSummary } from './report/render.js';
++import { agingByCustomer } from './report/by-customer.js';
++import { renderAging, renderAgingByCustomer, renderSummary } from './report/render.js';
+ import { summarize } from './report/summary.js';
+ 
+ const USAGE = `Usage:
+   invoicer summary <file>                     billed, paid and outstanding, overall and per customer
+-  invoicer aging <file> [--today YYYY-MM-DD]  overdue invoices, by how long they are overdue
++  invoicer aging <file> [--today YYYY-MM-DD] [--by-customer]
++                                              overdue invoices, by how long they are overdue;
++                                              --by-customer: one row per customer
+   invoicer csv <file>                         one row per invoice, for spreadsheets`;
+ 
+ function main(args: string[]): number {
+@@ -24,7 +27,8 @@ function main(args: string[]): number {
+     case 'aging': {
+       const at = rest.indexOf('--today');
+       const today = at >= 0 ? rest[at + 1] : new Date().toISOString().slice(0, 10);
+-      process.stdout.write(renderAging(aging(invoices, today)));
++      const report = aging(invoices, today);
++      process.stdout.write(rest.includes('--by-customer') ? renderAgingByCustomer(report, agingByCustomer(report)) : renderAging(report));
+       return 0;
+     }
+     case 'csv':
+diff --git a/src/report/by-customer.ts b/src/report/by-customer.ts
+new file mode 100644
+index 0000000..eff1448
+--- /dev/null
++++ b/src/report/by-customer.ts
+@@ -0,0 +1,25 @@
++import { totals } from '../invoice.js';
++import { roundCents } from '../money.js';
++import type { AgingReport } from './aging.js';
++
++export interface CustomerAging {
++  customer: string;
++  /** What the customer owes in each bucket of the report, in its order. */
++  buckets: number[];
++  total: number;
++}
++
++/** FB-112: the aging report per customer with overdue invoices, the largest total overdue first. */
++export function agingByCustomer(report: AgingReport): CustomerAging[] {
++  const byId = new Map<string, CustomerAging>();
++  report.buckets.forEach((bucket, i) => {
++    for (const invoice of bucket.invoices) {
++      const row = byId.get(invoice.customer.id) ?? { customer: invoice.customer.name, buckets: report.buckets.map(() => 0), total: 0 };
++      const amount = totals(invoice).total;
++      row.buckets[i] = roundCents(row.buckets[i] + amount);
++      row.total = roundCents(row.total + amount);
++      byId.set(invoice.customer.id, row);
++    }
++  });
++  return [...byId.values()].sort((a, b) => b.total - a.total || a.customer.localeCompare(b.customer));
++}
+diff --git a/src/report/render.ts b/src/report/render.ts
+index f648894..10a88fd 100644
+--- a/src/report/render.ts
++++ b/src/report/render.ts
+@@ -1,5 +1,6 @@
+ import { formatMoney } from '../money.js';
+ import type { AgingReport } from './aging.js';
++import type { CustomerAging } from './by-customer.js';
+ import type { Summary } from './summary.js';
+ 
+ /** Rows as aligned columns: the first left-aligned, the rest right-aligned. */
+@@ -33,3 +34,11 @@ export function renderAging(report: AgingReport): string {
+   ];
+   return `As of ${report.today}\n\n${table(rows)}\n`;
+ }
++
++export function renderAgingByCustomer(report: AgingReport, customers: CustomerAging[]): string {
++  const rows = [
++    ['Customer', ...report.buckets.map((b) => b.label), 'Total'],
++    ...customers.map((c) => [c.customer, ...c.buckets.map(formatMoney), formatMoney(c.total)]),
++  ];
++  return `As of ${report.today}\n\n${table(rows)}\n`;
++}
+diff --git a/tests/by-customer.test.ts b/tests/by-customer.test.ts
+new file mode 100644
+index 0000000..911a212
+--- /dev/null
++++ b/tests/by-customer.test.ts
+@@ -0,0 +1,24 @@
++import { describe, expect, it } from 'vitest';
++import { aging } from '../src/report/aging.js';
++import { agingByCustomer } from '../src/report/by-customer.js';
++import type { Invoice } from '../src/types.js';
++
++function invoice(id: string, customer: string, dueOn: string, amount: number, paid = false): Invoice {
++  return { id, customer: { id: customer.toLowerCase(), name: customer }, issuedOn: '2026-01-01', dueOn, items: [{ description: 'w', quantity: 1, unitPrice: amount }], taxRate: 0, paid };
++}
++
++describe('FB-112: aging by customer', () => {
++  const report = aging([
++    invoice('1', 'Birch', '2026-10-20', 50),
++    invoice('2', 'Alder', '2026-06-01', 900),
++    invoice('3', 'Birch', '2026-09-01', 100),
++    invoice('4', 'Cedar', '2026-06-01', 700, true),
++  ], '2026-11-01');
++
++  it('gives each customer with overdue invoices a row, by bucket and in total, largest first', () => {
++    expect(agingByCustomer(report)).toEqual([
++      { customer: 'Alder', buckets: [0, 0, 0, 900], total: 900 },
++      { customer: 'Birch', buckets: [50, 0, 100, 0], total: 150 },
++    ]);
++  });
++});

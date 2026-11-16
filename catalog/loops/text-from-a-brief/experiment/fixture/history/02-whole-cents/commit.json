@@ -1,0 +1,6 @@
+{
+  "author": "Lee Varga",
+  "email": "lee@invoicer.invalid",
+  "date": "2026-09-15T10:41:00Z",
+  "message": "money: add up amounts in whole cents\n\nInternal: sumAmounts adds whole cents instead of dollars. Nothing a report prints changes, and the\ntests are the same.\n"
+}

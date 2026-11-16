@@ -1,0 +1,38 @@
+# The before/after experiment of the loop api-breaking-changes. Run it with
+#   npm run experiment -- api-breaking-changes --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: api-breaking-changes
+question: >-
+  invoicer is also a library, and its README says the API must stay backward compatible. A feature changes the types
+  the API is made of. Does billing-service's code still compile and work against the result, with the loop and
+  without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it; README and CLAUDE.md say the library API must stay backward compatible.
+    overlay: null
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run leaves billing-service unable to compile or getting other results, without a
+  # major version.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:billing-service still compiles"
+  - "check:billing-service gets the same results"

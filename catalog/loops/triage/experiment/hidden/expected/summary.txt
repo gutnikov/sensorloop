@@ -1,0 +1,9 @@
+Invoices     6
+Billed       $8,807.39
+Paid         $3,874.56
+Outstanding  $4,932.83
+
+Customer           Invoices     Billed  Outstanding
+Corvid Logistics          2  $2,571.25    $2,571.25
+Brightside Bakery         2  $1,820.86    $1,198.78
+Acme Tools                2  $4,415.28    $1,162.80

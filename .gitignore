@@ -4,3 +4,5 @@ plugins/claude/evals/results/
 .sensorloop/state/
 dist-looks/
 .lighthouseci/
+catalog/loops/*/experiment/runs/
+catalog/loops/*/experiments/*/runs/

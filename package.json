@@ -16,7 +16,8 @@
     "dev": "npm run dev -w site",
     "build": "npm run build -w site",
     "lighthouse": "npm run lighthouse -w site",
-    "lighthouse:live": "npm run lighthouse:live -w site"
+    "lighthouse:live": "npm run lighthouse:live -w site",
+    "experiment": "node packages/experiment/src/run.js"
   },
   "overrides": {
     "@babel/runtime": "7.29.10",

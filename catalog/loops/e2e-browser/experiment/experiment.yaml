@@ -1,0 +1,44 @@
+# The before/after experiment of the loop e2e-browser. Run it with
+#   npm run experiment -- e2e-browser --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: e2e-browser
+question: >-
+  The feature is a button on a server-rendered page that changes the page in place and saves to the server. When the
+  agent says it is done, does the flow work for a person in a real browser, with the loop and without it?
+
+task: task.md
+
+# What the project's CI runs (.github/workflows/ci.yml): its three jobs, one after the other.
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+  - npm run test:e2e
+  - npm run lighthouse
+
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: >-
+      The project as its team keeps it: unit tests, a few Playwright specs and a page audit in CI, and a CLAUDE.md that
+      names their commands.
+    overlay: null
+
+# No reports: the run ends at the agent's first "done", which is what the judge walks.
+person:
+  max_reports: 0
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run builds and starts, has "Mark as paid" in src/ or public/ (feature in code), and
+  # fails one of the four walks (the scenario checks): its measure "broken in the browser" is true.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "value:broken in the browser"

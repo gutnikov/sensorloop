@@ -1,0 +1,107 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ca1fd9b..e44a01e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,8 @@ What changed for the people who use invoicer, newest first.
+ 
+ ## Unreleased
+ 
++- summary and csv take --since to cover only the invoices issued on or after a date (#64)
++
+ ## 0.4.0 (2026-09-01)
+ 
+ - csv: one row per invoice, for spreadsheets (#31)
+diff --git a/README.md b/README.md
+index 85c7d9a..5dd246b 100644
+--- a/README.md
++++ b/README.md
+@@ -16,6 +16,7 @@ The invoices file is a JSON list; `data/invoices.json` is an example.
+ | Command | Option | What it does |
+ |---|---|---|
+ | `aging` | `--today YYYY-MM-DD` | The date the report is as of; today by default. |
++| `summary`, `csv` | `--since YYYY-MM-DD` | Only the invoices issued on or after the date. |
+ 
+ `invoicer --help` prints the usage.
+ 
+diff --git a/src/cli.ts b/src/cli.ts
+index 1dfa5d7..87c195d 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -1,5 +1,6 @@
+ #!/usr/bin/env node
+ import { toCsv } from './export/csv.js';
++import { issuedSince } from './filter.js';
+ import { dateOption, UsageError } from './options.js';
+ import { InvoiceFileError, readInvoices } from './parse.js';
+ import { aging } from './report/aging.js';
+@@ -7,10 +8,12 @@ import { renderAging, renderSummary } from './report/render.js';
+ import { summarize } from './report/summary.js';
+ 
+ const USAGE = `Usage:
+-  invoicer summary <file>                     billed, paid and outstanding, overall and per customer
+-  invoicer aging <file> [--today YYYY-MM-DD]  overdue invoices, by how long they are overdue
+-  invoicer csv <file>                         one row per invoice, for spreadsheets
+-  invoicer --help                             this text`;
++  invoicer summary <file> [--since YYYY-MM-DD]  billed, paid and outstanding, overall and per customer
++  invoicer aging <file> [--today YYYY-MM-DD]    overdue invoices, by how long they are overdue
++  invoicer csv <file> [--since YYYY-MM-DD]      one row per invoice, for spreadsheets
++  invoicer --help                               this text
++
++  --since: only the invoices issued on or after the date`;
+ 
+ function main(args: string[]): number {
+   const [command, file, ...rest] = args;
+@@ -22,14 +25,16 @@ function main(args: string[]): number {
+     console.error(USAGE);
+     return 2;
+   }
+-  const invoices = readInvoices(file);
++  const all = readInvoices(file);
++  const at = rest.indexOf('--since');
++  const invoices = at >= 0 && command !== 'aging' ? issuedSince(all, dateOption('--since', rest[at + 1])) : all;
+   switch (command) {
+     case 'summary':
+       process.stdout.write(renderSummary(summarize(invoices)));
+       return 0;
+     case 'aging': {
+-      const at = rest.indexOf('--today');
+-      const today = at >= 0 ? dateOption('--today', rest[at + 1]) : new Date().toISOString().slice(0, 10);
++      const t = rest.indexOf('--today');
++      const today = t >= 0 ? dateOption('--today', rest[t + 1]) : new Date().toISOString().slice(0, 10);
+       process.stdout.write(renderAging(aging(invoices, today)));
+       return 0;
+     }
+diff --git a/src/filter.ts b/src/filter.ts
+new file mode 100644
+index 0000000..b1b5d46
+--- /dev/null
++++ b/src/filter.ts
+@@ -0,0 +1,6 @@
++import type { Invoice } from './types.js';
++
++/** The invoices issued on or after a date (YYYY-MM-DD). */
++export function issuedSince(invoices: Invoice[], since: string): Invoice[] {
++  return invoices.filter((invoice) => invoice.issuedOn >= since);
++}
+diff --git a/tests/since.test.ts b/tests/since.test.ts
+new file mode 100644
+index 0000000..7580a13
+--- /dev/null
++++ b/tests/since.test.ts
+@@ -0,0 +1,16 @@
++import { execFileSync } from 'node:child_process';
++import { describe, expect, it } from 'vitest';
++
++const cli = (...args: string[]) => execFileSync('node_modules/.bin/tsx', ['src/cli.ts', ...args], { encoding: 'utf8' });
++
++describe('--since (#64)', () => {
++  it('covers only the invoices issued on or after the date', () => {
++    const csv = cli('csv', 'data/invoices.json', '--since', '2026-08-20');
++    expect(csv.split('\n').filter(Boolean).map((row) => row.split(',')[0])).toEqual(['id', 'INV-1002', 'INV-1004', 'INV-1005']);
++    expect(cli('summary', 'data/invoices.json', '--since', '2026-08-20')).toMatch(/^Invoices\s+3$/m);
++  });
++
++  it('refuses a date that does not exist, naming it', () => {
++    expect(() => execFileSync('node_modules/.bin/tsx', ['src/cli.ts', 'summary', 'data/invoices.json', '--since', '2026-02-30'], { stdio: 'pipe' })).toThrow(/--since: expected a date as YYYY-MM-DD, got 2026-02-30/);
++  });
++});

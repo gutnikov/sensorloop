@@ -1,0 +1,13 @@
+{
+  "name": "@sensorloop/experiment",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Runs a loop's before/after experiment in fresh Docker containers, and scores each run",
+  "type": "module",
+  "bin": {
+    "sensorloop-experiment": "src/run.js"
+  },
+  "dependencies": {
+    "yaml": "2.9.1"
+  }
+}

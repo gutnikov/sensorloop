@@ -1,0 +1,192 @@
+diff --git a/src/cli.ts b/src/cli.ts
+index 2182a54..5ac05a3 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -1,16 +1,19 @@
+ #!/usr/bin/env node
+ import { toCsv } from './export/csv.js';
++import { formatMoney } from './money.js';
+ import { InvoiceFileError, readInvoices } from './parse.js';
++import { fetchRates, outstandingInUsd, RatesError } from './rates.js';
+ import { aging } from './report/aging.js';
+ import { renderAging, renderSummary } from './report/render.js';
+ import { summarize } from './report/summary.js';
+ 
+ const USAGE = `Usage:
+-  invoicer summary <file>                     billed, paid and outstanding, overall and per customer
++  invoicer summary <file>                     billed, paid and outstanding, per currency and per customer,
++                                              and in USD at today's rates (from RATES_URL)
+   invoicer aging <file> [--today YYYY-MM-DD]  overdue invoices, by how long they are overdue
+   invoicer csv <file>                         one row per invoice, for spreadsheets`;
+ 
+-function main(args: string[]): number {
++async function main(args: string[]): Promise<number> {
+   const [command, file, ...rest] = args;
+   if (!command || !file) {
+     console.error(USAGE);
+@@ -18,9 +21,19 @@ function main(args: string[]): number {
+   }
+   const invoices = readInvoices(file);
+   switch (command) {
+-    case 'summary':
+-      process.stdout.write(renderSummary(summarize(invoices)));
++    case 'summary': {
++      const summaries = summarize(invoices);
++      let text = renderSummary(summaries);
++      try {
++        const rates = await fetchRates(process.env.RATES_URL);
++        text += `\nOutstanding in USD  ${formatMoney(outstandingInUsd(summaries, rates), 'USD')}\n`;
++      } catch (error) {
++        if (!(error instanceof RatesError)) throw error;
++        console.error(`invoicer: warning: no total in USD: ${error.message}`);
++      }
++      process.stdout.write(text);
+       return 0;
++    }
+     case 'aging': {
+       const at = rest.indexOf('--today');
+       const today = at >= 0 ? rest[at + 1] : new Date().toISOString().slice(0, 10);
+@@ -36,10 +49,13 @@ function main(args: string[]): number {
+   }
+ }
+ 
+-try {
+-  process.exitCode = main(process.argv.slice(2));
+-} catch (error) {
+-  if (!(error instanceof InvoiceFileError)) throw error;
+-  console.error(`invoicer: ${error.message}`);
+-  process.exitCode = 1;
+-}
++main(process.argv.slice(2)).then(
++  (code) => {
++    process.exitCode = code;
++  },
++  (error) => {
++    if (!(error instanceof InvoiceFileError)) throw error;
++    console.error(`invoicer: ${error.message}`);
++    process.exitCode = 1;
++  },
++);
+diff --git a/src/rates.ts b/src/rates.ts
+new file mode 100644
+index 0000000..e4c3469
+--- /dev/null
++++ b/src/rates.ts
+@@ -0,0 +1,52 @@
++import type { Currency } from './types.js';
++import { roundCents } from './money.js';
++import type { Summary } from './report/summary.js';
++
++/** Why there is no total in dollars today; the summary prints without it. */
++export class RatesError extends Error {}
++
++/** What one dollar buys in each currency. */
++export type Rates = Partial<Record<Currency, number>>;
++
++/** How long the rates service has to answer, body included. */
++export const RATES_TIMEOUT_MS = 5000;
++
++/** Today's rates from the rates service at baseUrl: GET <baseUrl>/rates?base=USD. */
++export async function fetchRates(baseUrl: string | undefined, timeoutMs = RATES_TIMEOUT_MS): Promise<Rates> {
++  if (!baseUrl) throw new RatesError('RATES_URL is not set');
++  const url = `${baseUrl.replace(/\/+$/, '')}/rates?base=USD`;
++  // One signal for the whole exchange: it also stops a body that arrives too slowly, and frees the connection.
++  const signal = AbortSignal.timeout(timeoutMs);
++  let body: unknown;
++  try {
++    const response = await fetch(url, { signal });
++    if (!response.ok) {
++      await response.body?.cancel();
++      throw new RatesError(`the rates service answered ${response.status}`);
++    }
++    body = await response.json();
++  } catch (error) {
++    if (error instanceof RatesError) throw error;
++    if (signal.aborted) throw new RatesError(`the rates service did not answer within ${timeoutMs / 1000} s`);
++    throw new RatesError(`the rates service failed: ${(error as Error).message}`);
++  }
++  if (typeof body !== 'object' || body === null || Array.isArray(body)) throw new RatesError('the rates service sent no rates');
++  return body as Rates;
++}
++
++/** What is outstanding in every currency, in dollars at the given rates. */
++export function outstandingInUsd(summaries: Summary[], rates: Rates): number {
++  let total = 0;
++  for (const summary of summaries) {
++    if (summary.currency === 'USD') {
++      total += summary.outstanding;
++      continue;
++    }
++    const rate = rates[summary.currency];
++    if (typeof rate !== 'number' || !Number.isFinite(rate) || rate <= 0) {
++      throw new RatesError(`the rates service has no rate for ${summary.currency}`);
++    }
++    total += summary.outstanding / rate;
++  }
++  return roundCents(total);
++}
+diff --git a/tests/rates.test.ts b/tests/rates.test.ts
+new file mode 100644
+index 0000000..44f2264
+--- /dev/null
++++ b/tests/rates.test.ts
+@@ -0,0 +1,59 @@
++import http from 'node:http';
++import type { AddressInfo } from 'node:net';
++import { afterEach, describe, expect, it } from 'vitest';
++import { fetchRates, outstandingInUsd } from '../src/rates.js';
++import type { Summary } from '../src/report/summary.js';
++
++const summary = (currency: Summary['currency'], outstanding: number): Summary => ({
++  currency,
++  invoices: 1,
++  billed: outstanding,
++  paid: 0,
++  outstanding,
++  customers: [],
++});
++
++describe('outstandingInUsd', () => {
++  it('converts each currency at its rate and adds them up', () => {
++    expect(outstandingInUsd([summary('USD', 100), summary('EUR', 92), summary('GBP', 79)], { EUR: 0.92, GBP: 0.79 })).toBe(300);
++  });
++
++  it('refuses to guess a rate the service did not give', () => {
++    expect(() => outstandingInUsd([summary('GBP', 10)], { EUR: 0.92 })).toThrow('no rate for GBP');
++  });
++});
++
++describe('fetchRates', () => {
++  let server: http.Server | undefined;
++  afterEach(() => {
++    server?.closeAllConnections();
++    server?.close();
++  });
++  const serve = async (handler: http.RequestListener) => {
++    server = http.createServer(handler);
++    await new Promise<void>((resolve) => server!.listen(0, '127.0.0.1', resolve));
++    return `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
++  };
++
++  it('reads the rates', async () => {
++    const url = await serve((req, res) => res.end(JSON.stringify({ EUR: 0.92 })));
++    expect(await fetchRates(url)).toEqual({ EUR: 0.92 });
++  });
++
++  it('gives up on an error status, broken JSON, or a body that stops halfway', async () => {
++    let url = await serve((req, res) => {
++      res.statusCode = 500;
++      res.end('{"error": "down"}');
++    });
++    await expect(fetchRates(url)).rejects.toThrow('answered 500');
++    server!.close();
++    url = await serve((req, res) => res.end('{"EUR": '));
++    await expect(fetchRates(url)).rejects.toThrow('failed');
++    server!.close();
++    url = await serve((req, res) => {
++      res.writeHead(200, { 'content-length': 100 });
++      res.write('{"EUR": ');
++    });
++    await expect(fetchRates(url, 200)).rejects.toThrow('did not answer within');
++  });
++});

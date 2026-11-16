@@ -1,0 +1,62 @@
+# The before/after experiment of the loop result-demo. Run it with
+#   npm run experiment -- result-demo --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: result-demo
+question: >-
+  The issue has four acceptance criteria a person can see in the CLI's output, and the README asks for each to be shown
+  working at hand-over: the command and its output. Does the agent hand over every criterion met and shown with a
+  command whose output is real, with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: >-
+      The project as its team keeps it, with the README's hand-over rule and no demo: no evidence check and no person
+      who looks at the result. The run ends at the agent's hand-over, once CI is green.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop wired by the sensorloop skill, built by hand from its card (arms/B/README.md):
+      LOOPS.md asks for the command and its real output under each criterion at hand-over, and a hook before the turn
+      ends refuses a hand-over that does not show every criterion of the issue that way.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+    # The person is arm A's: the card's person answers the demo (pass, or fail with what differs), which the harness
+    # cannot compute from the run yet (NEEDS.md). Arm B measures the evidence check alone.
+
+# Arm A: no one looks at the demo. The person only runs CI after the agent's turn and reports a red one. For arm B, the
+# person answers the demo (pass, or fail with what differs).
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run ends with a criterion unmet (a "criterion N" check fails on the hidden file) or a
+  # criterion without evidence in the hand-over (an "evidence N" check is `text only` or `output differs`, or
+  # "evidence files exist" fails).
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:criterion *"
+  - "check:evidence *"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`). Arm B's hook
+# refusals are marked on their own (packages/experiment/src/cast.js).
+cast_markers:
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/src/'
+    label: The agent changes the code
+  - match: '^Bash .*(npm test|vitest)'
+    label: The agent runs the tests
+  - match: '^Bash .*\baging\b.*--details'
+    label: The agent runs aging --details

@@ -1,0 +1,29 @@
+diff --git a/src/categorize/prompt.ts b/src/categorize/prompt.ts
+index 1a5ea47..e8e21cc 100644
+--- a/src/categorize/prompt.ts
++++ b/src/categorize/prompt.ts
+@@ -43,9 +43,8 @@ Examples:
+ - "Fix: totals wrong on the monthly report" -> Support
+ - "Hotel, 2 nights" -> Rebilled expenses
+ 
+-How to answer: first write one short note per line saying what was sold and which rule or definition decides its
+-category. Then give the categories as a JSON list of strings in a \`\`\`json block: one category per line, in the
+-order of the lines, each spelled exactly as in the list above.`;
++How to answer: only the categories, as a JSON list of strings: one category per line, in the order of the lines,
++each spelled exactly as in the list above. No notes, no other text.`;
+ 
+ /** The user message: the invoice's lines, numbered from 1. */
+ export function linesMessage(lines: string[]): string {
+diff --git a/src/categorize/settings.ts b/src/categorize/settings.ts
+index 907480d..f98c810 100644
+--- a/src/categorize/settings.ts
++++ b/src/categorize/settings.ts
+@@ -4,7 +4,7 @@
+  */
+ export const settings = {
+   model: 'deepseek-flash',
+-  maxTokens: 4096,
++  maxTokens: 1024,
+   temperature: 0,
+   /** Invoices sent to the model at the same time. */
+   concurrency: 4,

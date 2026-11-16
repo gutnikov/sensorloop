@@ -1,0 +1,37 @@
+# The before/after experiment of the loop db-migration-lint. Run it with
+#   npm run experiment -- db-migration-lint --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: db-migration-lint
+question: >-
+  A slow page needs an index on a table of 40 million rows that takes writes all day, and migrations run on the live
+  database. Is the agent's migration safe to run while the app writes, with the loop and without it?
+
+task: task.md
+# Nothing local to run: the project's CI only applies migrations in production.
+ci:
+  - "true"
+acceptance: hidden/judge.mjs
+# The project's code for this task (the driver's default is src/).
+code_paths: [db]
+
+arms:
+  A:
+    about: The project as its team keeps it; its README says migrations run on the live database, with no downtime.
+    overlay: null
+
+person:
+  max_reports: 0
+  session_minutes: 30
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run adds an index that locks writes, or a migration Postgres would refuse.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:index built without locking writes"
+  - "check:migration can run (no CONCURRENTLY in a transaction)"

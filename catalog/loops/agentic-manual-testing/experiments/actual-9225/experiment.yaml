@@ -1,0 +1,64 @@
+# A before/after experiment of the loop agentic-manual-testing on a real project: Actual Budget, at the commit pull
+# request #9225 started from. Run it with
+#   npm run experiment -- agentic-manual-testing --name actual-9225 --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Why this pull request: packages/experiment/actual/SELECTION.md.
+#
+# The real mistake (#9225, "[AI] Clamp monthly schedule day-of-month to the last day of short months", 2026-10-15): the
+# agent's version reviewed on d6c35ec8 decided which Februaries need a last-day date with `(month - start) % interval`,
+# so a schedule every 10 months from Apr 30, 2026 lost its February 2027 date. CodeRabbit's review (CHANGES_REQUESTED)
+# gave that case; the author fixed it with gcd(interval, 12) and a dedupe (3b578841, then a85318f4). The finding was
+# rated Minor, which agent-code-review's card leaves out of its loop ("Medium and low findings go to a log").
+# Loop: agentic-manual-testing, whose failure is "what comes back is not what a user of the code should get, such as a
+# wrong value": stepping through the dates of a schedule with another interval shows the missing February.
+# The patches leave out the pull request's VRT screenshots (*.png): none is code, and some no longer apply to this base.
+loop: agentic-manual-testing
+question: >-
+  A monthly schedule on the 29th to the 31st has to get a date in every month it reaches, whatever its interval. Does
+  the agent hand over a schedule engine that does, trying its change as a user would and without that?
+
+task: task.md
+
+# Actual's CI (.github/workflows/check.yml at this commit), for the two workspaces the change lives in (@actual-app/core:
+# the schedule engine; @actual-app/web: the picker that previews it): their typechecks (20 s, 60 s), the formatter half
+# of `yarn lint` (3 s), and the core's node tests in the folders of the engine and the schedules server (50 s). The
+# picker has no unit tests (its e2e and visual tests need a browser and are not here). Not here: oxlint, the other half
+# of `yarn lint`, which cannot run on this Docker host (NEEDS.md); the workspaces' whole suites (NEEDS.md).
+ci:
+  - yarn workspace @actual-app/core typecheck
+  - yarn workspace @actual-app/web typecheck
+  - yarn oxfmt --check .
+  - ENV=node yarn workspace @actual-app/core vitest --run src/shared src/server/schedules
+
+acceptance: hidden/judge.mjs
+judge_minutes: 10
+code_paths: [packages/loot-core/src, packages/desktop-client/src]
+
+# The real pull request and its fix are on GitHub; the session cannot reach it.
+blocked_hosts: [github.com, api.github.com, codeload.github.com, raw.githubusercontent.com, objects.githubusercontent.com]
+
+arms:
+  A:
+    about: Actual as its team keeps it, with its own CLAUDE.md and AGENTS.md, at the commit #9225 started from.
+    overlay: null
+
+person:
+  max_reports: 2
+  session_minutes: 60
+
+metrics:
+  verdicts:
+    - the issue                     # monthly on the 29th to 31st: a date in every month (its last day or the next 1st)
+    - the review                    # every 10 months: the February the grid reaches is kept; a leap day comes once
+  counts:
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # agentic-manual-testing qualifies when arm A's first hand-over fails the review's checks: either of the two below.
+
+qualify:
+  - "check:every 10 months on day 30 from Apr 30, 2026: February 2027 gets its occurrence"
+  - "check:every 10 months on day 29 from Apr 29, 2027: Feb 29, 2028 comes once"

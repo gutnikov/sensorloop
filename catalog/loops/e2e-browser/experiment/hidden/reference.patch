@@ -1,0 +1,140 @@
+diff --git a/public/js/invoice.js b/public/js/invoice.js
+new file mode 100644
+index 0000000..85a58ec
+--- /dev/null
++++ b/public/js/invoice.js
+@@ -0,0 +1,16 @@
++// The "Mark as paid" button of an unpaid invoice: saves the payment, then shows the invoice as paid, in place.
++const button = document.querySelector('#mark-paid');
++
++button?.addEventListener('click', async () => {
++  button.disabled = true;
++  const response = await fetch(`/invoices/${encodeURIComponent(button.dataset.invoice)}/paid`, { method: 'POST' });
++  if (!response.ok) {
++    button.disabled = false;
++    alert('The invoice could not be marked as paid. Please try again.');
++    return;
++  }
++  const badge = document.querySelector('#status .status');
++  badge.textContent = 'Paid';
++  badge.className = 'status status-paid';
++  button.closest('p').remove();
++});
+diff --git a/src/app.ts b/src/app.ts
+index ca636bd..e8ec0b7 100644
+--- a/src/app.ts
++++ b/src/app.ts
+@@ -6,7 +6,7 @@ import { customersPage } from './pages/customers.js';
+ import { invoicePage } from './pages/invoice.js';
+ import { invoiceListPage } from './pages/invoices.js';
+ import { notFoundPage } from './pages/layout.js';
+-import { readInvoices } from './store.js';
++import { markPaid, readInvoices } from './store.js';
+ 
+ // public/ sits beside src/ and dist/, so the same path works from the source and from the build.
+ const publicDir = fileURLToPath(new URL('../public', import.meta.url));
+@@ -35,6 +35,13 @@ export function createApp({ invoicesFile, today = () => new Date().toISOString()
+     }
+     res.send(invoicePage(invoice, today()));
+   });
++  app.post('/invoices/:id/paid', (req, res) => {
++    if (!markPaid(invoicesFile, req.params.id)) {
++      res.status(404).json({ error: `There is no invoice ${req.params.id}.` });
++      return;
++    }
++    res.json({ id: req.params.id, status: 'Paid' });
++  });
+   app.get('/customers', (_req, res) => {
+     res.send(customersPage(customerSummaries(readInvoices(invoicesFile))));
+   });
+diff --git a/src/pages/invoice.ts b/src/pages/invoice.ts
+index 3ec2b21..bb8c64d 100644
+--- a/src/pages/invoice.ts
++++ b/src/pages/invoice.ts
+@@ -22,8 +22,9 @@ export function invoicePage(invoice: Invoice, today: string): string {
+   <dt>Customer</dt><dd>${invoice.customer.name}</dd>
+   <dt>Issued</dt><dd>${invoice.issuedOn}</dd>
+   <dt>Due</dt><dd>${invoice.dueOn}</dd>
+-  <dt>Status</dt><dd>${statusBadge(status(invoice, today))}</dd>
++  <dt>Status</dt><dd id="status">${statusBadge(status(invoice, today))}</dd>
+ </dl>
++${invoice.paid ? null : html`<p><button type="button" id="mark-paid" data-invoice="${invoice.id}">Mark as paid</button></p>`}
+ <table class="items">
+ <thead><tr><th scope="col">Item</th><th scope="col" class="num">Quantity</th><th scope="col" class="num">Price</th><th scope="col" class="num">Amount</th></tr></thead>
+ <tbody>
+@@ -36,5 +37,5 @@ ${items}
+ </tfoot>
+ </table>
+ <p><a href="/invoices">All invoices</a></p>`;
+-  return page(`Invoice ${invoice.id}`, body);
++  return page(`Invoice ${invoice.id}`, body, { scripts: invoice.paid ? [] : ['/js/invoice.js'] });
+ }
+diff --git a/src/store.ts b/src/store.ts
+index 69c92e8..533c0b6 100644
+--- a/src/store.ts
++++ b/src/store.ts
+@@ -1,4 +1,4 @@
+-import { readFileSync } from 'node:fs';
++import { readFileSync, writeFileSync } from 'node:fs';
+ import type { Customer, Invoice, LineItem } from './types.js';
+ 
+ // The invoices live in one JSON file (data/invoices.json, or INVOICES_FILE), read on every request: it is small,
+@@ -72,3 +72,13 @@ export function parseInvoices(json: string): Invoice[] {
+ export function readInvoices(file: string): Invoice[] {
+   return parseInvoices(readFileSync(file, 'utf8'));
+ }
++
++/** Marks one invoice as paid in the file, keeping everything else as it is; false when there is no such invoice. */
++export function markPaid(file: string, id: string): boolean {
++  const raw = JSON.parse(readFileSync(file, 'utf8'));
++  const invoice = Array.isArray(raw) ? raw.find((i) => i?.id === id) : undefined;
++  if (!invoice) return false;
++  invoice.paid = true;
++  writeFileSync(file, `${JSON.stringify(raw, null, 2)}\n`);
++  return true;
++}
+diff --git a/tests/mark-paid.test.ts b/tests/mark-paid.test.ts
+new file mode 100644
+index 0000000..7785c2b
+--- /dev/null
++++ b/tests/mark-paid.test.ts
+@@ -0,0 +1,39 @@
++import { copyFileSync, mkdtempSync, readFileSync } from 'node:fs';
++import type { Server } from 'node:http';
++import type { AddressInfo } from 'node:net';
++import { tmpdir } from 'node:os';
++import path from 'node:path';
++import { afterAll, beforeAll, describe, expect, it } from 'vitest';
++import { createApp } from '../src/app.js';
++
++// The app over a copy of the sample data, since marking an invoice paid writes the file.
++const file = path.join(mkdtempSync(path.join(tmpdir(), 'invoices-')), 'invoices.json');
++let server: Server;
++let base: string;
++
++beforeAll(async () => {
++  copyFileSync('data/invoices.json', file);
++  server = createApp({ invoicesFile: file, today: () => '2026-11-15' }).listen(0);
++  await new Promise((resolve) => server.once('listening', resolve));
++  base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
++});
++afterAll(() => new Promise((resolve) => server.close(resolve)));
++
++describe('mark as paid', () => {
++  it('shows the button on an unpaid invoice only', async () => {
++    expect(await (await fetch(`${base}/invoices/INV-1002`)).text()).toContain('Mark as paid');
++    expect(await (await fetch(`${base}/invoices/INV-1001`)).text()).not.toContain('Mark as paid');
++  });
++
++  it('saves the payment in the file', async () => {
++    const res = await fetch(`${base}/invoices/INV-1002/paid`, { method: 'POST' });
++    expect(res.status).toBe(200);
++    const saved = JSON.parse(readFileSync(file, 'utf8'));
++    expect(saved.find((i: { id: string }) => i.id === 'INV-1002').paid).toBe(true);
++    expect(await (await fetch(`${base}/invoices/INV-1002`)).text()).toContain('status-paid');
++  });
++
++  it('answers 404 for an invoice that does not exist', async () => {
++    expect((await fetch(`${base}/invoices/INV-9999/paid`, { method: 'POST' })).status).toBe(404);
++  });
++});

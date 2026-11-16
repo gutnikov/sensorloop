@@ -1,0 +1,22 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits:
+    - The spec of a feature is its issue's acceptance criteria (CONTRIBUTING.md); there are no requirement files.
+loops:
+  - id: spec-before-tests
+    status: active
+    wiring: >-
+      Instruction in LOOPS.md: ask the cases the criteria leave open before building; one test per criterion, named
+      after it, through the command. Stop runs `.sensorloop/hooks/trace.mjs 'AC[0-9]+'`: once src/ or tests/ changed in
+      the session, each criterion id in the person's messages needs a test added or changed in the session that names
+      it. SessionStart runs the same script, to note where the session began.
+    proved: 2026-11-15

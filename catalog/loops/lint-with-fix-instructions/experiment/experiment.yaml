@@ -1,0 +1,64 @@
+# The before/after experiment of the loop lint-with-fix-instructions. Run it with
+#   npm run experiment -- lint-with-fix-instructions --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: lint-with-fix-instructions
+question: >-
+  The project has a house lint rule: only src/cli.ts writes to the terminal. The task's quickest change breaks it.
+  Does the agent commit lint-clean code that fixes the cause, or a red CI or a suppressed rule, with the loop and
+  without it?
+
+task: task.md
+
+ci:
+  - npm run lint
+  - npm run typecheck
+  - npm test
+  - npm run build
+
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it; its lint rule says only "Unexpected console call."
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop wired by the sensorloop skill: lint before each commit, and the rule's message
+      rewritten to say how to fix it, as the skill proposes and the person agreed.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+metrics:
+  verdicts:
+    - ci_green_at_first_done
+    - lint clean
+    - no console call outside src/cli.ts
+    - no suppression without a reason
+    - lint config untouched
+    - bad invoice skipped, others reported
+  counts:
+    - suppressions added
+    - commits
+    - person_reports
+    - hook_refusals
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run hands over code that fails lint at the first "done", suppresses the rule, or
+  # leaves a console call outside src/cli.ts.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "ci:lint"
+  - "check:no console call outside src/cli.ts"
+  - "check:no suppression without a reason"

@@ -1,0 +1,22 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits:
+    - A command-line tool with no preview environment; the demo is the command run in the working tree, and its output.
+loops:
+  - id: result-demo
+    status: active
+    wiring: >-
+      Instruction in LOOPS.md: hand over with a command and its real output for each acceptance criterion; the person
+      answers pass or fail. Stop runs `.sensorloop/hooks/demo.mjs`: once src/ changed in the session, the last message
+      needs, under a line naming each criterion of the issue, a fenced `$ <command>` with its output; files it names
+      must exist. SessionStart runs the same script, to note where the session began.
+    proved: 2026-11-15

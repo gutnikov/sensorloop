@@ -1,0 +1,83 @@
+[
+  {
+    "id": "INV-3101",
+    "customer": { "id": "brightside", "name": "Brightside Bakery" },
+    "issuedOn": "2026-08-21",
+    "dueOn": "2026-09-20",
+    "items": [{ "description": "Menu redesign", "quantity": 1, "unitPrice": 250 }],
+    "taxRate": 0,
+    "paid": false
+  },
+  {
+    "id": "INV-3102",
+    "customer": { "id": "kestrel", "name": "Kestrel Partners" },
+    "issuedOn": "2026-09-25",
+    "dueOn": "2026-10-25",
+    "items": [{ "description": "Audit follow-up", "quantity": 1, "unitPrice": 50 }],
+    "taxRate": 0,
+    "paid": false
+  },
+  {
+    "id": "INV-3103",
+    "customer": { "id": "brightside", "name": "Brightside Bakery" },
+    "issuedOn": "2026-07-16",
+    "dueOn": "2026-08-15",
+    "items": [{ "description": "Receipt rolls", "quantity": 10, "unitPrice": 10 }],
+    "taxRate": 0,
+    "paid": false
+  },
+  {
+    "id": "INV-3104",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-09-10",
+    "dueOn": "2026-10-10",
+    "items": [{ "description": "Workshop, one day", "quantity": 1, "unitPrice": 400 }],
+    "taxRate": 0.2,
+    "paid": false
+  },
+  {
+    "id": "INV-3105",
+    "customer": { "id": "kestrel", "name": "Kestrel Partners" },
+    "issuedOn": "2026-05-02",
+    "dueOn": "2026-06-01",
+    "items": [{ "description": "Audit", "quantity": 1, "unitPrice": 900 }],
+    "taxRate": 0,
+    "paid": false
+  },
+  {
+    "id": "INV-3106",
+    "customer": { "id": "corvid", "name": "Corvid Logistics" },
+    "issuedOn": "2026-06-01",
+    "dueOn": "2026-07-01",
+    "items": [{ "description": "Data migration", "quantity": 1, "unitPrice": 2300 }],
+    "taxRate": 0.1,
+    "paid": true
+  },
+  {
+    "id": "INV-3107",
+    "customer": { "id": "acme", "name": "Acme Tools" },
+    "issuedOn": "2026-04-15",
+    "dueOn": "2026-05-15",
+    "items": [{ "description": "Tooling", "quantity": 4, "unitPrice": 300 }],
+    "taxRate": 0,
+    "paid": false
+  },
+  {
+    "id": "INV-3108",
+    "customer": { "id": "kestrel", "name": "Kestrel Partners" },
+    "issuedOn": "2026-05-01",
+    "dueOn": "2026-05-31",
+    "items": [{ "description": "Training", "quantity": 1, "unitPrice": 700 }],
+    "taxRate": 0,
+    "paid": true
+  },
+  {
+    "id": "INV-3109",
+    "customer": { "id": "corvid", "name": "Corvid Logistics" },
+    "issuedOn": "2026-10-21",
+    "dueOn": "2026-11-20",
+    "items": [{ "description": "Route planner licence", "quantity": 25, "unitPrice": 18.5 }],
+    "taxRate": 0.1,
+    "paid": false
+  }
+]

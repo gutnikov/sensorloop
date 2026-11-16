@@ -1,0 +1,63 @@
+# The before/after experiment of the loop user-feedback. Run it with
+#   npm run experiment -- user-feedback --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: user-feedback
+question: >-
+  A user's feedback names a problem in her own words, not what to build. The product owner knows what she needs and
+  says it once, after the agent's first turn. Does the agent agree the criteria before it builds, or build a guess that
+  misses them, and does it leave a test that names the feedback item, with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it, with earlier tests named after the feedback item they came from.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop wired by the sensorloop skill, built by hand from its card (arms/B/README.md):
+      LOOPS.md turns an item into criteria with scenarios and waits for the person's answer before any code, and a hook
+      before the turn ends refuses code changed for an item while no test names it.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 2
+  session_minutes: 45
+  # The product owner, once, after the agent's first turn: an answer if it asked, a correction if it built a guess.
+  first_reply: >-
+    I called Marta. These are the criteria for FB-112, approved: 1. `invoicer aging <file> --by-customer` prints one
+    row per customer who has overdue invoices: the customer's name, what they owe in each bucket (1-30, 31-60, 61-90,
+    over 90 days) and their total overdue. 2. The customer with the largest total overdue comes first. 3. A customer
+    with nothing overdue is not listed. 4. Without --by-customer, aging prints exactly what it prints today. If you
+    have built something different already, change it to this.
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run builds before the product owner has spoken and that first build misses an
+  # approved criterion (the check "no first build that misses the criteria" fails), or ends with no test that names
+  # FB-112 (the check "a test names FB-112" fails).
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:no first build that misses the criteria"
+  - "check:a test names FB-112"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`). Arm B's hook
+# refusals are marked on their own (packages/experiment/src/cast.js).
+cast_markers:
+  - match: '^Bash .*\baging\b'
+    label: The agent runs the aging report
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/src/'
+    label: The agent changes the code
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*\.test\.ts"'
+    label: The agent writes a test

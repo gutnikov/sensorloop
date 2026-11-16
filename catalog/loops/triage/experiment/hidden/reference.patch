@@ -1,0 +1,104 @@
+diff --git a/issues/74-summary-random-order.md b/issues/74-summary-random-order.md
+index 628ed4e..c073b25 100644
+--- a/issues/74-summary-random-order.md
++++ b/issues/74-summary-random-order.md
+@@ -10,3 +10,7 @@ opened: 2026-11-05
+ 
+ The customer list in `invoicer summary` comes out in a different order every month, and I can never find the customer
+ I'm looking for. They should be in alphabetical order.
++
++## Comments
++
++- claude, 2026-11-15: Not a bug: the order is by outstanding balance, largest first, as decided in #25. Alphabetical order would change that behaviour; it is a feature request for Dana to decide. Not changed.
+diff --git a/issues/76-crash-on-typo.md b/issues/76-crash-on-typo.md
+index b49fc8c..f1c19f1 100644
+--- a/issues/76-crash-on-typo.md
++++ b/issues/76-crash-on-typo.md
+@@ -22,3 +22,7 @@ Error: unknown discount code: LOYAL51
+ ```
+ 
+ Other mistakes in the file get a clear message, such as `invoice INV-7.dueOn: expected a date as YYYY-MM-DD`.
++
++## Comments
++
++- claude, 2026-11-15: Duplicate of #66, which Sam is fixing (branch sam/66-discount-codes). Not worked on here.
+diff --git a/issues/77-totals-a-cent-off.md b/issues/77-totals-a-cent-off.md
+index 98cafc6..1ebdde3 100644
+--- a/issues/77-totals-a-cent-off.md
++++ b/issues/77-totals-a-cent-off.md
+@@ -9,3 +9,7 @@ opened: 2026-11-07
+ ---
+ 
+ Some invoice totals don't match what our accounting software says, a cent off here and there. Please fix.
++
++## Comments
++
++- claude, 2026-11-15: Can't reproduce: which invoice, and what total does the accounting software show? Needs an example before it can be worked.
+diff --git a/src/export/csv.ts b/src/export/csv.ts
+index bc78fd8..c586e95 100644
+--- a/src/export/csv.ts
++++ b/src/export/csv.ts
+@@ -1,7 +1,7 @@
+ import { totals } from '../invoice.js';
+ import type { Invoice } from '../types.js';
+ 
+-const COLUMNS = ['id', 'customer', 'issued_on', 'due_on', 'subtotal', 'discount', 'tax', 'total', 'paid'];
++const COLUMNS = ['id', 'customer', 'customer_id', 'issued_on', 'due_on', 'subtotal', 'discount', 'tax', 'total', 'paid'];
+ 
+ function cell(value: string): string {
+   return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+@@ -14,6 +14,7 @@ export function toCsv(invoices: Invoice[]): string {
+     return [
+       invoice.id,
+       invoice.customer.name,
++      invoice.customer.id,
+       invoice.issuedOn,
+       invoice.dueOn,
+       t.subtotal.toFixed(2),
+diff --git a/src/report/aging.ts b/src/report/aging.ts
+index 9a42a6f..3b1fe3b 100644
+--- a/src/report/aging.ts
++++ b/src/report/aging.ts
+@@ -31,7 +31,7 @@ export function aging(invoices: Invoice[], today: string): AgingReport {
+   const buckets: AgingBucket[] = BUCKETS.map(({ label }) => ({ label, invoices: [], amount: 0 }));
+   for (const invoice of invoices.filter((i) => isOverdue(i, today))) {
+     const days = daysBetween(invoice.dueOn, today);
+-    buckets[BUCKETS.findIndex((b) => days < b.upTo)].invoices.push(invoice);
++    buckets[BUCKETS.findIndex((b) => days <= b.upTo)].invoices.push(invoice);
+   }
+   for (const bucket of buckets) bucket.amount = sumAmounts(bucket.invoices.map((i) => totals(i).total));
+   return { today, buckets, total: sumAmounts(buckets.map((b) => b.amount)) };
+diff --git a/tests/aging.test.ts b/tests/aging.test.ts
+new file mode 100644
+index 0000000..ec7aaf7
+--- /dev/null
++++ b/tests/aging.test.ts
+@@ -0,0 +1,12 @@
++import { describe, expect, it } from 'vitest';
++import { aging } from '../src/report/aging.js';
++import type { Invoice } from '../src/types.js';
++
++const due = (id: string, dueOn: string): Invoice => ({ id, customer: { id: 'c', name: 'C' }, issuedOn: '2026-01-01', dueOn, items: [{ description: 'x', quantity: 1, unitPrice: 1 }], taxRate: 0, paid: false });
++
++describe('aging buckets (#71)', () => {
++  it('keeps 30, 60 and 90 days overdue in the lower bucket', () => {
++    const report = aging([due('a', '2026-10-02'), due('b', '2026-09-02'), due('c', '2026-08-03')], '2026-11-01');
++    expect(report.buckets.map((b) => b.invoices.map((i) => i.id))).toEqual([['a'], ['b'], ['c'], []]);
++  });
++});
+diff --git a/tests/csv.test.ts b/tests/csv.test.ts
+new file mode 100644
+index 0000000..ebe1eaa
+--- /dev/null
++++ b/tests/csv.test.ts
+@@ -0,0 +1,10 @@
++import { describe, expect, it } from 'vitest';
++import { toCsv } from '../src/export/csv.js';
++
++describe('csv (#73)', () => {
++  it('has the customer id after the customer', () => {
++    const csv = toCsv([{ id: 'I', customer: { id: 'acme', name: 'Acme' }, issuedOn: '2026-01-01', dueOn: '2026-01-31', items: [{ description: 'x', quantity: 1, unitPrice: 10 }], taxRate: 0, paid: false }]);
++    expect(csv.split('\n')[0]).toBe('id,customer,customer_id,issued_on,due_on,subtotal,discount,tax,total,paid');
++    expect(csv.split('\n')[1].startsWith('I,Acme,acme,')).toBe(true);
++  });
++});

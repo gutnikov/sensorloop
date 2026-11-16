@@ -1,0 +1,21 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+concurrency: production
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/download/v2.28.0/dbmate-linux-amd64 && chmod +x /usr/local/bin/dbmate
+      - run: npm run migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - run: ./scripts/roll-out.sh

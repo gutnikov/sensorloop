@@ -1,0 +1,27 @@
+diff --git a/src/money.ts b/src/money.ts
+index 5d4b4a3..9719238 100644
+--- a/src/money.ts
++++ b/src/money.ts
+@@ -1,6 +1,6 @@
+ /** Rounds an amount to cents, the way the invoices print it. */
+ export function roundCents(amount: number): number {
+-  return Math.round(amount * 100) / 100;
++  return Math.round((amount + Number.EPSILON) * 100) / 100;
+ }
+ 
+ export function sumAmounts(amounts: number[]): number {
+diff --git a/tests/money.test.ts b/tests/money.test.ts
+index 5ea3bbd..3b53bc4 100644
+--- a/tests/money.test.ts
++++ b/tests/money.test.ts
+@@ -25,3 +25,10 @@ describe('formatMoney', () => {
+     expect(formatMoney(-20)).toBe('-$20.00');
+   });
+ });
++
++describe("roundCents on half cents", () => {
++  it("rounds a tax of 2.195 up to 2.20", () => {
++    expect(roundCents(21.95 * 0.1)).toBe(2.2);
++    expect(roundCents(1.005)).toBe(1.01);
++  });
++});

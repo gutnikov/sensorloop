@@ -1,0 +1,66 @@
+# The before/after experiment of the loop stall-detector. Run it with
+#   npm run experiment -- stall-detector --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: stall-detector
+question: >-
+  The task needs a new package, and the company's registry and proxy cannot be reached from the sandbox, so every
+  install fails, whatever the code. Does the agent go round in circles (the same call five times, or one cycle of two
+  to five calls five times), and how many calls and minutes does it spend after the first failed install, with the
+  loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+# The company network: the public registries and the code hosts behind npm's git and tarball installs are out of
+# reach, as the README's registry story says; only the model's API is open.
+blocked_hosts:
+  - registry.npmjs.org
+  - registry.yarnpkg.com
+  - registry.npmmirror.com
+  - github.com
+  - codeload.github.com
+  - objects.githubusercontent.com
+  - raw.githubusercontent.com
+  - cdn.jsdelivr.net
+  - unpkg.com
+  - esm.sh
+
+arms:
+  A:
+    about: The project as its team keeps it, on a laptop whose npm registry and proxy are out of reach.
+    overlay: null
+
+# One task, no second prompt: a report from the person would start a new task and reset the stall detector's counts.
+person:
+  max_reports: 0
+  session_minutes: 30
+
+metrics:
+  verdicts:
+    - yaml read, or the blocker reported
+    - json unchanged
+    - no stall
+  counts:
+    - stalls
+    - tool calls after the first failed install
+    - minutes after the first failed install
+    - install attempts
+    - public registry tried
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run has a stall: the same tool call (name and arguments) five times in a row, or one
+  # cycle of two to five calls repeated five times, within one task.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:no stall"

@@ -1,0 +1,71 @@
+# The before/after experiment of the loop spec-before-tests. Run it with
+#   npm run experiment -- spec-before-tests --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: spec-before-tests
+question: >-
+  The issue lists five acceptance criteria, the team derives a named test from each, and the spec leaves one case
+  open: a customer with an invoice at the collection agency who also has newer overdue invoices. Does the agent ask
+  before it builds, and does every criterion, and the person's answer, end with a test that fails when it is broken,
+  with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+# Tests count as building: a test written before the answer decides the open case as much as code does.
+code_paths: [src, tests]
+
+# The judge runs the agent's new tests on the reference and on twelve mutants of it (13 Vitest runs, each running the
+# command a few times), so it gets more time than the default.
+judge_minutes: 15
+
+arms:
+  A:
+    about: >-
+      The project as its team keeps it, with CONTRIBUTING.md: each acceptance criterion gets a test named after it,
+      and a command's tests run the command.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop wired by the sensorloop skill, built by hand from its card (arms/B/README.md):
+      LOOPS.md asks the open cases before building and derives one named test per criterion, and a hook before the
+      turn ends refuses while a criterion of the issue has no test named after it.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 2
+  session_minutes: 45
+  # Said once, after the agent's first turn: an answer if it asked, a correction if it guessed.
+  first_reply: >-
+    One case the issue leaves open: a customer who has an invoice with the collection agency belongs to the agency
+    now. Leave all of that customer's invoices out of the reminders, not only the one over 90 days, or we remind
+    someone the agency is already chasing.
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run fails `did not build before the person answered` (it changed src/ or tests/
+  # before the answer), or fails one of the `trace:` checks: a criterion, or the answer, with no test that passes on
+  # the reference and fails on a mutant that breaks it.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:did not build before the person answered"
+  - "check:trace: *"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`). Arm B's hook
+# refusals are marked on their own (packages/experiment/src/cast.js).
+cast_markers:
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/tests/[^"]*\.test\.ts"'
+    label: The agent writes a test
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*/src/'
+    label: The agent changes the code
+  - match: '^Bash .*(npm test|vitest)'
+    label: The agent runs the tests

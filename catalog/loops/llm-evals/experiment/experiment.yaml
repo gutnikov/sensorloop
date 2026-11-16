@@ -1,0 +1,59 @@
+# The before/after experiment of the loop llm-evals. Run it with
+#   npm run experiment -- llm-evals --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: llm-evals
+question: >-
+  The person asks for a cheaper categorize, with categories as good as before. The project has an eval set that the
+  team runs by hand. Does the change the agent leaves keep the eval pass rate of the base version, within the noise,
+  with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+# The judge runs the base version's eval set on the base version and on the agent's, three runs each (about 120 model
+# calls, a few cents), so it gets the model's settings and more time than the default.
+judge_gets_model: true
+judge_minutes: 15
+
+arms:
+  A:
+    about: The project as its team keeps it, with its README, CI, and an eval set that nothing runs automatically.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop, built by hand from the card: when the files that decide the categories changed, a
+      Stop hook runs the eval set three times and keeps the turn going while the pass rate is below the stored
+      baseline by more than its noise.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run fails the judge's `no eval regression` check with a measured drop (its detail does
+  # not start with "withheld"): the agent's mean pass rate is below the base's by more than the noise, the spread of
+  # the base's three runs, and at least one case.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:no eval regression"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`).
+cast_markers:
+  - match: '^(Edit|Write|MultiEdit) .*"file_path":"[^"]*src/categorize/prompt\.ts'
+    label: The agent changes the prompt
+  - match: '^(Edit|Write|MultiEdit) .*"file_path":"[^"]*src/categorize/(settings|categorize)\.ts'
+    label: The agent changes the request or the model settings
+  - match: '^Bash \{"command":"[^"]*(npm run eval|(tsx|node) [^"]*scripts/eval|node [^"]*evals\.mjs)'
+    label: The agent runs the evals

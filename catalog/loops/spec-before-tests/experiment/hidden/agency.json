@@ -1,0 +1,56 @@
+[
+  {
+    "id": "G-101",
+    "customer": {
+      "id": "brightside",
+      "name": "Brightside Bakery"
+    },
+    "issuedOn": "2026-06-01",
+    "dueOn": "2026-07-15",
+    "items": [
+      {
+        "description": "Point-of-sale setup",
+        "quantity": 1,
+        "unitPrice": 850
+      }
+    ],
+    "taxRate": 0.08,
+    "paid": false
+  },
+  {
+    "id": "G-102",
+    "customer": {
+      "id": "brightside",
+      "name": "Brightside Bakery"
+    },
+    "issuedOn": "2026-06-01",
+    "dueOn": "2026-10-25",
+    "items": [
+      {
+        "description": "Menu redesign",
+        "quantity": 1,
+        "unitPrice": 640
+      }
+    ],
+    "taxRate": 0.08,
+    "paid": false
+  },
+  {
+    "id": "G-201",
+    "customer": {
+      "id": "acme",
+      "name": "Acme Tools"
+    },
+    "issuedOn": "2026-06-01",
+    "dueOn": "2026-10-25",
+    "items": [
+      {
+        "description": "Support, October",
+        "quantity": 10,
+        "unitPrice": 95
+      }
+    ],
+    "taxRate": 0.2,
+    "paid": false
+  }
+]

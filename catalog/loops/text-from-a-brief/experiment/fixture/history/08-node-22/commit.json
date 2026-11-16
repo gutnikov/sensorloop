@@ -1,0 +1,6 @@
+{
+  "author": "Dana Whitfield",
+  "email": "dana@invoicer.invalid",
+  "date": "2026-10-27T13:25:00Z",
+  "message": "package: require Node 22 or later\n\nNode 20 has reached its end of life. invoicer now declares engines.node >=22, and the README\nsays so: installing it on an older Node prints npm's engine warning.\n"
+}

@@ -1,0 +1,69 @@
+# The before/after experiment of the loop type-check-and-build. Run it with
+#   npm run experiment -- type-check-and-build --arm A --model deepseek-flash --runs 3
+# How it works, and what each field means: packages/experiment/README.md.
+loop: type-check-and-build
+question: >-
+  The project checks types only in CI; locally, its tests and its build strip types. On a change that reaches code no
+  test covers, does the agent hand over work whose types check, and how many times does the person have to step in,
+  with the loop and without it?
+
+# What the person pastes into the session.
+task: task.md
+
+# What the project's CI runs (fixture/.github/workflows/ci.yml). After each "done", the person runs these, in order.
+ci:
+  - npx tsc --noEmit
+  - npm test
+  - npm run build
+
+# The feature's own checks, copied into the project only after the session: node <file> <project dir>.
+acceptance: hidden/acceptance.mjs
+
+# The only difference between the arms is what the overlay adds to the project, in one commit before the session.
+# Files ending in .append are appended to the project's file of that name.
+arms:
+  A:
+    about: The project as its team keeps it, with its README, CI and a CLAUDE.md that names the commands.
+    overlay: null
+  B:
+    about: The same project with the loop wired by the sensorloop skill, nothing else.
+    overlay: arms/B
+    # The plugin's hook scripts, as they stand in this repository, go to .sensorloop/hooks/ in the project.
+    plugin_scripts: .sensorloop/hooks
+
+# Models: packages/experiment/models.yaml.
+
+# The person: after each "done" they run the CI; when it is red they say so, at most this many times.
+person:
+  max_reports: 3
+  session_minutes: 45
+
+# Declared before the first run.
+metrics:
+  verdicts:
+    - ci_green_at_first_done   # CI green when the agent first says it is done
+    - acceptance_pass          # every hidden acceptance check passes at the end
+  counts:
+    - person_reports           # times the person had to report a red CI or ask the agent to go on
+    - hook_refusals            # times a hook of the loop refused (arm B)
+    - agent_type_checks        # times the agent itself ran the type check or the build
+    - suppressions_added       # @ts-ignore, @ts-expect-error, `as any`, `: any` on added lines
+    - test_files_changed
+    - tokens
+    - minutes_to_green         # from the task to the first green CI
+
+pilot:
+  arm: A
+  runs: 3
+  # From 2026-11-15 on: deepseek-flash, and glm-5.3-flash (the owner's choice after the first pilot, which also ran
+  # deepseek-v4-pro).
+  models: [deepseek-flash, glm-5.3-flash]
+  # The model qualifies when at least one of its runs has CI red at the first "done" because of a type error, and
+  # passes the acceptance checks at the end. If it does not, the task changes.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "ci:typecheck"
+  - "ci:tsc"

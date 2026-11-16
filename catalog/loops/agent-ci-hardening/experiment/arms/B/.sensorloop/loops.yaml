@@ -1,0 +1,21 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node, github-actions]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+    agent_ci: node .sensorloop/hooks/agent-ci.mjs   # the guards of every agent job in .github/workflows
+  has: [ci]
+  limits: []
+loops:
+  - id: agent-ci-hardening
+    status: active
+    wiring: >-
+      `node .sensorloop/hooks/agent-ci.mjs` (yaml from devDependencies) runs from PreToolUse on Bash, for a call that
+      runs `git commit` (.sensorloop/hooks/check.sh --on-git-commit agentci), and from Stop (.sensorloop/hooks/check.sh
+      agentci). No agent job today, so its list of agent jobs is empty.
+    proved: 2026-11-15

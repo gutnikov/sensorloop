@@ -1,0 +1,122 @@
+diff --git a/README.md b/README.md
+index b703e41..a37de9b 100644
+--- a/README.md
++++ b/README.md
+@@ -7,6 +7,7 @@ chores in an app's repository:
+ |---|---|
+ | `release-notes` | Writes the release notes of a version for the app's users, from the commits since the last tag. |
+ | `version-bump` | Bumps the version (semver, from the commits), updates `package.json` and `CHANGELOG.md`, commits and tags. |
++| `changelog` | Adds a change's entry to `CHANGELOG.md`: one line under `[Unreleased]`, in its Keep a Changelog section. |
+ 
+ ## Install
+ 
+diff --git a/evals/ignore-changelog-release-notes/graders/does-not-load-changelog.md b/evals/ignore-changelog-release-notes/graders/does-not-load-changelog.md
+new file mode 100644
+index 0000000..123279a
+--- /dev/null
++++ b/evals/ignore-changelog-release-notes/graders/does-not-load-changelog.md
+@@ -0,0 +1,8 @@
++---
++type: tool_used
++tool: Skill
++input_match: '"skill"\s*:\s*"(?:shipit:)?changelog"'
++min: 0
++max: 0
++arm: both
++---
+diff --git a/evals/ignore-changelog-release-notes/prompt.md b/evals/ignore-changelog-release-notes/prompt.md
+new file mode 100644
+index 0000000..b67b846
+--- /dev/null
++++ b/evals/ignore-changelog-release-notes/prompt.md
+@@ -0,0 +1,7 @@
++---
++tags: [no-trigger]
++max_turns: 4
++allowed_tools: [Read, Glob, Grep, Skill]
++---
++
++write the release notes for 2.4, the last tag is v2.3.1
+diff --git a/evals/trigger-changelog-entry/graders/loads-the-skill.md b/evals/trigger-changelog-entry/graders/loads-the-skill.md
+new file mode 100644
+index 0000000..bf2f86e
+--- /dev/null
++++ b/evals/trigger-changelog-entry/graders/loads-the-skill.md
+@@ -0,0 +1,5 @@
++---
++type: tool_used
++tool: Skill
++input_match: '"skill"\s*:\s*"(?:shipit:)?changelog"'
++---
+diff --git a/evals/trigger-changelog-entry/prompt.md b/evals/trigger-changelog-entry/prompt.md
+new file mode 100644
+index 0000000..18a79c3
+--- /dev/null
++++ b/evals/trigger-changelog-entry/prompt.md
+@@ -0,0 +1,7 @@
++---
++tags: [trigger]
++max_turns: 4
++allowed_tools: [Read, Glob, Grep, Skill]
++---
++
++add a changelog entry for the retry fix on this branch
+diff --git a/evals/trigger-changelog-file/graders/loads-the-skill.md b/evals/trigger-changelog-file/graders/loads-the-skill.md
+new file mode 100644
+index 0000000..bf2f86e
+--- /dev/null
++++ b/evals/trigger-changelog-file/graders/loads-the-skill.md
+@@ -0,0 +1,5 @@
++---
++type: tool_used
++tool: Skill
++input_match: '"skill"\s*:\s*"(?:shipit:)?changelog"'
++---
+diff --git a/evals/trigger-changelog-file/prompt.md b/evals/trigger-changelog-file/prompt.md
+new file mode 100644
+index 0000000..0f343df
+--- /dev/null
++++ b/evals/trigger-changelog-file/prompt.md
+@@ -0,0 +1,7 @@
++---
++tags: [trigger]
++max_turns: 4
++allowed_tools: [Read, Glob, Grep, Skill]
++---
++
++Update CHANGELOG.md for what this PR does
+diff --git a/skills/changelog/SKILL.md b/skills/changelog/SKILL.md
+new file mode 100644
+index 0000000..e289341
+--- /dev/null
++++ b/skills/changelog/SKILL.md
+@@ -0,0 +1,29 @@
++---
++name: changelog
++description: Adds the entry for a change to CHANGELOG.md, one line under [Unreleased] in its Keep a Changelog section. Use when someone asks to add a change to the changelog or to update CHANGELOG.md for their work. Not for release notes to users, and not for releasing a version.
++---
++
++# Changelog entry
++
++Our apps keep `CHANGELOG.md` in the Keep a Changelog format. Each pull request adds its entry under
++`## [Unreleased]`; the version-bump skill moves those entries under the version when it is released.
++
++1. Find out what the change does for the people who read the changelog: from the person, or from the branch
++   (the diff and the log against `main`).
++2. Choose its section: `Added` for something new, `Changed` for a change to what exists, `Deprecated` for
++   something that will go, `Removed` for something gone, `Fixed` for a bug fix, `Security` for a vulnerability.
++3. Under `## [Unreleased]`, add the section heading (`### Fixed`) if it is not there, in the order above, and the
++   entry below it: one line, starting with `- `, in plain words, saying what changed for the reader. No date, no
++   version, no hash.
++
++   ```
++   ## [Unreleased]
++
++   ### Added
++   - Reports can be exported as CSV from their menu.
++
++   ### Fixed
++   - Signing in no longer loops back to the login page after a password change.
++   ```
++
++4. Never add a version heading or a date: a release does that.

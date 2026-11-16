@@ -1,0 +1,26 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits:
+    - The person works with the agent in a session, with bypass permissions on, and answers between turns.
+loops:
+  - id: plan-approval
+    status: active
+    wiring: >-
+      LOOPS.md: a task that leaves a decision open gets a plan in plans/<task>.md (restatement, steps with checks, open
+      decisions with options), and the agent ends its turn for the person's answer. Hooks (.sensorloop/hooks/plan-gate.sh):
+      SessionStart records the base commit; UserPromptSubmit records each plan of this work as it stands when the
+      person answers (.sensorloop/state/plan-approvals.log); PreToolUse on Edit|Write|MultiEdit|NotebookEdit refuses an
+      edit outside plans/ while a plan has no approval on record or has changed since (`<plan>: <status>`).
+    why_not_plan_mode: >-
+      Claude Code's plan mode is the card's tool, but sessions here run with bypass permissions, which plan mode's
+      blocks do not hold against (the card says so), and the question tool is off; the gate is a hook instead.
+    proved: 2026-11-15

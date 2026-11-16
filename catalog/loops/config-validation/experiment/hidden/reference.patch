@@ -1,0 +1,62 @@
+diff --git a/invoicer.config.json b/invoicer.config.json
+index b54494a..da46454 100644
+--- a/invoicer.config.json
++++ b/invoicer.config.json
+@@ -3,6 +3,7 @@
+   "countries": {
+     "US": { "currency": "USD", "vatRate": 0 },
+     "GB": { "currency": "GBP", "vatRate": 0.2 },
+-    "CA": { "currency": "CAD", "vatRate": 0.05 }
++    "CA": { "currency": "CAD", "vatRate": 0.05 },
++    "NL": { "currency": "EUR", "vatRate": 0.21 }
+   }
+ }
+diff --git a/invoicer.config.schema.json b/invoicer.config.schema.json
+index a20192f..9d7a21c 100644
+--- a/invoicer.config.schema.json
++++ b/invoicer.config.schema.json
+@@ -23,7 +23,7 @@
+       "properties": {
+         "currency": {
+           "description": "The currency of the country's invoices, as an ISO 4217 code: one that invoicer can print (CURRENCIES in src/types.ts).",
+-          "enum": ["USD", "GBP", "CAD"]
++          "enum": ["USD", "GBP", "CAD", "EUR"]
+         },
+         "vatRate": {
+           "description": "The VAT (or sales tax) an invoice to this country gets when it sets no taxRate, as a fraction: 0.2 is 20 %.",
+diff --git a/src/money.ts b/src/money.ts
+index 6e325a9..d3cafb7 100644
+--- a/src/money.ts
++++ b/src/money.ts
+@@ -10,7 +10,7 @@ export function sumAmounts(amounts: number[]): number {
+ }
+ 
+ const digits = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+-const SIGNS: Record<Currency, string> = { USD: '$', GBP: '£', CAD: 'CA$' };
++const SIGNS: Record<Currency, string> = { USD: '$', GBP: '£', CAD: 'CA$', EUR: '€' };
+ 
+ /** An amount as the reports print it: $1,234.50, £1,234.50, CA$1,234.50, or -£20.00. */
+ export function formatMoney(amount: number, currency: Currency): string {
+diff --git a/src/types.ts b/src/types.ts
+index 526578b..83279a5 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -1,5 +1,5 @@
+ /** The currencies invoicer can print: each has its sign in src/money.ts. */
+-export const CURRENCIES = ['USD', 'GBP', 'CAD'] as const;
++export const CURRENCIES = ['USD', 'GBP', 'CAD', 'EUR'] as const;
+ export type Currency = (typeof CURRENCIES)[number];
+ 
+ /** A line on an invoice: what was sold, how many, and the price of one. */
+diff --git a/tests/money.test.ts b/tests/money.test.ts
+index 102cb3a..ef2903a 100644
+--- a/tests/money.test.ts
++++ b/tests/money.test.ts
+@@ -19,6 +19,7 @@ describe('formatMoney', () => {
+   it('prints dollars with thousands separators and cents', () => {
+     expect(formatMoney(1234.5, 'USD')).toBe('$1,234.50');
+     expect(formatMoney(0, 'USD')).toBe('$0.00');
++    expect(formatMoney(1234.5, 'EUR')).toBe('€1,234.50');
+   });
+ 
+   it('puts the minus before the sign', () => {

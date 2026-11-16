@@ -1,0 +1,320 @@
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..2182a54 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -24,7 +24,7 @@ function main(args: string[]): number {
+     case 'aging': {
+       const at = rest.indexOf('--today');
+       const today = at >= 0 ? rest[at + 1] : new Date().toISOString().slice(0, 10);
+-      process.stdout.write(renderAging(aging(invoices, today)));
++      process.stdout.write(renderAging(aging(invoices, today), today));
+       return 0;
+     }
+     case 'csv':
+diff --git a/src/export/csv.ts b/src/export/csv.ts
+index bc78fd8..55c9b3f 100644
+--- a/src/export/csv.ts
++++ b/src/export/csv.ts
+@@ -1,7 +1,7 @@
+ import { totals } from '../invoice.js';
+ import type { Invoice } from '../types.js';
+ 
+-const COLUMNS = ['id', 'customer', 'issued_on', 'due_on', 'subtotal', 'discount', 'tax', 'total', 'paid'];
++const COLUMNS = ['id', 'customer', 'issued_on', 'due_on', 'subtotal', 'discount', 'tax', 'total', 'currency', 'paid'];
+ 
+ function cell(value: string): string {
+   return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+@@ -20,6 +20,7 @@ export function toCsv(invoices: Invoice[]): string {
+       t.discount.toFixed(2),
+       t.tax.toFixed(2),
+       t.total.toFixed(2),
++      invoice.currency,
+       invoice.paid ? 'yes' : 'no',
+     ];
+   });
+diff --git a/src/money.ts b/src/money.ts
+index 9719238..39cf3b4 100644
+--- a/src/money.ts
++++ b/src/money.ts
+@@ -1,3 +1,5 @@
++import type { Currency } from './types.js';
++
+ /** Rounds an amount to cents, the way the invoices print it. */
+ export function roundCents(amount: number): number {
+   return Math.round((amount + Number.EPSILON) * 100) / 100;
+@@ -8,9 +10,10 @@ export function sumAmounts(amounts: number[]): number {
+ }
+ 
+ const digits = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
++const SIGNS: Record<Currency, string> = { USD: '$', EUR: '€', GBP: '£' };
+ 
+-/** An amount as the reports print it: $1,234.50, or -$20.00. */
+-export function formatMoney(amount: number): string {
++/** An amount as the reports print it: $1,234.50, €1,234.50, or -£20.00. */
++export function formatMoney(amount: number, currency: Currency): string {
+   const sign = amount < 0 ? '-' : '';
+-  return `${sign}$${digits.format(Math.abs(amount))}`;
++  return `${sign}${SIGNS[currency]}${digits.format(Math.abs(amount))}`;
+ }
+diff --git a/src/parse.ts b/src/parse.ts
+index 5aa805e..a43959b 100644
+--- a/src/parse.ts
++++ b/src/parse.ts
+@@ -1,5 +1,5 @@
+ import { readFileSync } from 'node:fs';
+-import type { Customer, Invoice, LineItem } from './types.js';
++import { CURRENCIES, type Currency, type Customer, type Invoice, type LineItem } from './types.js';
+ 
+ /** A problem with the invoices file, reported to the user as it is. */
+ export class InvoiceFileError extends Error {}
+@@ -38,6 +38,12 @@ function customer(raw: any, where: string): Customer {
+   return { id: text(raw?.id, `${where}.id`), name: text(raw?.name, `${where}.name`) };
+ }
+ 
++function currency(value: unknown, where: string): Currency {
++  if (value === undefined) return 'USD';
++  if (!CURRENCIES.includes(value as Currency)) fail(where, `expected one of ${CURRENCIES.join(', ')}`);
++  return value as Currency;
++}
++
+ export function parseInvoice(raw: any, where: string): Invoice {
+   const id = text(raw?.id, `${where}.id`);
+   where = `invoice ${id}`;
+@@ -47,6 +53,7 @@ export function parseInvoice(raw: any, where: string): Invoice {
+   return {
+     id,
+     customer: customer(raw.customer, `${where}.customer`),
++    currency: currency(raw.currency, `${where}.currency`),
+     issuedOn: date(raw.issuedOn, `${where}.issuedOn`),
+     dueOn: date(raw.dueOn, `${where}.dueOn`),
+     items: raw.items.map((item: unknown, i: number) => lineItem(item, `${where}.items[${i}]`)),
+diff --git a/src/report/aging.ts b/src/report/aging.ts
+index 3b1fe3b..bcc8636 100644
+--- a/src/report/aging.ts
++++ b/src/report/aging.ts
+@@ -1,6 +1,6 @@
+ import { isOverdue, totals } from '../invoice.js';
+ import { sumAmounts } from '../money.js';
+-import type { Invoice } from '../types.js';
++import { CURRENCIES, type Currency, type Invoice } from '../types.js';
+ 
+ export interface AgingBucket {
+   label: string;
+@@ -8,8 +8,10 @@ export interface AgingBucket {
+   amount: number;
+ }
+ 
++/** The overdue invoices in one currency. */
+ export interface AgingReport {
+   today: string;
++  currency: Currency;
+   buckets: AgingBucket[];
+   total: number;
+ }
+@@ -26,13 +28,19 @@ function daysBetween(from: string, to: string): number {
+   return Math.round((Date.parse(to) - Date.parse(from)) / DAY);
+ }
+ 
+-/** Unpaid invoices past their due date, grouped by how long they are overdue. */
+-export function aging(invoices: Invoice[], today: string): AgingReport {
++function agingOne(currency: Currency, invoices: Invoice[], today: string): AgingReport {
+   const buckets: AgingBucket[] = BUCKETS.map(({ label }) => ({ label, invoices: [], amount: 0 }));
+   for (const invoice of invoices.filter((i) => isOverdue(i, today))) {
+     const days = daysBetween(invoice.dueOn, today);
+     buckets[BUCKETS.findIndex((b) => days <= b.upTo)].invoices.push(invoice);
+   }
+   for (const bucket of buckets) bucket.amount = sumAmounts(bucket.invoices.map((i) => totals(i).total));
+-  return { today, buckets, total: sumAmounts(buckets.map((b) => b.amount)) };
++  return { today, currency, buckets, total: sumAmounts(buckets.map((b) => b.amount)) };
++}
++
++/** Unpaid invoices past their due date, grouped by how long they are overdue: one report per currency. */
++export function aging(invoices: Invoice[], today: string): AgingReport[] {
++  return CURRENCIES.map((currency) => invoices.filter((i) => i.currency === currency))
++    .filter((list) => list.length > 0)
++    .map((list) => agingOne(list[0].currency, list, today));
+ }
+diff --git a/src/report/render.ts b/src/report/render.ts
+index f648894..63dc004 100644
+--- a/src/report/render.ts
++++ b/src/report/render.ts
+@@ -10,26 +10,39 @@ function table(rows: string[][]): string {
+     .join('\n');
+ }
+ 
+-export function renderSummary(summary: Summary): string {
++function renderOneSummary(summary: Summary): string {
++  const money = (amount: number) => formatMoney(amount, summary.currency);
+   const head = [
+     `Invoices     ${summary.invoices}`,
+-    `Billed       ${formatMoney(summary.billed)}`,
+-    `Paid         ${formatMoney(summary.paid)}`,
+-    `Outstanding  ${formatMoney(summary.outstanding)}`,
++    `Billed       ${money(summary.billed)}`,
++    `Paid         ${money(summary.paid)}`,
++    `Outstanding  ${money(summary.outstanding)}`,
+   ];
+   const rows = [
+     ['Customer', 'Invoices', 'Billed', 'Outstanding'],
+-    ...summary.customers.map((c) => [c.customer, String(c.invoices), formatMoney(c.billed), formatMoney(c.outstanding)]),
++    ...summary.customers.map((c) => [c.customer, String(c.invoices), money(c.billed), money(c.outstanding)]),
+   ];
+   return `${head.join('\n')}\n\n${table(rows)}\n`;
+ }
+ 
+-export function renderAging(report: AgingReport): string {
++/** One block per currency; a file in one currency prints as it always did, with no currency heading. */
++export function renderSummary(summaries: Summary[]): string {
++  if (summaries.length === 1) return renderOneSummary(summaries[0]);
++  return summaries.map((s) => `${s.currency}\n\n${renderOneSummary(s)}`).join('\n');
++}
++
++function renderOneAging(report: AgingReport): string {
++  const money = (amount: number) => formatMoney(amount, report.currency);
+   const count = report.buckets.reduce((n, b) => n + b.invoices.length, 0);
+   const rows = [
+     ['Overdue', 'Invoices', 'Amount'],
+-    ...report.buckets.map((b) => [b.label, String(b.invoices.length), formatMoney(b.amount)]),
+-    ['Total', String(count), formatMoney(report.total)],
++    ...report.buckets.map((b) => [b.label, String(b.invoices.length), money(b.amount)]),
++    ['Total', String(count), money(report.total)],
+   ];
+-  return `As of ${report.today}\n\n${table(rows)}\n`;
++  return `${table(rows)}\n`;
++}
++
++export function renderAging(reports: AgingReport[], today: string): string {
++  if (reports.length <= 1) return `As of ${today}\n\n${reports.map(renderOneAging).join('')}`;
++  return `As of ${today}\n\n${reports.map((r) => `${r.currency}\n${renderOneAging(r)}`).join('\n')}`;
+ }
+diff --git a/src/report/summary.ts b/src/report/summary.ts
+index d67020c..157a45c 100644
+--- a/src/report/summary.ts
++++ b/src/report/summary.ts
+@@ -1,6 +1,6 @@
+ import { totals } from '../invoice.js';
+ import { sumAmounts } from '../money.js';
+-import type { Invoice } from '../types.js';
++import { CURRENCIES, type Currency, type Invoice } from '../types.js';
+ 
+ export interface CustomerLine {
+   customer: string;
+@@ -9,7 +9,9 @@ export interface CustomerLine {
+   outstanding: number;
+ }
+ 
++/** The summary of the invoices in one currency: amounts in different currencies are never added up. */
+ export interface Summary {
++  currency: Currency;
+   invoices: number;
+   billed: number;
+   paid: number;
+@@ -18,8 +20,7 @@ export interface Summary {
+   customers: CustomerLine[];
+ }
+ 
+-/** What was billed, what was paid and what is still owed, overall and per customer. */
+-export function summarize(invoices: Invoice[]): Summary {
++function summarizeOne(currency: Currency, invoices: Invoice[]): Summary {
+   const byCustomer = new Map<string, Invoice[]>();
+   for (const invoice of invoices) {
+     const list = byCustomer.get(invoice.customer.name) ?? [];
+@@ -35,5 +36,12 @@ export function summarize(invoices: Invoice[]): Summary {
+   customers.sort((a, b) => b.outstanding - a.outstanding || a.customer.localeCompare(b.customer));
+   const billed = sumAmounts(invoices.map((i) => totals(i).total));
+   const paid = sumAmounts(invoices.filter((i) => i.paid).map((i) => totals(i).total));
+-  return { invoices: invoices.length, billed, paid, outstanding: sumAmounts([billed, -paid]), customers };
++  return { currency, invoices: invoices.length, billed, paid, outstanding: sumAmounts([billed, -paid]), customers };
++}
++
++/** What was billed, what was paid and what is still owed, overall and per customer: one summary per currency. */
++export function summarize(invoices: Invoice[]): Summary[] {
++  return CURRENCIES.map((currency) => invoices.filter((i) => i.currency === currency))
++    .filter((list) => list.length > 0)
++    .map((list) => summarizeOne(list[0].currency, list));
+ }
+diff --git a/src/types.ts b/src/types.ts
+index eb9669d..0da0eca 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -1,3 +1,7 @@
++/** The currencies an invoice can be in. */
++export const CURRENCIES = ['USD', 'EUR', 'GBP'] as const;
++export type Currency = (typeof CURRENCIES)[number];
++
+ /** A line on an invoice: what was sold, how many, and the price of one. */
+ export interface LineItem {
+   description: string;
+@@ -13,6 +17,8 @@ export interface Customer {
+ export interface Invoice {
+   id: string;
+   customer: Customer;
++  /** Every amount on the invoice is in this currency. */
++  currency: Currency;
+   /** YYYY-MM-DD */
+   issuedOn: string;
+   /** YYYY-MM-DD */
+diff --git a/tests/invoice.test.ts b/tests/invoice.test.ts
+index 18350a0..cca4f14 100644
+--- a/tests/invoice.test.ts
++++ b/tests/invoice.test.ts
+@@ -5,6 +5,7 @@ import type { Invoice } from '../src/types.js';
+ const invoice: Invoice = {
+   id: 'INV-1',
+   customer: { id: 'c', name: 'C' },
++  currency: 'USD',
+   issuedOn: '2026-01-01',
+   dueOn: '2026-01-31',
+   items: [
+diff --git a/tests/money.test.ts b/tests/money.test.ts
+index fbce925..102cb3a 100644
+--- a/tests/money.test.ts
++++ b/tests/money.test.ts
+@@ -17,11 +17,11 @@ describe('sumAmounts', () => {
+ 
+ describe('formatMoney', () => {
+   it('prints dollars with thousands separators and cents', () => {
+-    expect(formatMoney(1234.5)).toBe('$1,234.50');
+-    expect(formatMoney(0)).toBe('$0.00');
++    expect(formatMoney(1234.5, 'USD')).toBe('$1,234.50');
++    expect(formatMoney(0, 'USD')).toBe('$0.00');
+   });
+ 
+   it('puts the minus before the sign', () => {
+-    expect(formatMoney(-20)).toBe('-$20.00');
++    expect(formatMoney(-20, 'USD')).toBe('-$20.00');
+   });
+ });
+diff --git a/tests/parse.test.ts b/tests/parse.test.ts
+index 79e18e9..df79422 100644
+--- a/tests/parse.test.ts
++++ b/tests/parse.test.ts
+@@ -16,6 +16,7 @@ describe('parseInvoices', () => {
+     expect(invoice.id).toBe('INV-7');
+     expect(invoice.paid).toBe(false);
+     expect(invoice.discountCode).toBeUndefined();
++    expect(invoice.currency).toBe('USD');
+   });
+ 
+   it('names the invoice and the field that is wrong', () => {
+diff --git a/tests/summary.test.ts b/tests/summary.test.ts
+index ba48608..1362a6a 100644
+--- a/tests/summary.test.ts
++++ b/tests/summary.test.ts
+@@ -6,6 +6,7 @@ function invoice(id: string, customer: string, amount: number, paid: boolean): I
+   return {
+     id,
+     customer: { id: customer.toLowerCase(), name: customer },
++    currency: 'USD',
+     issuedOn: '2026-01-01',
+     dueOn: '2026-01-31',
+     items: [{ description: 'work', quantity: 1, unitPrice: amount }],
+@@ -15,7 +16,7 @@ function invoice(id: string, customer: string, amount: number, paid: boolean): I
+ }
+ 
+ describe('summarize', () => {
+-  const summary = summarize([
++  const [summary] = summarize([
+     invoice('1', 'Alder', 100, true),
+     invoice('2', 'Alder', 250, false),
+     invoice('3', 'Birch', 400, false),

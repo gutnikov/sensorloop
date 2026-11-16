@@ -1,0 +1,21 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits:
+    - The tracker is the issues/ folder; nothing runs when an item arrives, so triage runs in the working session.
+loops:
+  - id: triage
+    status: active
+    wiring: >-
+      Instruction in LOOPS.md: triage each ready item (duplicate, short of information, wrong kind), flag it in its
+      file and do not work it. `.sensorloop/hooks/triage.mjs` lists, for each ready item, the items that look like it
+      and what it lacks; UserPromptSubmit runs it once per session (`--hook`), so its report is in the context.
+    proved: 2026-11-15

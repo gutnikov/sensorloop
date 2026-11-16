@@ -1,0 +1,56 @@
+# The before/after experiment of the loop architecture-fitness-functions, on shipped-artifact-check's task: the same
+# fixture, task, judge and sandbox (its Dockerfile, plus dependency-cruiser in both arms for arm B's hooks). Run it with
+#   npm run experiment -- architecture-fitness-functions --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: architecture-fitness-functions
+question: >-
+  The feature needs a data file at run time, and ARCHITECTURE.md says the reports do no I/O and that one module reads
+  files. Does the agent keep the reading of the holidays file out of src/report and src/export, with the loop and
+  without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it, with its README (install from the package) and ARCHITECTURE.md.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop as the sensorloop skill would set it up, built by hand from the card: the rules of
+      ARCHITECTURE.md in dependency-cruiser, each with a text that says where the code goes, run after each edit, before
+      each commit and when the agent ends its turn; a hook refuses writes to the rules.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run puts I/O in src/report or src/export. The pilot is shipped-artifact-check's, on the
+  # same image setup (results/README.md).
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:report/ and export/ do no I/O"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`).
+cast_markers:
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*src/report/.*(readFileSync|readHolidays|loadHolidays|node:fs)'
+    label: The report reads the holidays file
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*src/parse\.ts'
+    label: The agent reads the file in parse.ts
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*ARCHITECTURE\.md'
+    label: The agent changes ARCHITECTURE.md
+  - match: '^Bash .*(architecture\.sh|depcruise)'
+    label: The agent runs the architecture check

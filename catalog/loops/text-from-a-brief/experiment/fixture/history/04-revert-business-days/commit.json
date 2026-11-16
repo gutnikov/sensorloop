@@ -1,0 +1,7 @@
+{
+  "author": "Dana Whitfield",
+  "email": "dana@invoicer.invalid",
+  "date": "2026-09-29T16:30:00Z",
+  "revert": "aging: --business-days counts only weekdays",
+  "message": "Revert \"aging: --business-days counts only weekdays\"\n\nThis reverts commit {sha}.\n\nAccounting keeps counting calendar days: the payment terms in the customers' contracts are in\ncalendar days, and an aging report in business days would disagree with them. Reopens #33.\n"
+}

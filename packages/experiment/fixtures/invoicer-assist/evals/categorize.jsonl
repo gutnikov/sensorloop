@@ -1,0 +1,20 @@
+{"id":"till-rollout","lines":["Card terminal","Installation of 4 card terminals","Courier, terminals to the shop"],"expected":["Hardware","Consulting","Rebilled expenses"]}
+{"id":"menu","lines":["Menu redesign","Fix: prices missing on the printed menu"],"expected":["Consulting","Support"]}
+{"id":"route-planner","lines":["Route planner licence, 12 months","Setting up the route planner for 3 depots","Train-the-trainer day, route planner"],"expected":["Software","Consulting","Training"]}
+{"id":"discovery","lines":["Discovery workshop, two days","Mileage, 140 km","Hotel, 1 night"],"expected":["Consulting","Rebilled expenses","Rebilled expenses"]}
+{"id":"support-month","lines":["Support, September"],"expected":["Support"]}
+{"id":"hosting","lines":["Hosting, September","SMS credits, 10,000"],"expected":["Software","Software"]}
+{"id":"printer-care","lines":["Receipt printer maintenance, annual","Spare thermal print head"],"expected":["Support","Hardware"]}
+{"id":"warranty","lines":["Extended warranty, 2 years, 6 terminals"],"expected":["Support"]}
+{"id":"migration","lines":["Data migration from the old till system","Onboarding call"],"expected":["Consulting","Training"]}
+{"id":"scanners","lines":["Barcode scanners","Customs fees, scanners","Shipping"],"expected":["Hardware","Rebilled expenses","Rebilled expenses"]}
+{"id":"web-shop","lines":["New feature: gift cards in the web shop","Bug fix: checkout fails with a coupon"],"expected":["Consulting","Support"]}
+{"id":"e-learning","lines":["E-learning seats, 25 users"],"expected":["Training"]}
+{"id":"network","lines":["Health check of the store network we installed","Network switch, 24 ports","Patch cables, 20"],"expected":["Support","Hardware","Hardware"]}
+{"id":"kickoff","lines":["Kickoff workshop","Training day for store managers"],"expected":["Consulting","Training"]}
+{"id":"api","lines":["API calls, October (1.2M)","Integration with the accounting system"],"expected":["Software","Consulting"]}
+{"id":"on-call","lines":["On-call cover, Black Friday weekend"],"expected":["Support"]}
+{"id":"starter-kit","lines":["Starter kit: tablet, stand and card reader"],"expected":["Hardware"]}
+{"id":"loyalty","lines":["Configuration of the loyalty app","Loyalty app subscription, October"],"expected":["Consulting","Software"]}
+{"id":"web-domain","lines":["Domain registration fee (third party)","SSL certificate setup"],"expected":["Rebilled expenses","Consulting"]}
+{"id":"store-opening","lines":["Card terminal","Receipt printer","Cash drawer","Installation of the till system","Staff training on the new tills, full day","Till software licence, 12 months","Delivery of the hardware","Travel","Hotel, 2 nights","Support plan, first year"],"expected":["Hardware","Hardware","Hardware","Consulting","Training","Software","Rebilled expenses","Rebilled expenses","Rebilled expenses","Support"]}

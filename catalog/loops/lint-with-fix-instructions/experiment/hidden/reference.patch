@@ -1,0 +1,85 @@
+diff --git a/src/cli.ts b/src/cli.ts
+index ff9b6ad..690ced3 100644
+--- a/src/cli.ts
++++ b/src/cli.ts
+@@ -16,7 +16,8 @@ function main(args: string[]): number {
+     console.error(USAGE);
+     return 2;
+   }
+-  const invoices = readInvoices(file);
++  const { invoices, skipped } = readInvoices(file);
++  for (const { problem } of skipped) console.error(`invoicer: skipping ${problem}`);
+   switch (command) {
+     case 'summary':
+       process.stdout.write(renderSummary(summarize(invoices)));
+diff --git a/src/parse.ts b/src/parse.ts
+index 5aa805e..08280d9 100644
+--- a/src/parse.ts
++++ b/src/parse.ts
+@@ -56,7 +56,13 @@ export function parseInvoice(raw: any, where: string): Invoice {
+   };
+ }
+ 
+-export function parseInvoices(json: string): Invoice[] {
++/** An invoice left out of the reports, and why. */
++export interface Skipped {
++  problem: string;
++}
++
++/** The valid invoices in a file, and the invalid ones, skipped with their problem. */
++export function parseInvoices(json: string): { invoices: Invoice[]; skipped: Skipped[] } {
+   let data: unknown;
+   try {
+     data = JSON.parse(json);
+@@ -64,9 +70,20 @@ export function parseInvoices(json: string): Invoice[] {
+     throw new InvoiceFileError(`not JSON: ${(error as Error).message}`);
+   }
+   if (!Array.isArray(data)) throw new InvoiceFileError('expected a list of invoices');
+-  return data.map((raw, i) => parseInvoice(raw, `invoice #${i + 1}`));
++  const invoices: Invoice[] = [];
++  const skipped: Skipped[] = [];
++  data.forEach((raw, i) => {
++    try {
++      invoices.push(parseInvoice(raw, `invoice #${i + 1}`));
++    } catch (error) {
++      if (!(error instanceof InvoiceFileError)) throw error;
++      skipped.push({ problem: error.message });
++    }
++  });
++  if (invoices.length === 0 && skipped.length > 0) throw new InvoiceFileError(`no valid invoices: ${skipped[0].problem}`);
++  return { invoices, skipped };
+ }
+ 
+-export function readInvoices(path: string): Invoice[] {
++export function readInvoices(path: string): { invoices: Invoice[]; skipped: Skipped[] } {
+   return parseInvoices(readFileSync(path, 'utf8'));
+ }
+diff --git a/tests/parse.test.ts b/tests/parse.test.ts
+index 79e18e9..f91a256 100644
+--- a/tests/parse.test.ts
++++ b/tests/parse.test.ts
+@@ -12,16 +12,19 @@ const valid = {
+ 
+ describe('parseInvoices', () => {
+   it('reads a list of invoices', () => {
+-    const [invoice] = parseInvoices(JSON.stringify([valid]));
++    const [invoice] = parseInvoices(JSON.stringify([valid])).invoices;
+     expect(invoice.id).toBe('INV-7');
+     expect(invoice.paid).toBe(false);
+     expect(invoice.discountCode).toBeUndefined();
+   });
+ 
+-  it('names the invoice and the field that is wrong', () => {
+-    expect(() => parseInvoices(JSON.stringify([{ ...valid, dueOn: '31/03/2026' }]))).toThrow(
+-      'invoice INV-7.dueOn: expected a date as YYYY-MM-DD',
+-    );
++  it('skips an invalid invoice, naming it and the field that is wrong', () => {
++    const { invoices, skipped } = parseInvoices(JSON.stringify([valid, { ...valid, id: 'INV-8', dueOn: '31/03/2026' }]));
++    expect(invoices.map((i) => i.id)).toEqual(['INV-7']);
++    expect(skipped).toEqual([{ problem: 'invoice INV-8.dueOn: expected a date as YYYY-MM-DD' }]);
++  });
++
++  it('refuses a file with no valid invoice', () => {
+     expect(() => parseInvoices(JSON.stringify([{ ...valid, items: [] }]))).toThrow('invoice INV-7.items');
+   });
+ 

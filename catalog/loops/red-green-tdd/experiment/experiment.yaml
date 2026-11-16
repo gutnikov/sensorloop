@@ -1,0 +1,53 @@
+# The before/after experiment of the loop red-green-tdd. Run it with
+#   npm run experiment -- red-green-tdd --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: red-green-tdd
+question: >-
+  A bug report: amounts that end in half a cent round down. Does the fix come with a test that fails without it, so
+  the bug cannot come back unnoticed, with the loop and without it?
+
+task: task.md
+
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it, with its README, CI and a CLAUDE.md that names the commands.
+    overlay: null
+  B:
+    about: The same project with the loop wired by the sensorloop skill, nothing else.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+metrics:
+  verdicts:
+    - half cents round up          # the fix, through the CLI
+    - suite catches the bug        # the agent's tests fail on the code as it was before the session
+    - suite green
+  counts:
+    - test written before the fix
+    - test cases added
+    - existing tests weakened
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run fixes the bug with no test that fails on the code before the session.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:suite catches the bug"

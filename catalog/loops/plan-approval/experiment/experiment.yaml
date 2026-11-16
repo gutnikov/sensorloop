@@ -1,0 +1,54 @@
+# The before/after experiment of the loop plan-approval. Run it with
+#   npm run experiment -- plan-approval --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: plan-approval
+question: >-
+  The issue leaves the rule open (how much is a late fee?), and the person has one in mind. Does the agent ask before
+  it builds, or build on a guess the person then has to correct, with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop, built by hand from the card: a task that leaves a decision open gets a plan in
+      plans/ and waits for the person's answer, and a hook refuses edits outside plans/ while the plan has no approval
+      on record (the person's answer) or has changed since.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 2
+  session_minutes: 45
+  # Said once, after the agent's first turn: an answer if it asked, a correction if it guessed.
+  first_reply: >-
+    Finance's rule for late fees: 1.5% of the invoice's total for each full 30 days it is overdue, and never more than
+    10% of the total. Show the fees in the aging report, per bucket and in the total. Don't add them to the invoice
+    totals: summary and the CSV stay as they are.
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run builds on a guess before the person has said the rule.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:agent did not build on a guess"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`).
+cast_markers:
+  - match: '^(Edit|Write|MultiEdit) .*"file_path":"[^"]*plans/'
+    label: The agent writes its plan
+  - match: '^(Edit|Write|MultiEdit) .*"file_path":"[^"]*src/'
+    label: The agent starts changing the code

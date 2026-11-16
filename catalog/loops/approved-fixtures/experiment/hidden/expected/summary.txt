@@ -1,0 +1,10 @@
+Invoices     7
+Billed       $21,287.39
+Paid         $3,874.56
+Outstanding  $17,412.83
+
+Customer           Invoices      Billed  Outstanding
+Delta Freight             1  $12,480.00   $12,480.00
+Corvid Logistics          2   $2,571.25    $2,571.25
+Brightside Bakery         2   $1,820.86    $1,198.78
+Acme Tools                2   $4,415.28    $1,162.80

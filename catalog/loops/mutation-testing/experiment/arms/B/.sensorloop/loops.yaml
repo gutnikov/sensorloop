@@ -1,0 +1,22 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+    coverage: node .sensorloop/hooks/changed-lines.mjs   # vitest with @vitest/coverage-v8, on the lines the change touches
+  has: [ci]
+  limits: []
+loops:
+  - id: mutation-testing
+    status: active
+    wiring: >-
+      Its first check only, the coverage of the changed lines: Stop runs `node .sensorloop/hooks/changed-lines.mjs`
+      (.sensorloop/hooks/check.sh coverage), which runs the tests with coverage and refuses any line of src/ changed
+      since main that no test runs. The threshold on the diff is all of its lines. The mutation run on the changed
+      files (Stryker) is not wired yet.
+    proved: 2026-11-15

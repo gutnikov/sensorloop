@@ -1,0 +1,321 @@
+diff --git a/packages/desktop-client/src/hooks/useLocationPermission.test.ts b/packages/desktop-client/src/hooks/useLocationPermission.test.ts
+new file mode 100644
+index 00000000..b1a8384c
+--- /dev/null
++++ b/packages/desktop-client/src/hooks/useLocationPermission.test.ts
+@@ -0,0 +1,128 @@
++import { act, renderHook, waitFor } from '@testing-library/react';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++
++import { locationService } from '#payees/location';
++
++import { useLocationPermission } from './useLocationPermission';
++
++vi.mock('@actual-app/components/hooks/useResponsive', () => ({
++  useResponsive: () => ({ isNarrowWidth: true }),
++}));
++
++vi.mock('#payees/location', () => ({
++  locationService: { getCurrentPosition: vi.fn(), reset: vi.fn() },
++}));
++
++const getCurrentPosition = vi.mocked(locationService.getCurrentPosition);
++const reset = vi.mocked(locationService.reset);
++const position = { latitude: 1, longitude: 2 };
++const permissionDenied = Object.assign(new Error('denied'), { code: 1 });
++const timeout = Object.assign(new Error('timeout'), { code: 3 });
++
++describe('useLocationPermission without a Permissions API', () => {
++  beforeEach(() => {
++    vi.stubGlobal('navigator', { ...navigator, permissions: undefined });
++    localStorage.clear();
++    getCurrentPosition.mockReset();
++    reset.mockReset();
++  });
++
++  afterEach(() => {
++    vi.unstubAllGlobals();
++  });
++
++  it('offers a request instead of treating the unknown status as denied', () => {
++    const { result } = renderHook(() => useLocationPermission());
++
++    expect(result.current.isGranted).toBe(false);
++    expect(result.current.isPending).toBe(true);
++    expect(getCurrentPosition).not.toHaveBeenCalled();
++  });
++
++  it('grants after a successful request and restores it on the next mount', async () => {
++    getCurrentPosition.mockResolvedValue(position);
++    const first = renderHook(() => useLocationPermission());
++
++    await act(() => first.result.current.requestPermission());
++    expect(first.result.current.isGranted).toBe(true);
++    first.unmount();
++
++    const second = renderHook(() => useLocationPermission());
++    await waitFor(() => expect(second.result.current.isGranted).toBe(true));
++  });
++
++  it('stops restoring once access no longer holds', async () => {
++    localStorage.setItem('location-permission-granted', 'true');
++    getCurrentPosition.mockRejectedValue(permissionDenied);
++
++    const { result } = renderHook(() => useLocationPermission());
++
++    await waitFor(() =>
++      expect(localStorage.getItem('location-permission-granted')).toBeNull(),
++    );
++    expect(result.current.isGranted).toBe(false);
++    expect(result.current.isPending).toBe(true);
++  });
++
++  it('keeps the stored grant when a restore fails for another reason', async () => {
++    localStorage.setItem('location-permission-granted', 'true');
++    getCurrentPosition.mockRejectedValue(timeout);
++
++    const { result } = renderHook(() => useLocationPermission());
++
++    await waitFor(() => expect(getCurrentPosition).toHaveBeenCalled());
++    await act(() => Promise.resolve());
++    expect(localStorage.getItem('location-permission-granted')).toBe('true');
++    expect(result.current.isGranted).toBe(false);
++    expect(result.current.isPending).toBe(true);
++  });
++
++  it('checks access afresh instead of trusting a cached position', async () => {
++    localStorage.setItem('location-permission-granted', 'true');
++    getCurrentPosition.mockResolvedValue(position);
++
++    const { result } = renderHook(() => useLocationPermission());
++
++    await waitFor(() => expect(result.current.isGranted).toBe(true));
++    expect(reset).toHaveBeenCalled();
++    expect(reset.mock.invocationCallOrder[0]).toBeLessThan(
++      getCurrentPosition.mock.invocationCallOrder[0],
++    );
++  });
++
++  it('keeps the stored grant when a restore fails after unmount', async () => {
++    localStorage.setItem('location-permission-granted', 'true');
++    let rejectRestore: ((error: Error) => void) | undefined;
++    getCurrentPosition.mockReturnValue(
++      new Promise((_, reject) => {
++        rejectRestore = reject;
++      }),
++    );
++
++    const { unmount } = renderHook(() => useLocationPermission());
++    unmount();
++    await act(async () => rejectRestore?.(permissionDenied));
++
++    expect(localStorage.getItem('location-permission-granted')).toBe('true');
++  });
++
++  it('stops offering the request after it is refused', async () => {
++    getCurrentPosition.mockRejectedValue(permissionDenied);
++    const { result } = renderHook(() => useLocationPermission());
++
++    await act(() => result.current.requestPermission());
++
++    expect(result.current.isGranted).toBe(false);
++    expect(result.current.isPending).toBe(false);
++  });
++
++  it('keeps offering the request after a failure other than a refusal', async () => {
++    getCurrentPosition.mockRejectedValue(timeout);
++    const { result } = renderHook(() => useLocationPermission());
++
++    await act(() => result.current.requestPermission());
++
++    expect(result.current.isGranted).toBe(false);
++    expect(result.current.isPending).toBe(true);
++  });
++});
+diff --git a/packages/desktop-client/src/hooks/useLocationPermission.ts b/packages/desktop-client/src/hooks/useLocationPermission.ts
+index 79ea33c5..2caffbaa 100644
+--- a/packages/desktop-client/src/hooks/useLocationPermission.ts
++++ b/packages/desktop-client/src/hooks/useLocationPermission.ts
+@@ -4,6 +4,44 @@ import { useResponsive } from '@actual-app/components/hooks/useResponsive';
+ 
+ import { locationService } from '#payees/location';
+ 
++// Set when a location request succeeds, so a WebView that cannot query the
++// permission status can restore location use on a later launch.
++const GRANTED_KEY = 'location-permission-granted';
++
++function readGrantedFlag() {
++  try {
++    return localStorage.getItem(GRANTED_KEY) === 'true';
++  } catch {
++    return false;
++  }
++}
++
++function writeGrantedFlag(granted: boolean) {
++  try {
++    if (granted) {
++      localStorage.setItem(GRANTED_KEY, 'true');
++    } else {
++      localStorage.removeItem(GRANTED_KEY);
++    }
++  } catch {
++    // Storage unavailable, nothing to persist
++  }
++}
++
++// GeolocationPositionError.PERMISSION_DENIED; other codes are transient
++const PERMISSION_DENIED = 1;
++
++function isPermissionDenied(error: unknown) {
++  return (
++    typeof error === 'object' &&
++    error !== null &&
++    'code' in error &&
++    error.code === PERMISSION_DENIED
++  );
++}
++
++type PermissionStatusState = PermissionState | 'unknown';
++
+ export type LocationPermission = {
+   isGranted: boolean;
+   isPending: boolean;
+@@ -20,7 +58,7 @@ export type LocationPermission = {
+  */
+ export function useLocationPermission(): LocationPermission {
+   const { isNarrowWidth } = useResponsive();
+-  const [state, setState] = useState<PermissionState | null>(null);
++  const [state, setState] = useState<PermissionStatusState | null>(null);
+ 
+   useEffect(() => {
+     if (!isNarrowWidth) {
+@@ -32,13 +70,37 @@ export function useLocationPermission(): LocationPermission {
+     let handleChange: (() => void) | null = null;
+     let isMounted = true;
+ 
+-    // Check if Permissions API is available
++    // The status cannot be queried (some WebViews), so allow a fresh request,
++    // and if an earlier request succeeded, check that access still holds.
++    const handleUnknownStatus = () => {
++      setState('unknown');
++      if (!readGrantedFlag()) {
++        return;
++      }
++      // A cached position would skip the access check
++      locationService.reset();
++      locationService.getCurrentPosition().then(
++        () => {
++          if (isMounted) {
++            setState('granted');
++          }
++        },
++        error => {
++          if (isMounted && isPermissionDenied(error)) {
++            writeGrantedFlag(false);
++          }
++        },
++      );
++    };
++
+     if (
+       !navigator.permissions ||
+       typeof navigator.permissions.query !== 'function'
+     ) {
+-      setState(null);
+-      return;
++      handleUnknownStatus();
++      return () => {
++        isMounted = false;
++      };
+     }
+ 
+     try {
+@@ -64,15 +126,13 @@ export function useLocationPermission(): LocationPermission {
+           if (!isMounted) {
+             return;
+           }
+-          // Permission API not supported, assume no access
+-          setState(null);
++          handleUnknownStatus();
+         });
+     } catch {
+       if (!isMounted) {
+         return;
+       }
+-      // Synchronous error (e.g., TypeError), assume no access
+-      setState(null);
++      handleUnknownStatus();
+     }
+ 
+     // Cleanup function
+@@ -87,8 +147,13 @@ export function useLocationPermission(): LocationPermission {
+   const requestPermission = async () => {
+     try {
+       await locationService.getCurrentPosition();
++      writeGrantedFlag(true);
+       setState('granted');
+-    } catch {
++    } catch (error) {
++      const denied = isPermissionDenied(error);
++      if (denied) {
++        writeGrantedFlag(false);
++      }
+       // Re-query permissions state just in case
+       try {
+         const status = await navigator.permissions.query({
+@@ -96,14 +161,16 @@ export function useLocationPermission(): LocationPermission {
+         });
+         setState(status.state);
+       } catch {
+-        setState('denied');
++        if (denied) {
++          setState('denied');
++        }
+       }
+     }
+   };
+ 
+   return {
+     isGranted: state === 'granted',
+-    isPending: state === 'prompt',
++    isPending: state === 'prompt' || state === 'unknown',
+     requestPermission,
+   };
+ }
+diff --git a/packages/mobile-client/android/app/src/main/AndroidManifest.xml b/packages/mobile-client/android/app/src/main/AndroidManifest.xml
+index 575226c5..08ffcefc 100644
+--- a/packages/mobile-client/android/app/src/main/AndroidManifest.xml
++++ b/packages/mobile-client/android/app/src/main/AndroidManifest.xml
+@@ -46,4 +46,6 @@
+     <!-- Permissions -->
+ 
+     <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
++    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+ </manifest>
+diff --git a/packages/mobile-client/ios/App/App/Info.plist b/packages/mobile-client/ios/App/App/Info.plist
+index d98309e7..e625e22a 100644
+--- a/packages/mobile-client/ios/App/App/Info.plist
++++ b/packages/mobile-client/ios/App/App/Info.plist
+@@ -35,6 +35,8 @@
+ 	<false/>
+ 	<key>LSRequiresIPhoneOS</key>
+ 	<true/>
++	<key>NSLocationWhenInUseUsageDescription</key>
++	<string>Actual Budget uses your location to save where you shop and to suggest nearby payees when you add a transaction.</string>
+ 	<key>UIApplicationSceneManifest</key>
+ 	<dict>
+ 		<key>UIApplicationSupportsMultipleScenes</key>
+diff --git a/upcoming-release-notes/fix-mobile-app-location-permission.md b/upcoming-release-notes/fix-mobile-app-location-permission.md
+new file mode 100644
+index 00000000..4456d0bb
+--- /dev/null
++++ b/upcoming-release-notes/fix-mobile-app-location-permission.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [MannXo]
++---
++
++Fix the Request Location button for payee locations doing nothing in the iOS and Android apps

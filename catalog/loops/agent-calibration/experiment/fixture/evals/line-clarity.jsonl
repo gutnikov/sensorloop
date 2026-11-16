@@ -1,0 +1,40 @@
+{"line":"Services","verdict":"vague","why":"Says nothing about what we did. Name the work or the product."}
+{"line":"Receipt printer","verdict":"clear","why":"For hardware the product's name is enough: the customer ordered it and can match it."}
+{"line":"Misc work","verdict":"vague","why":"A catch-all: accounts payable can't match it to anything they ordered."}
+{"line":"Support, October","verdict":"clear","why":"The support plan and the month it covers."}
+{"line":"Travel","verdict":"vague","why":"Travel for which visit? A rebilled expense has to name the trip it belongs to: where, and what for."}
+{"line":"Card terminal, 4 units","verdict":"clear","why":"Product and quantity."}
+{"line":"Hotel, 1 night","verdict":"vague","why":"Which trip was this for? A hotel, a train or a taxi we pass on has to name the visit it belongs to."}
+{"line":"Installation of 4 card terminals","verdict":"clear","why":"Says what was installed."}
+{"line":"Mileage, 85 km","verdict":"vague","why":"Mileage to where, for what? Name the visit."}
+{"line":"Hosting, Q3 2026","verdict":"clear","why":"Hosting with the period it covers."}
+{"line":"Shipping","verdict":"vague","why":"Shipping of what, to where? Name the shipment."}
+{"line":"Route planner licence, 12 months","verdict":"clear","why":"The licence and its term."}
+{"line":"Support","verdict":"vague","why":"Support is billed per period: say which month or year this covers, or they can't tell it from last month's."}
+{"line":"Hotel in Lyon, 2 nights, depot rollout","verdict":"clear","why":"The expense and the visit it belongs to."}
+{"line":"Hosting","verdict":"vague","why":"Hosting is recurring: say the period it covers."}
+{"line":"Mileage, 140 km, visit to the Leeds shop","verdict":"clear","why":"Distance and the visit."}
+{"line":"Licence renewal","verdict":"vague","why":"Renewal of which licence, and for how long?"}
+{"line":"Courier, terminals to the Lyon shop","verdict":"clear","why":"The shipment and where it went."}
+{"line":"Consulting, 16 hours","verdict":"vague","why":"Hours of what? Say what the consulting was about. The hours alone don't tell them which project to book it to."}
+{"line":"Consulting: data model for the loyalty scheme, 12 hours","verdict":"clear","why":"Says what the hours were spent on."}
+{"line":"Development","verdict":"vague","why":"Development of what? Name the feature or the system."}
+{"line":"Development of the PDF export of invoices","verdict":"clear","why":"Names the feature."}
+{"line":"Installation","verdict":"vague","why":"Installation of what? Name what was installed."}
+{"line":"Fix: totals wrong on the monthly report","verdict":"clear","why":"Names the defect we fixed."}
+{"line":"Onsite day","verdict":"vague","why":"What did we do on site? Name the work."}
+{"line":"Discovery workshop, two days","verdict":"clear","why":"The kind of workshop says what it was for."}
+{"line":"CR-204","verdict":"vague","why":"Our change-request number alone: their accounts payable don't know our CR numbers. Say what changed."}
+{"line":"Staff training on the new tills, half day","verdict":"clear","why":"What the training covered, and how long."}
+{"line":"Sprint 9","verdict":"vague","why":"Our sprint numbers mean nothing to the customer. Say what was delivered."}
+{"line":"CR-118: PDF export of the monthly statement","verdict":"clear","why":"A reference is fine when the line also says what it changed."}
+{"line":"Hardware","verdict":"vague","why":"Which hardware? Name the products."}
+{"line":"Spare parts for the label printer","verdict":"clear","why":"Parts for a named device."}
+{"line":"Bug fixes","verdict":"vague","why":"Which bugs? Name what was fixed."}
+{"line":"Data migration of the 2025 orders","verdict":"clear","why":"Names the work and what it covered."}
+{"line":"Training","verdict":"vague","why":"Training on what, for whom? Name the course or the system."}
+{"line":"Onboarding call with the accounts team","verdict":"clear","why":"Names what was delivered, and for whom."}
+{"line":"Adjustment","verdict":"vague","why":"An adjustment of what? Name the invoice or the line it corrects."}
+{"line":"Printer maintenance, annual","verdict":"clear","why":"Maintenance of a named device, with its period."}
+{"line":"As agreed","verdict":"vague","why":"Points to an agreement their clerk hasn't seen. Say what was delivered."}
+{"line":"SMS credits, 5,000","verdict":"clear","why":"A product billed by volume, with the quantity."}

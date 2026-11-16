@@ -1,0 +1,24 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+    architecture: .sensorloop/hooks/architecture.sh   # dependency-cruiser 18.7.0 on .dependency-cruiser.cjs, and the clock
+  has: [ci]
+  limits:
+    - The architecture rules (ARCHITECTURE.md, .dependency-cruiser.cjs) are the person's.
+loops:
+  - id: architecture-fitness-functions
+    status: active
+    wiring: >-
+      .sensorloop/hooks/architecture.sh (depcruise with the rules of ARCHITECTURE.md in .dependency-cruiser.cjs, and a
+      search for the clock in src/report and src/export) through .sensorloop/hooks/check.sh, label architecture:
+      PostToolUse on Edit|Write|MultiEdit, PreToolUse on Bash for a call that runs `git commit`, and Stop.
+      PreToolUse on Edit|Write|MultiEdit runs .sensorloop/hooks/guard-rules.sh, which refuses writes to
+      .dependency-cruiser.cjs. No violation today, so no baseline.
+    proved: 2026-11-15

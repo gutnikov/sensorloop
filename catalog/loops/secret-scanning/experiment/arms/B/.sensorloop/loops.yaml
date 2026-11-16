@@ -1,0 +1,21 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+    secrets: .sensorloop/hooks/scan-secrets.sh   # gitleaks 8.30.1 (/usr/local/bin), its default rules
+  has: [ci]
+  limits: []
+loops:
+  - id: secret-scanning
+    status: active
+    wiring: >-
+      PreToolUse on Bash, for a call that runs `git commit`, runs .sensorloop/hooks/scan-secrets.sh
+      (.sensorloop/hooks/check.sh --on-git-commit secrets): gitleaks over what the commit could hold, a new
+      `gitleaks:allow` or a change to the scanner's ignore file or config, and a scan that wrote no report.
+    proved: 2026-11-15

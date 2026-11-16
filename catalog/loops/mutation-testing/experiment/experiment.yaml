@@ -1,0 +1,75 @@
+# The before/after experiment of the loop mutation-testing (its first check, the coverage of the changed lines). Run it
+# with
+#   npm run experiment -- mutation-testing --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: mutation-testing
+question: >-
+  The issue adds an option to the command line, and no test runs the command line today. Does the agent hand over
+  changed code that no test runs, with the loop and without it?
+
+task: task.md
+
+# What the project's CI runs. It does not measure coverage, so it is green whether or not a test runs the new code.
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it, with its README, CI, a CLAUDE.md that names the commands, and
+      @vitest/coverage-v8 installed but not used.
+    overlay: null
+  B:
+    about: >-
+      The same project with the loop's first check as the sensorloop skill would set it up, built by hand from the card:
+      when the agent ends its turn, the tests run with coverage, and a line of src/ the change adds or edits that no
+      test runs keeps it working. The mutation run is not wired.
+    overlay: arms/B
+    plugin_scripts: .sensorloop/hooks
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+metrics:
+  verdicts:
+    - summary --customer
+    - aging --customer
+    - unknown customer refused
+    - reports unchanged without --customer
+    - tests pass
+    - coverage measured
+    - every changed line in src/ runs in a test
+  counts:
+    - changed lines in src/              # the lines of src/ the change adds or edits that hold code
+    - changed lines no test runs
+    - diff coverage                      # the share of them a test runs, in percent
+    - changed branches no test takes
+    - test files changed
+    - tokens
+    - minutes
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run hands over a changed line of src/ that no test runs.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+# The card's first check: a changed line no test runs (the threshold on the diff is 100% of its lines).
+qualify:
+  - "check:every changed line in src/ runs in a test"
+
+# The moments the cast marks: a tool call whose name and input match (`<tool> <input as JSON>`).
+cast_markers:
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*src/cli\.ts'
+    label: The agent changes the command line
+  - match: '^(Write|Edit|MultiEdit) .*"file_path":"[^"]*tests/'
+    label: The agent writes a test
+  - match: '^Bash .*(--coverage|changed-lines\.mjs)'
+    label: The agent measures the coverage of its change

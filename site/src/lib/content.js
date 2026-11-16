@@ -39,14 +39,57 @@ function withCasts(html) {
   });
 }
 
-/** The recordings in docs/casts/, by name. */
+/** The recordings in docs/casts/, by name, and the two of each loop's before/after (`loop-<id>-a`, `loop-<id>-b`). */
 export function casts() {
   const dir = path.join(__CONTENT__.docsDir, 'casts');
-  if (!fs.existsSync(dir)) return [];
-  return fs
-    .readdirSync(dir)
-    .filter((file) => file.endsWith('.cast'))
-    .map((file) => ({ name: file.slice(0, -'.cast'.length), file: path.join(dir, file) }));
+  const docs = fs.existsSync(dir)
+    ? fs
+        .readdirSync(dir)
+        .filter((file) => file.endsWith('.cast'))
+        .map((file) => ({ name: file.slice(0, -'.cast'.length), file: path.join(dir, file) }))
+    : [];
+  const loops = catalog().loops.flatMap((loop) => {
+    const shown = showcase(loop.id);
+    return shown ? ['a', 'b'].map((arm) => ({ name: `loop-${loop.id}-${arm}`, file: shown.casts[arm] })) : [];
+  });
+  return [...docs, ...loops];
+}
+
+/**
+ * A loop's before/after, when its experiment has one where arm A made the mistake: the newest results/<label>/ with a
+ * showcase.json (written by
+ * packages/experiment/src/showcase.js), its notes, the task the person gave, and its two casts (arm A, arm B).
+ * @param {string} id  the loop's id
+ */
+export function showcase(id) {
+  const loopDir = path.join(__CONTENT__.catalogDir, 'loops', id);
+  const experiments = [path.join(loopDir, 'experiment')];
+  const many = path.join(loopDir, 'experiments');
+  if (fs.existsSync(many)) experiments.push(...fs.readdirSync(many).map((name) => path.join(many, name)));
+  const found = experiments.flatMap((dir) => {
+    const results = path.join(dir, 'results');
+    if (!fs.existsSync(results)) return [];
+    return fs
+      .readdirSync(results)
+      .map((label) => path.join(results, label))
+      .filter((folder) => fs.existsSync(path.join(folder, 'showcase.json')))
+      .map((folder) => ({ dir, folder, data: JSON.parse(fs.readFileSync(path.join(folder, 'showcase.json'), 'utf8')) }))
+      // Shown only when the agent made the mistake without the loop at least once: otherwise the two arms have nothing
+      // to compare, whatever the loop does. The result stays in the repository with its notes.
+      .filter(({ data }) => data.arms?.A?.made_the_mistake > 0);
+  });
+  if (!found.length) return null;
+  const { dir, folder, data } = found.sort((a, b) => String(b.data.date).localeCompare(String(a.data.date)))[0];
+  const notesFile = path.join(folder, 'notes.md');
+  const taskFile = data.task ? path.join(dir, data.task) : null;
+  return {
+    data,
+    notes: fs.existsSync(notesFile) ? markdown(fs.readFileSync(notesFile, 'utf8')) : '',
+    task: taskFile && fs.existsSync(taskFile) ? fs.readFileSync(taskFile, 'utf8').trim() : '',
+    folder: path.relative(path.dirname(__CONTENT__.catalogDir), folder),
+    experiment: path.relative(path.dirname(__CONTENT__.catalogDir), dir),
+    casts: { a: path.join(folder, 'A.cast'), b: path.join(folder, 'B.cast') },
+  };
 }
 
 /**

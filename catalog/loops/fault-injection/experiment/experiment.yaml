@@ -1,0 +1,39 @@
+# The before/after experiment of the loop fault-injection. Run it with
+#   npm run experiment -- fault-injection --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: fault-injection
+question: >-
+  The summary calls a rates service, and the issue says what it must do when that service fails or is slow. The
+  project has no fault tests, and no rates service runs where the agent works. Does the summary keep its promise under
+  each fault (a slow answer, an answer that stops halfway, an HTTP error, broken JSON, a refused or dropped
+  connection), with the loop and without it?
+
+task: task.md
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: The project as its team keeps it.
+    overlay: null
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run fails a check named "fault: ...": under that fault the summary hung or took more
+  # than 5 seconds plus the CLI's start-up, exited non-zero, printed a USD total anyway, left out the summary, or gave
+  # no warning.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "check:fault: *"

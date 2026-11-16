@@ -1,0 +1,78 @@
+diff --git a/packages/loot-core/src/shared/util.test.ts b/packages/loot-core/src/shared/util.test.ts
+index 7616d927..af225873 100644
+--- a/packages/loot-core/src/shared/util.test.ts
++++ b/packages/loot-core/src/shared/util.test.ts
+@@ -57,6 +57,34 @@ describe('utility functions', () => {
+     expect(looselyParseAmount('−3,45')).toBe(-3.45);
+   });
+ 
++  test('looseParseAmount works with scientific notation', () => {
++    // Regression test for #9415: "E-06" used to be read as a 2-digit decimal
++    // marker, concatenating the exponent digits into a huge number that
++    // overflowed safeNumber during CSV import.
++    expect(looselyParseAmount('-1.26313799999993E-06')).toBeCloseTo(
++      -1.26313799999993e-6,
++      15,
++    );
++    expect(looselyParseAmount('-1.69622000000036E-04')).toBeCloseTo(
++      -1.69622000000036e-4,
++      15,
++    );
++    expect(looselyParseAmount('(1.26E-06)')).toBeCloseTo(-1.26e-6, 15);
++  });
++
++  test('looseParseAmount works with more than 9 decimal places', () => {
++    // The same CSV export also carries amounts with up to 16 decimal
++    // digits; previously they fell back to returning null.
++    expect(looselyParseAmount('-12039.958653084400')).toBeCloseTo(
++      -12039.9586530844,
++      10,
++    );
++    expect(looselyParseAmount('-1.1148430000001800')).toBeCloseTo(
++      -1.11484300000018,
++      15,
++    );
++  });
++
+   test('looseParseAmount works with parentheses (negative)', () => {
+     expect(looselyParseAmount('(3.45)')).toBe(-3.45);
+     expect(looselyParseAmount('(3)')).toBe(-3);
+diff --git a/packages/loot-core/src/shared/util.ts b/packages/loot-core/src/shared/util.ts
+index ce61649e..b4ab306e 100644
+--- a/packages/loot-core/src/shared/util.ts
++++ b/packages/loot-core/src/shared/util.ts
+@@ -579,11 +579,20 @@ export function looselyParseAmount(amount: string) {
+     amount = amount.replace(/\u2212/g, '-');
+   }
+ 
+-  // Look for a decimal marker, then look for either 1-2 or 4-9 decimal places.
++  // Scientific notation (e.g. "-1.26E-06" from forex exports): extract the
++  // value directly. The decimal-regex path below would otherwise read "E-06"
++  // as a 2-digit decimal marker and concat the exponent digits into a huge
++  // number, overflowing safeNumber later (#9415). Checked after the sign
++  // normalization so "(1.26E-06)" / "−1.26E-06" also match.
++  if (/e[+-]?\d+$/i.test(amount)) {
++    return safeNumber(parseFloat(amount));
++  }
++
++  // Look for a decimal marker, then look for either 1-2 or 4+ decimal places.
+   // This avoids matching against 3 places which may not actually be decimal.
+   // Only digits count as places, so a currency symbol or code after the
+   // number does not change how many there are.
+-  const m = amount.match(/[.,](\d{4,9}|\d{1,2})[^\d.,]*$/);
++  const m = amount.match(/[.,](\d{4,}|\d{1,2})[^\d.,]*$/);
+   if (!m || m.index === undefined) {
+     return safeNumber(parseFloat(extractNumbers(amount)));
+   }
+diff --git a/upcoming-release-notes/loosely-parse-scientific-notation.md b/upcoming-release-notes/loosely-parse-scientific-notation.md
+new file mode 100644
+index 00000000..17385e45
+--- /dev/null
++++ b/upcoming-release-notes/loosely-parse-scientific-notation.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [Yahiro025]
++---
++
++Fix CSV import crashing with `safeNumber: can't safely perform arithmetic with number` when an amount column contains scientific notation (e.g. `-1.26E-06`), and accept amounts with more than 9 decimal places

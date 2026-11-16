@@ -1,0 +1,8 @@
+{
+  "$schema": "./invoicer.config.schema.json",
+  "countries": {
+    "US": { "currency": "USD", "vatRate": 0 },
+    "GB": { "currency": "GBP", "vatRate": 0.2 },
+    "CA": { "currency": "CAD", "vatRate": 0.05 }
+  }
+}

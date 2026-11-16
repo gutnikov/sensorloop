@@ -1,0 +1,8 @@
+{
+  "name": "config-validation-judge",
+  "private": true,
+  "description": "What the judge needs to check the configuration against its schema; installed in /opt/judge, outside the project.",
+  "dependencies": {
+    "ajv": "8.17.1"
+  }
+}

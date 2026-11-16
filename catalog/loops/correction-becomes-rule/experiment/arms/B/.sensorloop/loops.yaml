@@ -1,0 +1,21 @@
+# Kept by the sensorloop skill. Edit it by hand or ask the agent; then ask the agent to rewrite LOOPS.md.
+version: 1
+project:
+  stack: [typescript, node]
+  commands:
+    test: npm test
+    typecheck: npm run typecheck
+    build: npm run build
+    lint: null
+    format: null
+  has: [ci]
+  limits:
+    - The person corrects the agent in the session; there is no review tool or outcome log to read corrections from.
+loops:
+  - id: correction-becomes-rule
+    status: active
+    wiring: >-
+      Instruction in LOOPS.md: a correction the person makes in a session is added, before the fix, as a dated rule
+      under "Rules from corrections" in LOOPS.md, which every later session reads through CLAUDE.md; each session
+      checks its work against those rules and names the ones it applied.
+    proved: 2026-11-15

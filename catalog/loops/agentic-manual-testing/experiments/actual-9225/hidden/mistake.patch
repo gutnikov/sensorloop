@@ -1,0 +1,943 @@
+diff --git a/packages/desktop-client/e2e/page-models/schedule-edit-modal.ts b/packages/desktop-client/e2e/page-models/schedule-edit-modal.ts
+index 75d9b73d..e536539d 100644
+--- a/packages/desktop-client/e2e/page-models/schedule-edit-modal.ts
++++ b/packages/desktop-client/e2e/page-models/schedule-edit-modal.ts
+@@ -1,3 +1,4 @@
++import { expect } from '@playwright/test';
+ import type { Locator, Page } from '@playwright/test';
+ 
+ type ScheduleEntry = {
+@@ -18,6 +19,7 @@ export class ScheduleEditModal {
+   readonly addButton: Locator;
+   readonly saveButton: Locator;
+   readonly cancelButton: Locator;
++  readonly recurringPickerButton: Locator;
+ 
+   constructor(locator: Locator) {
+     this.locator = locator;
+@@ -33,6 +35,9 @@ export class ScheduleEditModal {
+     this.addButton = locator.getByRole('button', { name: 'Add' });
+     this.saveButton = locator.getByRole('button', { name: 'Save' });
+     this.cancelButton = locator.getByRole('button', { name: 'Cancel' });
++    this.recurringPickerButton = locator.getByTestId(
++      'recurring-picker-trigger',
++    );
+   }
+ 
+   async fill(data: ScheduleEntry) {
+@@ -68,6 +73,30 @@ export class ScheduleEditModal {
+       .click();
+   }
+ 
++  async openRecurringPicker() {
++    await this.recurringPickerButton.click();
++
++    const popover = this.page
++      .locator('[data-popover]')
++      .filter({ hasText: 'Repeat every' });
++    await expect(popover).toBeVisible();
++    await popover.getByText('From').click();
++
++    return popover;
++  }
++
++  async addSpecificDays(popover: Locator) {
++    const addDaysButton = popover.getByRole('button', {
++      name: 'Add specific days',
++    });
++    await expect(addDaysButton).toBeVisible();
++    await addDaysButton.click();
++    await expect(
++      popover.getByRole('button', { name: '1', exact: true }),
++    ).toBeVisible();
++    await this.page.keyboard.press('Escape');
++  }
++
+   async save() {
+     await this.saveButton.click();
+   }
+diff --git a/packages/desktop-client/e2e/schedules.test.ts b/packages/desktop-client/e2e/schedules.test.ts
+index 66e9ac2d..2096249a 100644
+--- a/packages/desktop-client/e2e/schedules.test.ts
++++ b/packages/desktop-client/e2e/schedules.test.ts
+@@ -1,4 +1,5 @@
+ import type { Page } from '@playwright/test';
++import { getDaysInMonth, parse } from 'date-fns';
+ 
+ import { expect, test } from './fixtures';
+ import { ConfigurationPage } from './page-models/configuration-page';
+@@ -85,6 +86,49 @@ test.describe('Schedules', () => {
+     await expect(page).toMatchThemeScreenshots();
+   });
+ 
++  test('clamps day 31 to the last day of shorter months', async () => {
++    const scheduleEditModal = await schedulesPage.addNewSchedule();
++    await scheduleEditModal.fill({
++      payee: 'Home Depot',
++      account: 'HSBC',
++      amount: 25,
++    });
++
++    const popover = await scheduleEditModal.openRecurringPicker();
++    await scheduleEditModal.addSpecificDays(popover);
++
++    const daySelect = popover.getByRole('button', { name: '1', exact: true });
++    await daySelect.click();
++    await page
++      .getByRole('menu')
++      .getByRole('button', { name: '31', exact: true })
++      .click();
++
++    await expect(
++      popover.getByText(
++        'Months without this day will use the last day of that month.',
++      ),
++    ).toBeVisible();
++
++    await expect
++      .poll(async () => {
++        const previewDates =
++          (await popover.innerText()).match(/\d{1,2}\/\d{1,2}\/\d{4}/g) ?? [];
++
++        return (
++          previewDates.length === 4 &&
++          previewDates.every(value => {
++            const date = parse(value, 'M/d/yyyy', new Date());
++
++            return date.getDate() === getDaysInMonth(date);
++          })
++        );
++      })
++      .toBe(true);
++
++    await expect(popover).toMatchThemeScreenshots();
++  });
++
+   test('shows a scheduled split transfer in its destination account', async () => {
+     await page.evaluate(async () => {
+       const $send = (
+diff --git a/packages/desktop-client/src/components/select/RecurringSchedulePicker.tsx b/packages/desktop-client/src/components/select/RecurringSchedulePicker.tsx
+index 37cd1ed9..99246695 100644
+--- a/packages/desktop-client/src/components/select/RecurringSchedulePicker.tsx
++++ b/packages/desktop-client/src/components/select/RecurringSchedulePicker.tsx
+@@ -1,4 +1,11 @@
+-import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
++import {
++  Fragment,
++  useEffect,
++  useMemo,
++  useReducer,
++  useRef,
++  useState,
++} from 'react';
+ import type { CSSProperties, Dispatch } from 'react';
+ import { Trans, useTranslation } from 'react-i18next';
+ 
+@@ -16,6 +23,7 @@ import { theme } from '@actual-app/components/theme';
+ import { View } from '@actual-app/components/view';
+ import { sendCatch } from '@actual-app/core/platform/client/connection';
+ import * as monthUtils from '@actual-app/core/shared/months';
++import { hasShortMonthFallback } from '@actual-app/core/shared/schedules';
+ import type { RecurConfig, RecurPattern } from '@actual-app/core/types/models';
+ import type {
+   TransObjectLiteral,
+@@ -256,7 +264,7 @@ function SchedulePreview({
+         </Text>
+         <SpaceBetween gap={20} style={{ marginTop: 10 }}>
+           {previewDates.map((d, idx) => (
+-            <View key={idx} style={{ flex: 1 }}>
++            <View key={idx} style={{ flex: 1 }} data-vrt-mask>
+               <Text>{monthUtils.format(d, dateFormat, locale)}</Text>
+               <Text>{monthUtils.format(d, 'EEEE', locale)}</Text>
+             </View>
+@@ -299,70 +307,91 @@ function MonthlyPatterns({
+   return (
+     <SpaceBetween direction="vertical" gap={10} style={{ marginTop: 10 }}>
+       {config.patterns.map((recurrence, idx) => (
+-        <View
+-          key={idx}
+-          style={{
+-            display: 'flex',
+-            flexDirection: 'row',
+-            width: '100%',
+-          }}
+-        >
+-          <Select
+-            options={[
+-              [-1, t('Last')],
+-              Menu.line,
+-              ...DAY_OF_MONTH_OPTIONS.map(opt => [opt, String(opt)] as const),
+-            ]}
+-            value={recurrence.value}
+-            onChange={value =>
+-              dispatch({
+-                type: 'update-recurrence',
+-                recurrence,
+-                field: 'value',
+-                value: parsePatternValue(value),
+-              })
+-            }
+-            style={{ flex: 1, marginRight: 10 }}
+-          />
+-          <Select
+-            options={[
+-              ['day', t('Day')],
+-              Menu.line,
+-              ...DAY_OF_WEEK_OPTIONS.map(opt => [opt.id, opt.name] as const),
+-            ]}
+-            value={recurrence.type}
+-            onChange={value => {
+-              dispatch({
+-                type: 'update-recurrence',
+-                recurrence,
+-                field: 'type',
+-                value,
+-              });
++        <Fragment key={idx}>
++          <View
++            style={{
++              display: 'flex',
++              flexDirection: 'row',
++              width: '100%',
+             }}
+-            style={{ flex: 1, marginRight: 10 }}
+-          />
+-          <Button
+-            variant="bare"
+-            aria-label={t('Remove recurrence')}
+-            style={{ padding: 7 }}
+-            onPress={() =>
+-              dispatch({
+-                type: 'remove-recurrence',
+-                recurrence,
+-              })
+-            }
+-          >
+-            <SvgSubtract style={{ width: 8, height: 8 }} />
+-          </Button>
+-          <Button
+-            variant="bare"
+-            aria-label={t('Add recurrence')}
+-            style={{ padding: 7, marginLeft: 5 }}
+-            onPress={() => dispatch({ type: 'add-recurrence' })}
+           >
+-            <SvgAdd style={{ width: 10, height: 10 }} />
+-          </Button>
+-        </View>
++            <Select
++              options={[
++                [-1, t('Last')],
++                Menu.line,
++                ...DAY_OF_MONTH_OPTIONS.map(opt => [opt, String(opt)] as const),
++              ]}
++              value={recurrence.value}
++              onChange={value =>
++                dispatch({
++                  type: 'update-recurrence',
++                  recurrence,
++                  field: 'value',
++                  value: parsePatternValue(value),
++                })
++              }
++              style={{ flex: 1, marginRight: 10 }}
++            />
++            <Select
++              options={[
++                ['day', t('Day')],
++                Menu.line,
++                ...DAY_OF_WEEK_OPTIONS.map(opt => [opt.id, opt.name] as const),
++              ]}
++              value={recurrence.type}
++              onChange={value => {
++                dispatch({
++                  type: 'update-recurrence',
++                  recurrence,
++                  field: 'type',
++                  value,
++                });
++              }}
++              style={{ flex: 1, marginRight: 10 }}
++            />
++            <Button
++              variant="bare"
++              aria-label={t('Remove recurrence')}
++              style={{ padding: 7 }}
++              onPress={() =>
++                dispatch({
++                  type: 'remove-recurrence',
++                  recurrence,
++                })
++              }
++            >
++              <SvgSubtract style={{ width: 8, height: 8 }} />
++            </Button>
++            <Button
++              variant="bare"
++              aria-label={t('Add recurrence')}
++              style={{ padding: 7, marginLeft: 5 }}
++              onPress={() => dispatch({ type: 'add-recurrence' })}
++            >
++              <SvgAdd style={{ width: 10, height: 10 }} />
++            </Button>
++          </View>
++          {recurrence.type === 'day' &&
++            (recurrence.value === 31 ||
++              (config.endMode !== 'after_n_occurrences' &&
++                hasShortMonthFallback(unparseConfig(config)))) && (
++              <View
++                style={{
++                  display: 'flex',
++                  flexDirection: 'row',
++                  alignItems: 'center',
++                  gap: 5,
++                  marginTop: -5,
++                }}
++              >
++                <Text style={{ color: theme.tableText }}>
++                  <Trans>
++                    Months without this day will use the last day of that month.
++                  </Trans>
++                </Text>
++              </View>
++            )}
++        </Fragment>
+       ))}
+     </SpaceBetween>
+   );
+@@ -401,6 +430,7 @@ function RecurringScheduleTooltip({
+   }, [currentConfig]);
+ 
+   const { config } = state;
++  const startDay = parseInt(monthUtils.format(config.start, 'd'), 10);
+ 
+   const updateField = <Field extends keyof RecurConfig>(
+     field: Field,
+@@ -509,6 +539,28 @@ function RecurringScheduleTooltip({
+           </Button>
+         ) : null}
+       </SpaceBetween>
++      {config.frequency === 'monthly' &&
++      (config.patterns == null || config.patterns.length === 0) &&
++      startDay >= 29 &&
++      (startDay === 31 ||
++        (config.endMode !== 'after_n_occurrences' &&
++          hasShortMonthFallback(unparseConfig(config)))) ? (
++        <View
++          style={{
++            display: 'flex',
++            flexDirection: 'row',
++            alignItems: 'center',
++            gap: 5,
++            marginTop: 5,
++          }}
++        >
++          <Text style={{ color: theme.tableText }}>
++            <Trans>
++              Months without this day will use the last day of that month.
++            </Trans>
++          </Text>
++        </View>
++      ) : null}
+       {config.frequency === 'monthly' &&
+         config.patterns &&
+         config.patterns.length > 0 && (
+@@ -626,6 +678,7 @@ export function RecurringSchedulePicker({
+     <View>
+       <Button
+         ref={triggerRef}
++        data-testid="recurring-picker-trigger"
+         style={{ textAlign: 'left', ...buttonStyle }}
+         onPress={() => setIsOpen(true)}
+       >
+diff --git a/packages/loot-core/src/shared/schedules.test.ts b/packages/loot-core/src/shared/schedules.test.ts
+index 5bd000a1..fe7d22c6 100644
+--- a/packages/loot-core/src/shared/schedules.test.ts
++++ b/packages/loot-core/src/shared/schedules.test.ts
+@@ -1,6 +1,11 @@
+ import MockDate from 'mockdate';
+ 
+-import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
++import type {
++  RecurConfig,
++  RecurPattern,
++  RuleConditionEntity,
++  ScheduleEntity,
++} from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import {
+@@ -11,9 +16,11 @@ import {
+   getScheduleOccurrenceMatchStartDate,
+   getStatus,
+   getUpcomingDays,
++  hasShortMonthFallback,
+   indexPostedScheduleTransactions,
+   isCustomUpcomingLength,
+   isScheduleOccurrencePosted,
++  recurConfigToRSchedule,
+   UPCOMING_LENGTH_PRESET_LABELS,
+   UPCOMING_LENGTH_PRESET_OPTIONS,
+   UPCOMING_LENGTH_PRESET_VALUES,
+@@ -614,6 +621,396 @@ describe('schedules', () => {
+     });
+   });
+ 
++  describe('monthly day-of-month clamping', () => {
++    type MonthlyRule = {
++      byDayOfMonth?: number[];
++      byMonthOfYear?: number[];
++      byDayOfWeek?: [string, number][];
++    };
++
++    function dayConfig(
++      start: string,
++      patterns: RecurPattern[],
++      extra: Partial<RecurConfig> = {},
++    ): { op: 'isapprox'; value: RecurConfig } {
++      return {
++        op: 'isapprox',
++        value: { start, frequency: 'monthly', patterns, ...extra },
++      };
++    }
++
++    function getOccurrences(
++      dateCond: { op: 'isapprox'; value: RecurConfig },
++      afterDate: string,
++      count: number,
++    ): string[] {
++      const dates: string[] = [];
++      let cursor = afterDate;
++      for (let i = 0; i < count; i++) {
++        const next = getNextDateAfter(dateCond, cursor);
++        if (next == null) break;
++        dates.push(next);
++        cursor = next;
++      }
++      return dates;
++    }
++
++    it('clamps day 31 to the last day of shorter months', () => {
++      const dateCond = dayConfig('2024-01-31', [{ value: 31, type: 'day' }]);
++      expect(getOccurrences(dateCond, '2024-01-30', 7)).toEqual([
++        '2024-01-31',
++        '2024-02-29',
++        '2024-03-31',
++        '2024-04-30',
++        '2024-05-31',
++        '2024-06-30',
++        '2024-07-31',
++      ]);
++    });
++
++    it('clamps day 31 to Feb 28 in a non-leap year', () => {
++      const dateCond = dayConfig('2023-01-31', [{ value: 31, type: 'day' }]);
++      expect(getOccurrences(dateCond, '2023-01-30', 2)).toEqual([
++        '2023-01-31',
++        '2023-02-28',
++      ]);
++    });
++
++    it('clamps day 30 without overshooting to day 31', () => {
++      const dateCond = dayConfig('2024-01-30', [{ value: 30, type: 'day' }]);
++      const dates = getOccurrences(dateCond, '2024-01-29', 3);
++      expect(dates).toEqual(['2024-01-30', '2024-02-29', '2024-03-30']);
++      expect(dates).not.toContain('2024-03-31');
++    });
++
++    it('produces a single Feb 29 occurrence for day 29 in a leap year', () => {
++      const dateCond = dayConfig('2024-01-29', [{ value: 29, type: 'day' }]);
++      expect(getOccurrences(dateCond, '2024-01-28', 3)).toEqual([
++        '2024-01-29',
++        '2024-02-29',
++        '2024-03-29',
++      ]);
++    });
++
++    it('clamps day 29 to Feb 28 in a non-leap year', () => {
++      const dateCond = dayConfig('2023-01-29', [{ value: 29, type: 'day' }]);
++      expect(getOccurrences(dateCond, '2023-01-28', 2)).toEqual([
++        '2023-01-29',
++        '2023-02-28',
++      ]);
++    });
++
++    it('keeps the exact occurrence count for day 31 with after_n_occurrences', () => {
++      const dateCond = dayConfig('2024-01-31', [{ value: 31, type: 'day' }], {
++        endMode: 'after_n_occurrences',
++        endOccurrences: 3,
++      });
++      expect(getOccurrences(dateCond, '2024-01-30', 4)).toEqual([
++        '2024-01-31',
++        '2024-02-29',
++        '2024-03-31',
++      ]);
++    });
++
++    it('skips short months and keeps the exact count for day 30 with after_n_occurrences', () => {
++      const dateCond = dayConfig('2024-01-30', [{ value: 30, type: 'day' }], {
++        endMode: 'after_n_occurrences',
++        endOccurrences: 12,
++      });
++      const dates = getOccurrences(dateCond, '2024-01-29', 12);
++      expect(dates).toHaveLength(12);
++      expect(dates.some(d => d.startsWith('2024-02'))).toBe(false);
++      expect(dates[11]).toBe('2025-01-30');
++    });
++
++    it('bounds the clamped schedule by the end date', () => {
++      const dateCond = dayConfig('2024-01-31', [{ value: 31, type: 'day' }], {
++        endMode: 'on_date',
++        endDate: '2024-06-15',
++      });
++      expect(getOccurrences(dateCond, '2024-01-30', 6)).toEqual([
++        '2024-01-31',
++        '2024-02-29',
++        '2024-03-31',
++        '2024-04-30',
++        '2024-05-31',
++      ]);
++    });
++
++    it('combines days 30 and 31 with a single clamped Feb occurrence', () => {
++      const dateCond = dayConfig('2024-01-01', [
++        { value: 30, type: 'day' },
++        { value: 31, type: 'day' },
++      ]);
++      expect(getOccurrences(dateCond, '2023-12-31', 3)).toEqual([
++        '2024-01-30',
++        '2024-01-31',
++        '2024-02-29',
++      ]);
++      expect(getOccurrences(dateCond, '2024-03-31', 1)).toEqual(['2024-04-30']);
++    });
++
++    it('keeps the last-day (-1) pattern unchanged', () => {
++      const rules = recurConfigToRSchedule({
++        frequency: 'monthly',
++        start: '2023-01-31',
++        patterns: [{ value: -1, type: 'day' }],
++      }) as MonthlyRule[];
++      expect(rules).toHaveLength(1);
++      expect(rules[0].byDayOfMonth).toEqual([-1]);
++
++      const nonLeap = dayConfig('2023-01-31', [{ value: -1, type: 'day' }]);
++      expect(getOccurrences(nonLeap, '2023-01-30', 2)).toEqual([
++        '2023-01-31',
++        '2023-02-28',
++      ]);
++
++      const leap = dayConfig('2024-01-31', [{ value: -1, type: 'day' }]);
++      expect(getOccurrences(leap, '2024-01-30', 2)).toEqual([
++        '2024-01-31',
++        '2024-02-29',
++      ]);
++    });
++
++    it('unions day and weekday patterns without duplicates', () => {
++      const dateCond = dayConfig('2024-01-29', [
++        { value: 29, type: 'day' },
++        { value: 1, type: 'FR' },
++      ]);
++      expect(getOccurrences(dateCond, '2024-01-28', 4)).toEqual([
++        '2024-01-29',
++        '2024-02-02',
++        '2024-02-29',
++        '2024-03-01',
++      ]);
++    });
++
++    it('clamps the first occurrence when the schedule starts mid-month', () => {
++      const dateCond = dayConfig('2025-02-15', [{ value: 30, type: 'day' }]);
++      expect(getOccurrences(dateCond, '2025-02-14', 1)).toEqual(['2025-02-28']);
++    });
++
++    it('clamps day 31 on an every-other-month interval', () => {
++      const dateCond = dayConfig('2023-12-31', [{ value: 31, type: 'day' }], {
++        interval: 2,
++      });
++      expect(getOccurrences(dateCond, '2023-12-30', 3)).toEqual([
++        '2023-12-31',
++        '2024-02-29',
++        '2024-04-30',
++      ]);
++    });
++
++    it('does not add an unreachable fallback rule for day 30 on an every-other-month grid', () => {
++      const dateCond = dayConfig('2026-09-30', [{ value: 30, type: 'day' }], {
++        interval: 2,
++      });
++      expect(getOccurrences(dateCond, '2026-09-29', 4)).toEqual([
++        '2026-09-30',
++        '2026-11-30',
++        '2027-01-30',
++        '2027-03-30',
++      ]);
++    });
++
++    it('keeps the Feb fallback when the interval grid visits February', () => {
++      const dateCond = dayConfig('2027-02-28', [{ value: 30, type: 'day' }], {
++        interval: 2,
++      });
++      expect(getOccurrences(dateCond, '2027-02-27', 3)).toEqual([
++        '2027-02-28',
++        '2027-04-30',
++        '2027-06-30',
++      ]);
++    });
++
++    it('clamps day 31 on an every-other-month grid anchored in October', () => {
++      const dateCond = dayConfig('2026-10-31', [{ value: 31, type: 'day' }], {
++        interval: 2,
++      });
++      expect(getOccurrences(dateCond, '2026-10-30', 4)).toEqual([
++        '2026-10-31',
++        '2026-12-31',
++        '2027-02-28',
++        '2027-04-30',
++      ]);
++    });
++
++    it('clamps a bare monthly schedule starting on day 31', () => {
++      const dateCond = dayConfig('2026-10-31', []);
++      expect(getOccurrences(dateCond, '2026-10-30', 4)).toEqual([
++        '2026-10-31',
++        '2026-11-30',
++        '2026-12-31',
++        '2027-01-31',
++      ]);
++    });
++
++    it('clamps a bare monthly schedule starting on day 30 without overshooting', () => {
++      const dateCond = dayConfig('2024-01-30', []);
++      const dates = getOccurrences(dateCond, '2024-01-29', 3);
++      expect(dates).toEqual(['2024-01-30', '2024-02-29', '2024-03-30']);
++      expect(dates).not.toContain('2024-03-31');
++    });
++
++    it('keeps the legacy path for a bare monthly schedule on day 28', () => {
++      const dateCond = dayConfig('2023-02-28', []);
++      expect(getOccurrences(dateCond, '2023-02-27', 3)).toEqual([
++        '2023-02-28',
++        '2023-03-28',
++        '2023-04-28',
++      ]);
++    });
++
++    it('skips short months and keeps the exact count for a bare monthly schedule on day 30 with after_n_occurrences', () => {
++      const dateCond = dayConfig('2024-01-30', [], {
++        endMode: 'after_n_occurrences',
++        endOccurrences: 3,
++      });
++      expect(getOccurrences(dateCond, '2024-01-29', 4)).toEqual([
++        '2024-01-30',
++        '2024-03-30',
++        '2024-04-30',
++      ]);
++    });
++
++    it('keeps the exact occurrence count for a bare monthly schedule on day 31 with after_n_occurrences', () => {
++      const dateCond = dayConfig('2024-01-31', [], {
++        endMode: 'after_n_occurrences',
++        endOccurrences: 3,
++      });
++      expect(getOccurrences(dateCond, '2024-01-30', 4)).toEqual([
++        '2024-01-31',
++        '2024-02-29',
++        '2024-03-31',
++      ]);
++    });
++
++    describe('rule construction', () => {
++      it('uses a single [31, -1] rule for day 31', () => {
++        const rules = recurConfigToRSchedule({
++          frequency: 'monthly',
++          start: '2024-01-31',
++          patterns: [{ value: 31, type: 'day' }],
++        }) as MonthlyRule[];
++        expect(rules).toHaveLength(1);
++        expect(rules[0].byDayOfMonth).toEqual([31, -1]);
++      });
++
++      it('adds a short-month fallback rule for days >= 29', () => {
++        const rules = recurConfigToRSchedule({
++          frequency: 'monthly',
++          start: '2024-01-01',
++          patterns: [
++            { value: 30, type: 'day' },
++            { value: 31, type: 'day' },
++          ],
++        }) as MonthlyRule[];
++        expect(rules).toHaveLength(2);
++        expect(rules[0].byDayOfMonth).toEqual([30, 31]);
++        expect(rules[1].byMonthOfYear).toEqual([2, 4, 6, 9, 11]);
++        expect(rules[1].byDayOfMonth).toEqual([-1]);
++      });
++
++      it('omits the fallback rule when the interval grid never reaches a short month', () => {
++        const rules = recurConfigToRSchedule({
++          frequency: 'monthly',
++          start: '2026-09-30',
++          interval: 2,
++          patterns: [{ value: 30, type: 'day' }],
++        }) as MonthlyRule[];
++        expect(rules).toHaveLength(1);
++        expect(rules[0].byDayOfMonth).toEqual([30]);
++        expect(rules[0].byMonthOfYear).toBeUndefined();
++      });
++
++      it('keeps the Feb fallback rule when the interval grid reaches February', () => {
++        const rules = recurConfigToRSchedule({
++          frequency: 'monthly',
++          start: '2027-02-28',
++          interval: 2,
++          patterns: [{ value: 30, type: 'day' }],
++        }) as MonthlyRule[];
++        expect(rules).toHaveLength(2);
++        expect(rules[1].byMonthOfYear).toEqual([2]);
++        expect(rules[1].byDayOfMonth).toEqual([-1]);
++      });
++
++      it('reports fallback reachability for the UI hint', () => {
++        expect(
++          hasShortMonthFallback({
++            frequency: 'monthly',
++            start: '2026-09-30',
++            interval: 2,
++            patterns: [{ value: 30, type: 'day' }],
++          }),
++        ).toBe(false);
++        expect(
++          hasShortMonthFallback({
++            frequency: 'monthly',
++            start: '2027-02-28',
++            interval: 2,
++            patterns: [{ value: 30, type: 'day' }],
++          }),
++        ).toBe(true);
++        expect(
++          hasShortMonthFallback({
++            frequency: 'monthly',
++            start: '2024-01-30',
++            patterns: [{ value: 30, type: 'day' }],
++          }),
++        ).toBe(true);
++      });
++
++      it('keeps only the primary rule for day 29 with after_n_occurrences', () => {
++        const rules = recurConfigToRSchedule({
++          frequency: 'monthly',
++          start: '2024-01-29',
++          endMode: 'after_n_occurrences',
++          endOccurrences: 5,
++          patterns: [{ value: 29, type: 'day' }],
++        }) as MonthlyRule[];
++        expect(rules).toHaveLength(1);
++        expect(rules[0].byDayOfMonth).toEqual([29]);
++      });
++
++      it('keeps day rules before weekday rules', () => {
++        const rules = recurConfigToRSchedule({
++          frequency: 'monthly',
++          start: '2024-01-29',
++          patterns: [
++            { value: 1, type: 'FR' },
++            { value: 15, type: 'day' },
++          ],
++        }) as MonthlyRule[];
++        expect(rules).toHaveLength(2);
++        expect(rules[0].byDayOfMonth).toEqual([15]);
++        expect(rules[1].byDayOfWeek).toEqual([['FR', 1]]);
++      });
++
++      it('derives a clamped rule from the start date for a bare monthly schedule', () => {
++        const rules = recurConfigToRSchedule({
++          frequency: 'monthly',
++          start: '2024-01-31',
++          patterns: [],
++        }) as MonthlyRule[];
++        expect(rules).toHaveLength(1);
++        expect(rules[0].byDayOfMonth).toEqual([31, -1]);
++      });
++
++      it('keeps the legacy base rule for a bare monthly schedule on day 28', () => {
++        const rules = recurConfigToRSchedule({
++          frequency: 'monthly',
++          start: '2023-02-28',
++          patterns: [],
++        }) as MonthlyRule[];
++        expect(rules).toHaveLength(1);
++        expect(rules[0].byDayOfMonth).toBeUndefined();
++        expect(rules[0].byMonthOfYear).toBeUndefined();
++      });
++    });
++  });
++
+   describe('shared presets', () => {
+     it('preset values and options align', () => {
+       const valuesFromOptions = UPCOMING_LENGTH_PRESET_OPTIONS.map(
+diff --git a/packages/loot-core/src/shared/schedules.ts b/packages/loot-core/src/shared/schedules.ts
+index b83cb4b9..1541b45f 100644
+--- a/packages/loot-core/src/shared/schedules.ts
++++ b/packages/loot-core/src/shared/schedules.ts
+@@ -3,7 +3,11 @@ import type { IRuleOptions } from '@rschedule/core';
+ import * as d from 'date-fns';
+ 
+ import { Condition } from '#server/rules';
+-import type { RuleConditionEntity, ScheduleEntity } from '#types/models';
++import type {
++  RecurConfig,
++  RuleConditionEntity,
++  ScheduleEntity,
++} from '#types/models';
+ 
+ import * as monthUtils from './months';
+ import { q } from './query';
+@@ -196,8 +200,57 @@ type ScheduleRuleOptions = IRuleOptions & {
+   frequency: string;
+   interval?: number;
+   byHourOfDay?: number[];
++  byDayOfMonth?: number[];
++  byMonthOfYear?: number[];
+ };
+ 
++function getShortMonthDayValues(config: RecurConfig): number[] {
++  const patterns = config.patterns ?? [];
++  const days = patterns.filter(p => p.type === 'day');
++
++  if (days.length > 0) {
++    return days.map(p => p.value);
++  }
++
++  if (patterns.length === 0) {
++    const startDay = parseInt(monthUtils.format(config.start, 'd'), 10);
++    return startDay >= 29 ? [startDay] : [];
++  }
++
++  return [];
++}
++
++function getShortMonthFallbackMonths(config: RecurConfig): number[] {
++  const dayValues = getShortMonthDayValues(config);
++
++  if (
++    dayValues.length === 0 ||
++    dayValues.includes(-1) ||
++    (dayValues.length === 1 && dayValues[0] === 31) ||
++    !dayValues.some(v => v >= 29) ||
++    config.endMode === 'after_n_occurrences'
++  ) {
++    return [];
++  }
++
++  const interval = config.interval ?? 1;
++  const startMonth = parseInt(config.start.slice(5, 7), 10);
++
++  return [
++    ...new Set(
++      dayValues
++        .filter(v => v >= 29)
++        .flatMap(v => (v === 31 ? [2, 4, 6, 9, 11] : [2])),
++    ),
++  ]
++    .sort((a, b) => a - b)
++    .filter(m => (((m - startMonth) % interval) + interval) % interval === 0);
++}
++
++export function hasShortMonthFallback(config: RecurConfig): boolean {
++  return getShortMonthFallbackMonths(config).length > 0;
++}
++
+ export function recurConfigToRSchedule(config) {
+   const base: ScheduleRuleOptions = {
+     start: monthUtils.parseDate(config.start),
+@@ -229,22 +282,63 @@ export function recurConfigToRSchedule(config) {
+     case 'weekly':
+       // Nothing to do
+       return [base];
+-    case 'monthly':
+-      if (config.patterns && config.patterns.length > 0) {
+-        const days = config.patterns.filter(p => p.type === 'day');
+-        const dayNames = config.patterns.filter(p => p.type !== 'day');
+-
+-        return [
+-          days.length > 0 && { ...base, byDayOfMonth: days.map(p => p.value) },
+-          dayNames.length > 0 && {
+-            ...base,
+-            byDayOfWeek: dayNames.map(p => [abbrevDay(p.type), p.value]),
+-          },
+-        ].filter(Boolean);
+-      } else {
+-        // Nothing to do
+-        return [base];
++    case 'monthly': {
++      const patterns = config.patterns ?? [];
++      const days = patterns.filter(p => p.type === 'day');
++      const dayNames = patterns.filter(p => p.type !== 'day');
++
++      let dayValues: number[] = [];
++      if (days.length > 0) {
++        dayValues = days.map(p => p.value);
++      } else if (patterns.length === 0) {
++        const startDay = parseInt(monthUtils.format(config.start, 'd'), 10);
++        if (startDay <= 28) {
++          // Nothing to do
++          return [base];
++        }
++        dayValues = [startDay];
+       }
++
++      let dayRules: ScheduleRuleOptions[] = [];
++
++      if (dayValues.length > 0) {
++        const dayRule: ScheduleRuleOptions = {
++          ...base,
++          byDayOfMonth: dayValues,
++        };
++
++        if (dayValues.includes(-1)) {
++          dayRules = [dayRule];
++        } else if (dayValues.length === 1 && dayValues[0] === 31) {
++          dayRules = [{ ...base, byDayOfMonth: [31, -1] }];
++        } else if (dayValues.some(v => v >= 29)) {
++          const fallbackMonths = getShortMonthFallbackMonths(config);
++
++          if (fallbackMonths.length > 0) {
++            dayRules = [
++              dayRule,
++              {
++                ...base,
++                byMonthOfYear: fallbackMonths,
++                byDayOfMonth: [-1],
++              },
++            ];
++          } else {
++            dayRules = [dayRule];
++          }
++        } else {
++          dayRules = [dayRule];
++        }
++      }
++
++      return [
++        ...dayRules,
++        dayNames.length > 0 && {
++          ...base,
++          byDayOfWeek: dayNames.map(p => [abbrevDay(p.type), p.value]),
++        },
++      ].filter(Boolean);
++    }
+     case 'yearly':
+       return [base];
+     default:
+diff --git a/upcoming-release-notes/fix-monthly-schedules-short-months.md b/upcoming-release-notes/fix-monthly-schedules-short-months.md
+new file mode 100644
+index 00000000..f0597f30
+--- /dev/null
++++ b/upcoming-release-notes/fix-monthly-schedules-short-months.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [flafleur]
++---
++
++Fix monthly schedules on the 29th, 30th, or 31st to use the last day of shorter months when no occurrence count is set; day-31 schedules also use the last day with an occurrence count

@@ -1,0 +1,43 @@
+# The before/after experiment of the loop skill-trigger-eval. Run it with
+#   npm run experiment -- skill-trigger-eval --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: skill-trigger-eval
+question: >-
+  The agent adds a skill to a Claude Code plugin that already has two. The plugin has trigger cases the team runs by
+  hand. After the change, does every skill of the plugin load for the requests it should, and only for those, with
+  the loop and without it?
+
+task: task.md
+ci:
+  - claude plugin validate .
+acceptance: hidden/judge.mjs
+# The project's code: the plugin has no src/.
+code_paths: [skills, evals, .claude-plugin]
+
+# The judge runs headless Claude Code with the plugin on 15 requests, twice each (about 30 runs on the model), so it
+# gets the model's settings and more time than the default.
+judge_gets_model: true
+judge_minutes: 25
+
+arms:
+  A:
+    about: The plugin as its team keeps it, with its README, CI and trigger cases that nothing runs automatically.
+    overlay: null
+
+person:
+  max_reports: 3
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run passes `changelog skill added` and fails one of the `triggers: <skill>` checks:
+  # for some skill of the plugin, a request that should load it does so in fewer than half its runs (a load after
+  # other work has started counts as none), or a request that should not load it does so in half its runs or more.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - ["pass:changelog skill added", "check:triggers: *"]

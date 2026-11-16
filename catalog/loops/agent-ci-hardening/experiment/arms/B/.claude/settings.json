@@ -1,0 +1,27 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.sensorloop/hooks/check.sh --on-git-commit agentci 'node .sensorloop/hooks/agent-ci.mjs'",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.sensorloop/hooks/check.sh agentci 'node .sensorloop/hooks/agent-ci.mjs'",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "hasCompletedOnboarding": true,
+  "lastOnboardingVersion": "2.1.325",
+  "bypassPermissionsModeAccepted": true,
+  "projects": {
+    "/work": { "hasTrustDialogAccepted": true, "hasCompletedProjectOnboarding": true }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "observe-and-interrupt-judge",
+  "private": true,
+  "description": "What the judge needs to apply the migrations as production and a new database would; installed in /opt/judge, outside the project.",
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.10"
+  }
+}

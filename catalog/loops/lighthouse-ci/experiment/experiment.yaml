@@ -1,0 +1,47 @@
+# The before/after experiment of the loop lighthouse-ci. Run it with
+#   npm run experiment -- lighthouse-ci --arm A --model deepseek-flash --runs 3
+# How it works: packages/experiment/README.md. Models: packages/experiment/models.yaml.
+loop: lighthouse-ci
+question: >-
+  The task adds images, given as they came from the customers' brand kits, to a page the project audits with
+  Lighthouse CI against its own minimums. When the agent says it is done, does the page still meet them, with the loop
+  and without it?
+
+task: task.md
+
+# What the project's CI runs (.github/workflows/ci.yml): its three jobs, one after the other; the last is the page audit.
+ci:
+  - npm run typecheck
+  - npm test
+  - npm run build
+  - npm run test:e2e
+  - npm run lighthouse
+
+acceptance: hidden/judge.mjs
+
+arms:
+  A:
+    about: >-
+      The project as its team keeps it: lighthouserc.json with its minimums, run in CI with the unit and browser tests,
+      and a CLAUDE.md that names the commands.
+    overlay: null
+
+# No reports: the run ends at the agent's first "done", which is what the judge audits. (A report of the red audit
+# would let arm A fix it in CI, the part of the loop that runs after the hand-over.)
+person:
+  max_reports: 0
+  session_minutes: 45
+
+pilot:
+  arm: A
+  runs: 3
+  models: [deepseek-flash]
+  # Qualifies when at least one run shows the logos (logos on the customers page) and fails an error-level assertion
+  # of the project's lighthouserc.json on /customers (an "assert ..." check): its measure "fails the audit with the
+  # feature" is true.
+
+# When a run shows the loop's mistake, judged at the first hand-over (packages/experiment/src/report.js):
+# check:<name> fails, pass:<name> passes, value:<name> is true, ci:<step> was red at the first "done";
+# a trailing * matches a prefix; a list inside the list means all of it.
+qualify:
+  - "value:fails the audit with the feature"

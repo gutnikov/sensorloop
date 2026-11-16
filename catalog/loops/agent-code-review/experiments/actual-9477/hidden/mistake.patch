@@ -1,0 +1,36 @@
+diff --git a/packages/mobile-client/android/app/src/main/AndroidManifest.xml b/packages/mobile-client/android/app/src/main/AndroidManifest.xml
+index 575226c5..08ffcefc 100644
+--- a/packages/mobile-client/android/app/src/main/AndroidManifest.xml
++++ b/packages/mobile-client/android/app/src/main/AndroidManifest.xml
+@@ -46,4 +46,6 @@
+     <!-- Permissions -->
+ 
+     <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
++    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+ </manifest>
+diff --git a/packages/mobile-client/ios/App/App/Info.plist b/packages/mobile-client/ios/App/App/Info.plist
+index d98309e7..e625e22a 100644
+--- a/packages/mobile-client/ios/App/App/Info.plist
++++ b/packages/mobile-client/ios/App/App/Info.plist
+@@ -35,6 +35,8 @@
+ 	<false/>
+ 	<key>LSRequiresIPhoneOS</key>
+ 	<true/>
++	<key>NSLocationWhenInUseUsageDescription</key>
++	<string>Actual Budget uses your location to save where you shop and to suggest nearby payees when you add a transaction.</string>
+ 	<key>UIApplicationSceneManifest</key>
+ 	<dict>
+ 		<key>UIApplicationSupportsMultipleScenes</key>
+diff --git a/upcoming-release-notes/fix-mobile-app-location-permission.md b/upcoming-release-notes/fix-mobile-app-location-permission.md
+new file mode 100644
+index 00000000..4456d0bb
+--- /dev/null
++++ b/upcoming-release-notes/fix-mobile-app-location-permission.md
+@@ -0,0 +1,6 @@
++---
++category: Bugfix
++authors: [MannXo]
++---
++
++Fix the Request Location button for payee locations doing nothing in the iOS and Android apps

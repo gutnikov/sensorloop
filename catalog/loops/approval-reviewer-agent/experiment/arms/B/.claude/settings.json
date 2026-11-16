@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(npm publish:*)"
+    ]
+  },
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.sensorloop/hooks/permission-review.sh", "timeout": 180 }]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.sensorloop/hooks/permission-review.sh reset" }]
+      }
+    ]
+  }
+}

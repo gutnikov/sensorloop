@@ -1,0 +1,8 @@
+As of 2026-11-01
+
+Overdue       Invoices     Amount
+1-30 days            0      $0.00
+31-60 days           1   $1162.80
+61-90 days           1  $12480.00
+over 90 days         2   $3096.28
+Total                4  $16739.08

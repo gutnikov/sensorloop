@@ -1,0 +1,6 @@
+{
+  "author": "Lee Varga",
+  "email": "lee@invoicer.invalid",
+  "date": "2026-10-20T08:47:00Z",
+  "message": "ci: test on Node 22 and 24\n"
+}
