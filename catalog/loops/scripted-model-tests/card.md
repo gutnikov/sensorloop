@@ -1,6 +1,7 @@
 ---
 title: Tests against a scripted model
 summary: Code around a model, such as the agent loop, tool dispatch, retries and compaction, is tested against a fake provider that replays scripted replies and tool calls. The tests run in CI with no network and no tokens and give the same result every time, so a failure points at the code, not at a bad answer.
+motivation: I want the code around my AI model, such as the agent loop, tool calls and retries, tested against a fake model with scripted answers, so the tests are fast, free and repeatable, and a failure points at my code, not at a bad answer.
 sensors: [test-runner]
 when: On every change to the code around the model, before the agent says it is done; in CI on every pull request; and when a bug in that code is reported, before it is fixed.
 failure: A failed test. The fake also fails it on a request the script holds no reply for, on a scripted reply that is never requested, on a request the provider would reject (a tool result with no call), and on any request to the network.

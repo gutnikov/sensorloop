@@ -1,6 +1,7 @@
 ---
 title: A person reviews the diff
 summary: A person reads the pull request's diff and comments on it. The agent answers each unresolved comment in its thread, with a change, a reply or a refusal and its reason, and the merge waits for the person's approval.
+motivation: I want to read every change my agent proposes and have it answer each of my comments before anything is merged, because only a person can judge whether it is the right change for this codebase.
 sensors: [human-review]
 when: On each pull request once its automated checks pass and each high finding of the reviewer agents is fixed or ruled on; then after each round of comments, when the agent works on the threads still unresolved.
 failure: The person asks for a change, or leaves a thread unresolved. A run of the agent on the comments fails when it ends with no commit and no reply; a reply to a comment it was not given is dropped.

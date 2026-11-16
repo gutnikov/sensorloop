@@ -1,6 +1,7 @@
 ---
 title: Tests that notice a change
 summary: The agent checks its tests from outside. Coverage of the changed lines shows code no test runs, mutation testing on the changed files shows changes to the code no test notices, and each gap gets a test that fails on it.
+motivation: I want proof that my tests would notice if the code broke, not just that they run it, so tests my agent wrote alongside its code do not pass simply because they check nothing.
 sensors: [coverage-mutants]
 when: Before the agent says a change is done, once its tests pass; in CI on every pull request; and on a schedule over the whole code, and for each written concern, such as data leaks, over the code it covers.
 failure: A changed line or branch no test runs, coverage of the diff under its threshold, coverage of the whole code more than a tenth of a point under its floor, or a surviving mutant in a changed file that is not on the reviewed list of equivalent mutants. A coverage report or a mutation run that observed nothing is a failure too.

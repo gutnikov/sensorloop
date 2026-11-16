@@ -1,6 +1,7 @@
 ---
 title: A correction becomes a rule
 summary: Every correction a person makes is logged at the phase that should have caught it, and the second of the same kind becomes a check, a reviewer's rule or a line in the agent's instructions.
+motivation: I want every correction I make to my agent's work recorded, and the second one of the same kind turned into an automatic check or a written rule, so I never have to make the same correction a third time.
 sensors: [human-review, loop-outcomes]
 when: "Each time a person corrects the agent: in the session, in a review comment or by reverting a change. Weekly, the session transcripts are searched for missed corrections, including an error that took the agent more than three attempts, and the outcome log is read for kinds that came back."
 failure: A second correction of a kind already logged. It is an escape, a problem that got past the phase meant to catch it though the same kind had already been corrected once.

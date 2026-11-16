@@ -1,6 +1,7 @@
 ---
 title: A preview environment for each change
 summary: Every pull request is deployed to an environment of its own, at its own address, so that the checks needing a running app can test that change alone, before it is merged.
+motivation: I want every pull request deployed to an environment of its own, at its own address, so checks that need a running app can test that one change before it is merged, not mixed with everyone else's.
 sensors: [smoke-probe, logs, ci-results]
 when: On every push to a pull request from the repository's own branches, once its deploy job has finished; and on a schedule, for environments of pull requests already closed. A fork's pull request gets no preview, so its checks that need a running app wait until after the merge.
 failure: The environment is not deployed, runs an older commit than the pull request's head, gives no answer or is not healthy; or an environment of a merged or closed pull request still runs.

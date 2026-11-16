@@ -1,6 +1,7 @@
 ---
 title: A clean environment for each task
 summary: Each task gets a new environment of its own, which checks its own isolation before the agent starts and is thrown away at the end, so the sensors give the same result for the same code.
+motivation: I want each task my agent works on to run in a fresh, isolated environment that is thrown away afterwards, so leftovers from earlier work cannot fail its tests, parallel agents cannot collide, and a mistake cannot reach real data.
 sensors: [isolation-probe]
 when: At the start of each task, before the agent starts; while it works, on every sandbox process; after teardown; and in CI, on every change to the setup files.
 failure: A host that must be blocked answers, or the allowed one does not. The canary, or a secret the sandbox was not given, is visible inside it. An escape reaches the host. Two environments from the same commit collide or give different test results. Something is left after teardown.

@@ -1,6 +1,7 @@
 ---
 title: Compare with approved output
 summary: A test compares the output with a reference stored in the repository. The agent fixes a difference the change does not explain, and proposes one it does explain to a person, who alone approves the new reference.
+motivation: I want my tests to compare the whole output with a reference I approved, and to approve every change to it myself, so my agent cannot make a failing test pass by saving its broken output as the new expected one.
 sensors: [test-runner, human-review]
 when: On every run of the tests, locally and in CI on every pull request; and in CI on every pull request that changes a reference file.
 failure: An output that differs from its reference, or a reference that is missing. In CI, also a reference changed on the branch that no person has approved.

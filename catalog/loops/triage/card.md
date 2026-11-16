@@ -1,6 +1,7 @@
 ---
 title: Triage what comes in
 summary: Each incoming item, from an alert to a user's message, joins an open item on the same problem or is sorted as a fix, a new feature, maintenance or a question for a person. Where the judge cannot decide, a person does.
+motivation: I want every incoming report, from an alert to a user's message, merged with its duplicates and sorted as a bug, a feature, maintenance or a question, so each kind of work is checked the right way and nothing is done twice.
 sensors: [llm-judge, human-answer]
 when: As each item arrives and before any work starts on it, from a webhook or a scheduled job over the error tracker, the alerts and the issue tracker. A person is asked when the judge cannot decide, and before a one-way door, a change that is hard to undo.
 failure: An item that duplicates an open one, cannot be worked as it stands, or came with a kind that triage changes, such as a ticket typed as a bug. Later, a kind that proves wrong, such as a maintenance item that changes behaviour, or a fix whose reproduction turns out to be a new requirement.

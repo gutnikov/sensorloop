@@ -1,6 +1,7 @@
 ---
 title: No known-vulnerable dependencies
 summary: A scanner checks the project's dependencies against vulnerability databases and the licences the project allows, and the agent moves each vulnerable package to a safe version, or replaces a package under a licence the project does not allow, before the change is merged.
+motivation: I want every library my agent adds checked for known vulnerabilities and for a licence I can accept, so I do not ship someone else's security hole or a legal problem without noticing.
 sensors: [security-scanner]
 when: On every pull request that changes a manifest or a lockfile, and every night over the SBOMs of the releases in production.
 failure: A known HIGH or CRITICAL vulnerability in a dependency that no current exception covers, whether or not a fixed version exists. A version on the project's ban list. A package under a licence the project does not allow, or whose licence the scanner cannot identify. A scan that failed or found no packages.

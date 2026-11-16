@@ -1,6 +1,7 @@
 ---
 title: Check what ships before the channel moves
 summary: The release installs the exact package, binary or image it will publish into an empty place and runs it, publishes it without moving the channel pointer, verifies it from the registry, and only then moves the pointer (`latest`, `stable`, an install script). Moving the pointer back does not repair the installs that already failed.
+motivation: I want the exact package my users will download installed and run before it becomes the version they get, so a file missing from it or a binary built for the wrong machine never reaches them.
 sensors: [structure-check, smoke-probe]
 when: On every release, as required steps of the release job between the build and the pointer; and on every pull request, a quick pack, install and run of the package.
 failure: "Any step that is not ok: a file missing from a package or one not expected; a version that differs from the tag; a binary, or a library inside it, built for another architecture; a signature that does not verify; an installed copy that does not start or fails its smoke; a version the registry does not serve with its exact files in time; an asset checked only for existing; or a skipped step."

@@ -1,6 +1,7 @@
 ---
 title: Feedback becomes tested criteria
 summary: One item of user feedback becomes acceptance criteria, each tied to a scenario that reproduces what the user met, and a person approves them before any work. The agent works until the tests made from them pass.
+motivation: I want each piece of user feedback turned into criteria I approve, each with a scenario that reproduces the problem, so my agent fixes what users actually ran into, not its guess at what they meant.
 sensors: [user-feedback, human-answer]
 when: When an item of feedback that asks the product to do something new or different is picked up for work, before any code is written; again when the agent says the work is done, and in CI on its pull request. After the release, the item's topic is read again in the feedback.
 failure: A criterion with no scenario that runs, or one the agent cannot reproduce on the current product. The person corrects or rejects the criteria. After the work, an approved item with no test tagged with its id, a test that did not fail before the change, or a test that fails.

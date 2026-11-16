@@ -1,6 +1,7 @@
 ---
 title: Merge parallel agents' branches one at a time
 summary: Agents that work in parallel each leave a branch. A wrapper asks git which branches are ready, merges them into the target one at a time with the type check and the tests after each, and fails a merge that moved nothing or left conflicts.
+motivation: I want the branches of agents working in parallel merged one at a time, with the type check and the tests after each merge, so when two changes clash I know which branch broke the build instead of finding the main branch broken.
 sensors: [repository-state, build-and-types, test-runner]
 when: After each cycle of parallel runs and before the next is planned, once for every branch git shows ahead of the target; and when the base moves under an open pull request.
 failure: A branch ahead of the target that is not merged and green at the end of the cycle. A merge the agent made that left HEAD where it was, left a file unmerged, or staged a file with conflict markers in it. A type check or a test that fails after a merge. Two branches of one cycle that changed the same file, even when they merge clean and pass.

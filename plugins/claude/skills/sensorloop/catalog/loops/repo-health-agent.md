@@ -1,6 +1,7 @@
 ---
 title: Repository health
 summary: Every day a job records the project's delivery metrics, an agent turns the worst trend into one proposed change, and a critic must approve it before it becomes a draft pull request a person reviews.
+motivation: I want how my team delivers, such as how long pull requests wait for review or what CI costs, tracked every day, so when it slowly gets worse an agent proposes one small fix to review, instead of me noticing months later.
 sensors: [flow-metrics, llm-reviewer]
 when: Every day, from a scheduled CI job that first records the day's metrics, and when a collaborator, member or owner mentions the agent on an issue; the critic reads each proposed change before anything is published; and four weeks after a change merges, its metric is read again.
 failure: A metric whose median over the last four weeks is more than 20% worse than over the four weeks before. A proposed change the critic rejects. A merged change whose metric did not improve in the four weeks after it.

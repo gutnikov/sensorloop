@@ -1,6 +1,7 @@
 ---
 title: Evals on every prompt change
 summary: After each change to a prompt, a tool description or the model, the agent runs the feature on a suite of cases several times, and a drop in the pass rate fails the change.
+motivation: I want every change to a prompt or a model tested on a whole set of examples, several times, so a gain on the one case my agent tried does not quietly make the feature worse on all the others.
 sensors: [eval-set, llm-judge]
 when: After each change to a prompt, a tool description, the model or a parameter the feature uses, before the agent says it is done; in CI, on every pull request that touches one of them; and every night on the main branch, to learn which cases are stable.
 failure: The pass rate falls below the threshold, or below the baseline by more than the noise (the spread of the pass rate between repeated runs of the base branch). On a pull request, only stable cases count. A case that fails on the base branch as well is pre-existing, and a run that errored is missing; neither counts against the change. A drop that only the judge's grades show is advice until the judge is calibrated.

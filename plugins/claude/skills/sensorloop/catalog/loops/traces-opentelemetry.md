@@ -1,6 +1,7 @@
 ---
 title: Read the traces
 summary: After running a scenario, the agent queries the traces of its own run for spans that failed or went over budget, and fixes the cause until the same queries return nothing.
+motivation: I want my agent to look at the trace of each slow or failed request, so it sees which step, in which service, failed or slowed down instead of guessing where to fix.
 sensors: [traces]
 when: After the agent runs a scenario through the services it changed, before it says the work is done; and in CI, against CI's own collector and trace store.
 failure: A failed span, with the status Error; a span over its user journey's budget; a duration that was not captured; or no traces found for the scenario.

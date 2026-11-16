@@ -1,6 +1,7 @@
 ---
 title: Security scan of the running preview
 summary: A dynamic security scanner probes the deployed preview from outside, the way an attacker would, with a passive scan on every deploy and an active scan with attacks before a release. The agent fixes each alert that the project's rules file marks as a failure.
+motivation: I want a preview deployment of my app probed from outside the way an attacker would, so security holes that show only in the running app, like a missing security header or an insecure cookie, are fixed before release.
 sensors: [security-scanner]
 when: After each deploy of a pull request's preview, once it is ready, a passive scan; nightly and before each release, an active scan against the preview or staging.
 failure: An alert on a rule that the rules file sets to fail. A scan that ended in an error, or whose crawl reached no page, also fails, since it has observed nothing.

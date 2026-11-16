@@ -15,7 +15,7 @@ const TOOL =
   "---\ntitle: The project's test command\nsummary: Runs the tests.\nsensors: [test-runner]\nlayer: project\n" +
   'vendors:\n  - name: pytest\n    url: https://docs.pytest.org/\n    note: Python\n---\n';
 const LOOP =
-  '---\ntitle: Red, then green\nsummary: Test first.\nsensors: [test-runner]\n' +
+  '---\ntitle: Red, then green\nsummary: Test first.\nmotivation: I want every test to have failed once.\nsensors: [test-runner]\n' +
   'when: Before and after.\nfailure: A test fails.\nnext: Fix the code.\n---\n';
 
 /** Writes a catalog with the real schemas and the given cards ({ 'sensors/x.md': text }), and returns its folder. */
@@ -79,6 +79,16 @@ test('a tool with no vendors, and a vendor with no link', () => {
   assert.deepEqual(problems({ 'sensors/test-runner.md': SENSOR, 'tools/project-test-command.md': noLink }), [
     "tools/project-test-command.md: vendors/0 must have required property 'url'",
   ]);
+});
+
+test('a loop with no motivation, and one not in its owner\'s words', () => {
+  const noMotivation = LOOP.replace(/motivation: .*\n/, '');
+  assert.deepEqual(problems({ 'sensors/test-runner.md': SENSOR, 'loops/red-green-tdd/card.md': noMotivation }), [
+    "loops/red-green-tdd/card.md: front matter must have required property 'motivation'",
+  ]);
+  const thirdPerson = LOOP.replace('I want every test', 'Every test needs');
+  const [problem] = problems({ 'sensors/test-runner.md': SENSOR, 'loops/red-green-tdd/card.md': thirdPerson });
+  assert.match(problem, /^loops\/red-green-tdd\/card\.md: motivation must match pattern "\^I want "/);
 });
 
 test('a loop that is a file instead of a folder', () => {

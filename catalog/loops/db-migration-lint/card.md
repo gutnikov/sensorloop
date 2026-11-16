@@ -1,6 +1,7 @@
 ---
 title: Check each migration before it runs
 summary: A migration linter names a dangerous operation in a new database migration, such as a table lock or a destructive change, and the agent rewrites the migration; then it is applied, rolled back and applied again on a throwaway database. A bad migration does its damage when it runs, and reverting the code does not undo it.
+motivation: I want every database migration checked for dangerous operations and tried on a throwaway database before it runs for real, because a migration that locks a table or drops data does its damage at once, and reverting the code does not undo it.
 sensors: [linter, test-runner]
 when: On every change that adds a migration or edits one that has not run anywhere yet, in the agent's session before it commits, and again in CI on the pull request.
 failure: A violation of a rule set to fail in a new migration, a step of the up, down and up run that errors on the throwaway database, or a run that checked no migration although the change adds one.

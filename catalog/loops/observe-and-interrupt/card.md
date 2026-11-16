@@ -1,6 +1,7 @@
 ---
 title: Watch and step in
 summary: The person does not approve each step. They watch the agent work and step in when it drifts; the agent stops at once, the drifted work can be rolled back, and the correction becomes the agent's next instruction.
+motivation: I want to watch my agent work and stop it the moment it heads the wrong way, instead of approving every step, so I catch a wrong turn early and spend my attention only where it matters.
 sensors: [live-supervision]
 when: While the agent works on a task the person chose to watch, at any step. Whether a task is watched is decided before it starts.
 failure: "The person interrupts: the agent misread the task, took a wrong approach, touched a file it should not have, or spent effort out of proportion to the problem. An interruption that adds a requirement, or changes the person's mind, is new input rather than an error."

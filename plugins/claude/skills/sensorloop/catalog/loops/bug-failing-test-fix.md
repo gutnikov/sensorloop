@@ -1,6 +1,7 @@
 ---
 title: A bug starts with a failing test
 summary: The agent turns a bug into a test that fails for the bug's reason, changes the code until it passes, and runs the whole suite.
+motivation: I want every bug fix to start with a test that reproduces the bug, so I can see that the bug was real, that the fix removed it, and that it will not quietly come back.
 sensors: [test-runner]
 when: On every bug fix, before the code is changed and again after.
 failure: No test reproduces the bug, the test passes before the fix, the original reproduction still fails after it, or another test breaks.

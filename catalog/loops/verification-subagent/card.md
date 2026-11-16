@@ -1,6 +1,7 @@
 ---
 title: Check the claim of done
 summary: When the working agent says a task is done, a separate agent with a fresh context gets the claim and the requirement, not the reasoning, and tries to prove the claim wrong by running the tests and the app.
+motivation: I want a second agent, which never saw how the work was done, to check every claim that a task is done by running the tests and the app, so done means shown to work, not just said to work.
 sensors: [llm-reviewer, test-runner, manual-probe]
 when: Each time the working agent says a task is done, before its turn ends or it opens a pull request; again after each fix, with a new refuter; and in CI on the pull request.
 failure: The refuter returns fail with evidence that the claim is wrong, such as a test that fails or was skipped, a step of the requirement's scenario that does not work in the running app, or an example in the requirement left unmet. A refuter that could not run the tests or the app, timed out or returned no verdict has checked nothing, which is not a pass. Until the refuter is calibrated, a fail is advice.

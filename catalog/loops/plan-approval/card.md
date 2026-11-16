@@ -1,6 +1,7 @@
 ---
 title: Approve the plan first
 summary: Before it changes anything, the agent studies the code read-only and writes a plan that opens with the task in its own words (what it understood, what it will not do, and what will show it is done). A person corrects or approves it, and the agent then works by the plan on its own.
+motivation: I want my agent to tell me what it understood and how it will do the task before it changes anything, so I can correct a misunderstanding in a minute instead of finding it hours later in the code.
 sensors: [human-answer]
 when: Before the agent's first edit on a task whose direction is not yet settled, once it has read the code; again whenever the work needs a requirement or a change of approach the approved plan does not name.
 failure: The person corrects the restatement or rejects the plan, with what to change. Or a plan reaches the person empty, with a step that has no check, or with a decision left open; or work starts on a plan that has no approval record or has changed since it was approved.

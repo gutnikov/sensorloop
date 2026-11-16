@@ -1,6 +1,7 @@
 ---
 title: Fresh-context code review
 summary: Reviewer agents with a fresh context read the committed diff, and the coding agent fixes the high findings a second pass confirms. Each re-review checks only the findings not yet addressed, for at most five rounds.
+motivation: I want each change reviewed by a second AI agent that never saw how it was written, so it catches the mistakes the author is blind to, and my agent fixes the serious ones before a person looks.
 sensors: [llm-reviewer]
 when: After the coding agent's tests pass and its work is committed, before it opens a pull request; then once per round of fixes, on the fix diff; and again in CI on the pull request.
 failure: A high-severity finding that a second pass confirms, or one a re-review marks not addressed; until the reviewer is calibrated, these are advice. Medium and low findings go to a log, and never enter the loop.
