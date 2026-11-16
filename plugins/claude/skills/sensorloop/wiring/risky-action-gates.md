@@ -1,7 +1,8 @@
 # Wiring: Ask before the irreversible
 
-Needs: the list of actions that must not run without a person (setup step 2). Adds: `ask` permission rules, one per
-gated command. A rule that asks wins over one that allows.
+Needs: the list of actions that must not run without a person (the interview's **gates**,
+[../../interview/tree.md](../../interview/tree.md)). Adds: `ask` permission rules, one per gated command. A rule that
+asks wins over one that allows.
 
 ## In .claude/settings.json
 

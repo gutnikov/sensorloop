@@ -12,12 +12,7 @@ The catalog of sensors, tools and loops, the plugins built from it, and the site
   The text names a product only to show how the role is used.
 - A relation is written once, on the more specific card: a tool lists the sensors it builds, a loop the sensors it
   reads. A sensor's tools and loops are computed, never written on its card.
-- `catalog/wizard/`: the wizard at /wizard/. `tree.yaml` holds its questions (at most eight) and the rules that turn
-  answers into loops, checked against `catalog/schema/wizard.schema.json` and the catalog: every loop must be reachable.
-  `personas/` holds the projects it is tried on, each with the loops it must and must not get and its latest answers;
-  `npm run check` fails when one loses a loop it must have. How to change the tree and run a round: its `README.md`.
-- `packages/catalog`: the only code that parses cards and the wizard's tree. The site and the plugin builders import
-  it; the page runs its `wizard.js` in the browser.
+- `packages/catalog`: the only code that parses cards. The site and the plugin builders import it.
 - `docs/metamodel.md`: the metamodel, imported above and rendered on the home page. `docs/get-started.md`: how to
   install and use the plugin, rendered at /get-started/.
 - A recorded terminal session in a doc is a line `<!-- cast: <name> | <caption> -->` and the file
@@ -29,10 +24,14 @@ The catalog of sensors, tools and loops, the plugins built from it, and the site
 - `plugins/claude/`: the Claude Code plugin `sensorloop`, installed from the marketplace in `.claude-plugin/`. Its
   skill (`skills/sensorloop/`) keeps a project's loops; `procedures/` and `wiring/` are written by hand, `catalog/` is
   generated from `catalog/` by `npm run build:plugin` and committed (CI fails when it is out of date). The skill wires
-  itself only the loops in `wiring/`; the rest it proposes. Its evals are in `plugins/claude/evals/`.
+  itself only the loops in `wiring/`; the rest it proposes. Before it sets loops up or changes them, it interviews
+  the person with the plugin's second skill, `skills/interview/`: rounds of questions over a tree of the person's
+  needs (`tree.md`), facts looked up rather than asked, and needs the person confirms. Its evals are in
+  `plugins/claude/evals/`.
 - This repository keeps its own loops with that skill: `.sensorloop/`, and the hooks and gates in
-  `.claude/settings.json`. `.claude/skills/sensorloop` and `.claude/agents/flow-auditor.md` link to the plugin's, so a
-  session here uses the skill as it stands in the working tree; a change to it takes effect in the next session.
+  `.claude/settings.json`. `.claude/skills/sensorloop`, `.claude/skills/interview` and `.claude/agents/flow-auditor.md`
+  link to the plugin's, so a session here uses the skills as they stand in the working tree; a change to them takes
+  effect in the next session.
 
 ```bash
 npm ci

@@ -13,7 +13,8 @@ the failure it catches is likely or expensive.
 
 ## What you keep in the project
 
-- `.sensorloop/loops.yaml`: the registry. The project's facts and limits, and every loop with its status and wiring.
+- `.sensorloop/loops.yaml`: the registry. The project's facts, what the person wants from the loops and their
+  limits, and every loop with its status and wiring.
 - `.sensorloop/LOOPS.md`: what an agent working here must know about the loops, written from the registry, and
   imported into `CLAUDE.md` by one line, `@.sensorloop/LOOPS.md`.
 - `.sensorloop/hooks/`: the scripts the hooks run, copied from `wiring/scripts/`.
@@ -31,7 +32,9 @@ do not have this plugin, and in CI. Formats: [procedures/loops-file.md](procedur
 | A step to add to the flow or change in it (an approval, a review, a check), something keeps going wrong in the flow, or the person asks how to improve it | [procedures/diagnose.md](procedures/diagnose.md) |
 | Write or fix the prompt of a service agent (reviewer, judge, triager, verifier) | [procedures/agent-prompt.md](procedures/agent-prompt.md) |
 
-Read [procedures/loops-file.md](procedures/loops-file.md) before you write anything under `.sensorloop/`.
+Setup and change begin with an interview of the person about what they need from the loops:
+[../interview/SKILL.md](../interview/SKILL.md). Read [procedures/loops-file.md](procedures/loops-file.md) before you
+write anything under `.sensorloop/`.
 
 ## The catalog
 
@@ -42,8 +45,9 @@ assumed. Products a card names are examples.
 
 ## Rules
 
-1. **Fit the project.** Choose loops by its facts and limits (what exists: CI, deploy, previews, a browser, logs,
-   metrics; the budget; who can answer questions), not by the size of the catalog. Start with few, cheap loops.
+1. **Fit the project.** Choose loops by its facts (what exists: CI, deploy, previews, a browser, logs, metrics) and
+   by the needs and limits the person confirmed (what would hurt, what needs a person, the budget), not by the size
+   of the catalog. Start with few, cheap loops.
 2. **Ask before you write.** Show the person the loops you propose, why each fits, and the exact changes (files,
    hooks, permissions, CI), and get a yes. Use the question tool when you have one. If the person said they are not
    available, use sensible defaults and say what you chose.

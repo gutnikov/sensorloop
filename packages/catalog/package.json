@@ -5,12 +5,11 @@
   "description": "Reads, checks and links the cards in catalog/: the only code that parses them",
   "type": "module",
   "exports": {
-    ".": "./src/index.js",
-    "./wizard": "./src/wizard.js"
+    ".": "./src/index.js"
   },
   "scripts": {
     "check": "node src/check.js",
-    "test": "node --test test/catalog.test.js test/export.test.js test/wizard.test.js"
+    "test": "node --test test/catalog.test.js test/export.test.js"
   },
   "dependencies": {
     "ajv": "8.20.0",

@@ -10,7 +10,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import YAML from 'yaml';
-import { checkAnswers, checkTree } from './wizard.js';
 
 /** @typedef {'sensors' | 'tools' | 'loops'} Kind */
 
@@ -181,74 +180,4 @@ function parse(text) {
     return { error: 'front matter is not a mapping of fields' };
   }
   return { data, body: match[2].trim() };
-}
-
-/**
- * @typedef {object} Persona  a developer and their project, to run the wizard on (catalog/wizard/personas/<id>.yaml)
- * @property {string} id
- * @property {string} file
- * @property {string} title
- * @property {string} who                         the project, as the developer would tell it
- * @property {{ must: string[], must_not: string[] }} expect   loops the result must have, and must not
- * @property {import('./wizard.js').Answers | undefined} answers   the answers given in the latest round
- */
-
-/**
- * Reads the wizard (catalog/wizard/tree.yaml) and its personas, and checks them against their schema and the
- * catalog: every loop it names has a card, every catalog loop has a phase and is reached by a rule or the base, every
- * question and option a condition reads exists before it. A persona's answers must fit the tree; whether they get
- * what they must is the test's to check.
- * @param {string} root  the catalog folder
- * @param {Catalog} catalog
- * @returns {{ tree: any, personas: Persona[] }}
- */
-export function loadWizard(root, catalog) {
-  /** @type {string[]} */
-  const problems = [];
-  const dir = path.join(root, 'wizard');
-  const ajv = new Ajv2020({ allErrors: true });
-  const validate = ajv.compile(JSON.parse(fs.readFileSync(path.join(root, 'schema', 'wizard.schema.json'), 'utf8')));
-  const file = path.join(dir, 'tree.yaml');
-  let tree;
-  try {
-    tree = YAML.parse(fs.readFileSync(file, 'utf8'));
-  } catch (error) {
-    throw new CatalogError([`wizard/tree.yaml: ${/** @type {Error} */ (error).message}`]);
-  }
-  if (!validate(tree)) {
-    throw new CatalogError(
-      (validate.errors ?? []).map((e) => `wizard/tree.yaml: ${e.instancePath.slice(1) || 'the tree'} ${e.message}`),
-    );
-  }
-  for (const problem of checkTree(tree, catalog.loops.map((l) => l.id))) problems.push(`wizard/tree.yaml: ${problem}`);
-
-  /** @type {Persona[]} */
-  const personas = [];
-  const known = new Set(catalog.loops.map((l) => l.id));
-  const personaDir = path.join(dir, 'personas');
-  const files = fs.existsSync(personaDir) ? fs.readdirSync(personaDir).filter((f) => f.endsWith('.yaml')).sort() : [];
-  for (const name of files) {
-    const where = `wizard/personas/${name}`;
-    const data = YAML.parse(fs.readFileSync(path.join(personaDir, name), 'utf8'));
-    for (const field of ['title', 'who', 'expect']) {
-      if (!data?.[field]) problems.push(`${where}: no ${field}`);
-    }
-    const expect = { must: data?.expect?.must ?? [], must_not: data?.expect?.must_not ?? [] };
-    for (const id of [...expect.must, ...expect.must_not]) {
-      if (!known.has(id)) problems.push(`${where}: expect names the loop "${id}", which has no card`);
-    }
-    if (data?.answers && problems.length === 0) {
-      for (const problem of checkAnswers(tree, data.answers)) problems.push(`${where}: answers: ${problem}`);
-    }
-    personas.push({
-      id: name.slice(0, -'.yaml'.length),
-      file: where,
-      title: data?.title,
-      who: data?.who,
-      expect,
-      answers: data?.answers,
-    });
-  }
-  if (problems.length > 0) throw new CatalogError(problems);
-  return { tree, personas };
 }
