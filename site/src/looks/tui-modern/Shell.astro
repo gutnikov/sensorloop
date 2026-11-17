@@ -11,6 +11,7 @@ import iosevka400 from './fonts/iosevka-400.woff2?url';
 import iosevka700 from './fonts/iosevka-700.woff2?url';
 import martianMono from '@fontsource-variable/martian-mono/files/martian-mono-latin-wdth-normal.woff2?url';
 import Pane from './Pane.astro';
+import LinkPreview from '../../components/LinkPreview.astro';
 import { analyticsSnippet, config } from '../../config.mjs';
 import { catalog, kinds } from '../../lib/content.js';
 import { href, kicker } from '../../lib/present.js';
@@ -110,6 +111,7 @@ const docHtml =
     <meta name="theme-color" content="#191335" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <LinkPreview title={title} description={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     {

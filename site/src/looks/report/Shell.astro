@@ -8,6 +8,7 @@ import '@fontsource/ibm-plex-serif/700.css';
 import '@fontsource-variable/ibm-plex-sans/wght.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import './look.css';
+import LinkPreview from '../../components/LinkPreview.astro';
 import { analyticsSnippet, config } from '../../config.mjs';
 
 export interface Props {
@@ -29,6 +30,7 @@ const { title, description, bodyClass, nav } = Astro.props;
     <meta name="color-scheme" content="light" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <LinkPreview title={title} description={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <!-- Light by default; dark only when the reader chose it with the toggle. Runs before the first paint. -->
     <script is:inline>
