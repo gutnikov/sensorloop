@@ -38,8 +38,9 @@ and the report.
 
 ## Ask a person first
 
-`git push`, and the site's deploy (`npx wrangler@4 deploy`). A refused action is not tried another way (a rewritten
-command, a script, `gh api`): say what you did not do and go on with the rest, or ask what to do instead.
+`git push`, `gh pr merge`, and a deploy by hand (`npx wrangler@4 deploy`). A merge to main is the release: CI
+deploys the site after it. A refused action is not tried another way (a rewritten command, a script, `gh api`): say
+what you did not do and go on with the rest, or ask what to do instead.
 
 Only a person changes the page audit's thresholds and pages: a hook refuses your edits to `site/lighthouserc.yml` and
 `site/scripts/lighthouse-live.mjs`. Do not change them, or the scripts and CI job that run the audit, any other way.
@@ -47,10 +48,13 @@ When you think a threshold is wrong, tell the person what to change and why.
 
 ## After a deploy
 
-When `wrangler deploy` succeeds, a hook runs `npm run lighthouse:live` (3 to 4 minutes): the page audit, with the same
-pages and minimums, on sensorloop.dev. A failure there that the build passed comes from what only the published site
-has, such as Cloudflare's headers, or from a deploy that did not publish the build. Tell the person the failing
-assertions and the report (`site/.lighthouseci/live/`), and fix the cause in a new pull request.
+After each merge to main, once `check` and `lighthouse` pass on the merged commit, the `deploy` workflow builds it,
+deploys it to Cloudflare, and runs `npm run lighthouse:live` (3 to 4 minutes): the page audit, with the same pages
+and minimums, on sensorloop.dev. A deploy by hand is only a fallback; when it succeeds, a hook runs the same audit.
+A failure there that the build passed comes from what only the published site has, such as Cloudflare's headers, or
+from a deploy that did not publish the build. Tell the person the failing assertions and the report (the run's
+artifact `lighthouse-live`, or `site/.lighthouseci/live/` after a deploy by hand), and fix the cause in a new pull
+request.
 
 ## Never
 

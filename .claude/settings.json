@@ -2,6 +2,7 @@
   "permissions": {
     "ask": [
       "Bash(git push:*)",
+      "Bash(gh pr merge:*)",
       "Bash(npx wrangler@4 deploy:*)",
       "Bash(npx wrangler deploy:*)",
       "Bash(wrangler deploy:*)"

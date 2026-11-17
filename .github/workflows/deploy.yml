@@ -1,0 +1,76 @@
+# The release of sensorloop.dev. A merge to main is the release: once `check` has passed on the merged commit (its
+# jobs `check` and `lighthouse`), this builds that commit, deploys it to Cloudflare, and runs the page audit on the
+# published site (site/scripts/lighthouse-live.mjs, the same pages and minimums as site/lighthouserc.yml). Merging
+# waits for a person (.sensorloop/LOOPS.md); nothing here asks one. A failed deploy or audit leaves the run red.
+name: deploy
+
+on:
+  workflow_run:
+    workflows: [check]
+    types: [completed]
+    branches: [main]
+  # By hand, from main only: to deploy again without a new commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, and none cancelled halfway.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://sensorloop.dev
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      # When a newer commit reached main while this one was checked, the newer one's own run deploys it: deploying
+      # this one now could put an older site over a newer one.
+      - name: The commit is still the tip of main
+        id: tip
+        run: |
+          tip="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [ "$tip" = "$SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "current=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::main is at $tip now, not $SHA; that commit's own run deploys it."
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.tip.outputs.current == 'true'
+        with:
+          node-version: 20
+          cache: npm
+      - if: steps.tip.outputs.current == 'true'
+        run: npm ci
+      - if: steps.tip.outputs.current == 'true'
+        run: npm run build
+      - name: Deploy to Cloudflare
+        if: steps.tip.outputs.current == 'true'
+        working-directory: site
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx --yes wrangler@4 deploy
+      - name: The page audit of sensorloop.dev
+        if: steps.tip.outputs.current == 'true'
+        run: npm run lighthouse:live
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.tip.outputs.current == 'true'
+        with:
+          name: lighthouse-live
+          path: site/.lighthouseci/live/
+          include-hidden-files: true
