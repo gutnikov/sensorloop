@@ -6,8 +6,11 @@ the wiring and `LOOPS.md` match the project and the person's needs again.
 
 ## 1. Compare
 
-Read `.sensorloop/loops.yaml`. Learn the project again as in [setup.md](setup.md) step 1, and compare:
+Read `.sensorloop/loops.yaml`. Find the tools and learn the project again as in [setup.md](setup.md) step 1, and
+compare:
 
+- **Tools**: which of the catalog's tools are new since `project.tools`, and which are gone. Show the person these
+  before anything else.
 - **Commands**: does each recorded command still run as CI runs it? A renamed, moved or new command changes every
   hook that calls it.
 - **Facts**: what the project now has or lost (CI, deploy, previews, telemetry).
@@ -21,12 +24,15 @@ Read `.sensorloop/loops.yaml`. Learn the project again as in [setup.md](setup.md
 ## 2. Propose the difference
 
 List, for the person: loops whose wiring must change (and how), loops that can no longer run (to turn `off`), and
-loops the new facts make possible (to wire, if they are in [wiring/](../wiring/), or to propose). Get a yes.
+loops the new facts or needs call for: to wire, from their page in [wiring/](../wiring/) or from their card, when the
+project can run them, or to propose, when they need what only a person can provide ([setup.md](setup.md) step 3).
+Get a yes.
 
 ## 3. Apply, prove, write down
 
-Change the wiring, prove each changed loop fires ([setup.md](setup.md) step 5), update `loops.yaml` (its wants and
-limits too, when the interview changed them), and rewrite `LOOPS.md`. Never turn a loop off to make a change pass: a
+Change the wiring, prove each changed loop works ([setup.md](setup.md) step 5), update `loops.yaml` (its tools, and
+its wants and limits too, when the interview changed them), rewrite `LOOPS.md`, and end with the report
+([setup.md](setup.md) step 7) on the loops that changed. Never turn a loop off to make a change pass: a
 loop that blocks a change is doing its job until the person decides otherwise.
 
 When the person only asks for `CLAUDE.md` to be current, check that `LOOPS.md` matches `loops.yaml` and that

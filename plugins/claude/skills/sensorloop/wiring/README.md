@@ -1,7 +1,12 @@
-# Wiring the loops you install yourself
+# Wiring pages
 
-One page per loop, each with what it adds to the project, the text it puts in `LOOPS.md`, and how to prove it fires.
-The card behind each is `../catalog/loops/<id>.md`; read it for the reasons.
+The loops most projects get have a page here, each with what it adds to the project, the text it puts in `LOOPS.md`,
+and how to prove it fires. The card behind each is `../catalog/loops/<id>.md`; read it for the reasons.
+
+Every other loop is wired from its card: its "The loop" and "Set up", its `when`, `failure` and `next`, built with the
+tools found in the project. The same scripts serve it where they fit: `check.sh` runs any command as a hook. Prove it
+the same way: make it fail once on purpose, see its signal, undo the break
+([../procedures/setup.md](../procedures/setup.md) step 5).
 
 | Loop | Page | What it adds |
 |---|---|---|

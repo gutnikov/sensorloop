@@ -13,8 +13,8 @@ the failure it catches is likely or expensive.
 
 ## What you keep in the project
 
-- `.sensorloop/loops.yaml`: the registry. The project's facts, what the person wants from the loops and their
-  limits, and every loop with its status and wiring.
+- `.sensorloop/loops.yaml`: the registry. The project's facts and the tools it has, what the person wants from the
+  loops and their limits, and every loop with its status and wiring.
 - `.sensorloop/LOOPS.md`: what an agent working here must know about the loops, written from the registry, and
   imported into `CLAUDE.md` by one line, `@.sensorloop/LOOPS.md`.
 - `.sensorloop/hooks/`: the scripts the hooks run, copied from `wiring/scripts/`.
@@ -45,19 +45,23 @@ assumed. Products a card names are examples.
 
 ## Rules
 
-1. **Fit the project.** Choose loops by its facts (what exists: CI, deploy, previews, a browser, logs, metrics) and
-   by the needs and limits the person confirmed (what would hurt, what needs a person, the budget), not by the size
-   of the catalog. Start with few, cheap loops.
+1. **Fit the project.** Choose loops by its facts (the tools it has, and what exists: CI, deploy, previews, a
+   browser, logs, metrics) and by the needs and limits the person confirmed (what would hurt, what needs a person,
+   the budget). There is no limit on how many: take every loop that a need or a likely failure calls for, and no loop
+   without one, since each costs time, money and attention.
 2. **Ask before you write.** Show the person the loops you propose, why each fits, and the exact changes (files,
    hooks, permissions, CI), and get a yes. Use the question tool when you have one. If the person said they are not
    available, use sensible defaults and say what you chose.
-3. **Prove each loop fires.** After wiring a loop, make it fail once on purpose and see its signal, then undo the
-   break. Never leave a break behind.
+3. **Prove each loop works, and report it.** After wiring a loop, make it fail once on purpose and see its signal,
+   then undo the break and see it pass. Never leave a break behind. End a setup or a change with the report in
+   [procedures/setup.md](procedures/setup.md) step 7: each loop, how it was checked, and the result.
 4. **Never weaken a check to make it pass**: no raised thresholds, disabled rules, deleted or loosened tests, or
    suppressions without a reason. If a check is wrong, say so to the person.
 5. **Keep LOOPS.md in step** with `loops.yaml`: rewrite it after every change to the registry.
-6. **Wire only what you can wire well.** You wire yourself the loops in [wiring/](wiring/): run-tests-first,
-   type-check-and-build, lint-with-fix-instructions, risky-action-gates, stall-detector, red-green-tdd. Any other loop
-   you propose with its card, say what the project must provide, and record it with `status: proposed`.
+6. **Wire every loop the project can run.** The loops in [wiring/](wiring/) (run-tests-first, red-green-tdd,
+   type-check-and-build, lint-with-fix-instructions, risky-action-gates, stall-detector) have a page with tested
+   scripts: follow it. Wire any other loop from its card (`catalog/loops/<id>.md`, its "The loop" and "Set up") with
+   the tools found in the project. A loop that needs what only a person can provide, or what the limits forbid, you
+   propose with its card: say what the project must provide, and record it with `status: proposed`.
 7. **End with what could be better.** After any procedure, name at most three loops, sensors or tools that would
    improve the flow here, each with the failure it would catch and what it costs. Propose; do not install.

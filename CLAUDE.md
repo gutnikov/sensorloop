@@ -24,10 +24,13 @@ The catalog of sensors, tools and loops, the plugins built from it, and the site
 - `plugins/claude/`: the Claude Code plugin `sensorloop`, installed from the marketplace in `.claude-plugin/`. Its
   skill (`skills/sensorloop/`) keeps a project's loops; `procedures/` and `wiring/` are written by hand, `catalog/` is
   generated from `catalog/` by `npm run build:plugin` and committed (CI fails when it is out of date). The skill wires
-  itself only the loops in `wiring/`; the rest it proposes. Before it sets loops up or changes them, it interviews
-  the person with the plugin's second skill, `skills/interview/`: rounds of questions over a tree of the person's
-  needs (`tree.md`), facts looked up rather than asked, and needs the person confirms. Its evals are in
-  `plugins/claude/evals/`.
+  every loop the person's needs call for and the project can run, with no set number: from its page in `wiring/`
+  when it has one, otherwise from its card; a loop that needs what only a person can provide it proposes. It proves
+  each loop it wires and ends with a report. Before it sets loops up or changes them, it interviews the person with
+  the plugin's second skill, `skills/interview/`: first the tools found in the project, then one or two questions a
+  turn for at most five turns, ordered by how much each answer changes the setup (the weights in `tree.md`), with
+  options that follow the earlier answers, facts looked up rather than asked, and needs the person confirms. Its
+  evals are in `plugins/claude/evals/`.
 - This repository keeps its own loops with that skill: `.sensorloop/`, and the hooks and gates in
   `.claude/settings.json`. `.claude/skills/sensorloop`, `.claude/skills/interview` and `.claude/agents/flow-auditor.md`
   link to the plugin's, so a session here uses the skills as they stand in the working tree; a change to them takes
