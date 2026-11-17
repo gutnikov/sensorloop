@@ -20,6 +20,13 @@ project:
     lint: ruff check .
     format: ruff format .
   has: [ci]                       # what exists beyond the repo: ci, deploy, preview, browser, logs, metrics, traces, errors
+  tools:                          # the catalog's tools found here, and where: shown to the person before the interview
+    - id: project-test-command    # a tool id from catalog/tools/
+      found: pytest -q            # the product or command that plays the role here
+      where: pyproject.toml, .github/workflows/ci.yml
+    - id: ci-system
+      found: GitHub Actions
+      where: .github/workflows/
   limits:                         # what the loops must not do or cost: from the interview, in the person's words
     - No paid model calls in CI.
     - Nobody watches the agent at night.
@@ -40,8 +47,10 @@ loops:
     why: UI changes are reviewed only after merge today.
 ```
 
-Rules: one entry per loop id; `wiring` says exactly what runs where; `proved` is the date you made it fail on
-purpose and saw the signal; a loop that cannot run here is `proposed` with its `needs`, never `active`. The project's
+Rules: one entry per loop id, and as many loops as the needs call for; `wiring` says exactly what runs where;
+`proved` is the date you made it fail on purpose and saw the signal; a loop that cannot run here is `proposed` with
+its `needs`, never `active`. `tools` lists only what was found, with where; the next interview shows what changed in
+it. The project's
 `limits` and `wants` come from the interview ([../../interview/SKILL.md](../../interview/SKILL.md)), each in the
 person's words, with an answer nobody gave marked assumed; the next interview starts from them.
 

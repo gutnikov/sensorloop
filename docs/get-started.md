@@ -1,6 +1,6 @@
 # Get started
 
-sensorloop is a plugin for Claude Code. It keeps your project's validation loops: it interviews you about what you need, sets up the checks that catch an agent's mistakes, fitted to what your project has and what you told it, keeps them in step as the project changes, and finds the loop that should have caught a problem.
+sensorloop is a plugin for Claude Code. It keeps your project's validation loops: it finds the tools your project already has, interviews you about what you need, sets up the checks that catch an agent's mistakes, fitted to what your project has and what you told it, keeps them in step as the project changes, and finds the loop that should have caught a problem.
 
 ## Install
 
@@ -28,39 +28,40 @@ Ask in plain words. Its two skills, `sensorloop` for the loops and `interview` f
 
 **Set a project up for coding agents.** "Set this repo up so the agent's work gets checked properly." The agent:
 
-1. Reads how the project builds, tests and lints, as its CI and task files run them.
-2. Interviews you about what you need, in a few rounds of numbered questions, each with the answer it recommends. It starts with what you are building (unless the code shows it), how much the agent should do on its own, and when it may call you; the next rounds follow from your answers: which actions need a person, what would hurt if a change broke it, where you want to approve the work, what the loops may spend. It asks only what the repository cannot tell it. It sets nothing up until you confirm its summary of what you said.
-3. Proposes a few loops that fit those needs, with the changes each makes.
-4. After your yes, wires them, and makes each one fail once on purpose to prove it fires.
-5. Writes them down, with what you told it in the interview.
+1. Finds the tools your project already has (its test command, linter, CI, error tracker and the rest of the [catalog](/tools/)) and shows them to you, with where it found each, before it asks anything.
+2. Interviews you about what you need: one or two numbered questions a turn, each with the answer it recommends, for at most five turns. The questions that change the setup most come first: how much the agent should do on its own, what would hurt if a change broke it, what the loops may spend. Those that change how the loops hold come next: when it may call you, which actions wait for you, where you want to approve the work. Each question offers only the options your earlier answers leave open. It asks only what the repository cannot tell it, takes a default for what it did not ask, and sets nothing up until you confirm its summary of what you said.
+3. Proposes every loop those needs call for, with no set number: the ones your project can run, to wire, and the ones that need something only you can provide, such as an account or a secret, to record for later.
+4. After your yes, wires them, and makes each one fail once on purpose to prove it works.
+5. Writes them down, with what you told it in the interview, and ends with a report: each loop, when it fires, how it was checked, and whether it works.
 
-A first round, for an orders API whose code shows how it deploys:
+The first turn, for an orders API whose code shows how it deploys:
 
 ```
-❓ Q1 · What you are building: The code shows the orders API of a shop, deployed to Fly.io
-with `npm run deploy`, which runs the migrations against the production database. Is the
-shop's front end its only client?
+| Tool | Found | Where | Builds |
+|---|---|---|---|
+| The project's test command | `npm test` (node --test) | package.json, CI | test runner |
+| The CI system | GitHub Actions | .github/workflows/test.yml | CI results |
 
-➡️ Yes: the front end is the only client.
+The code shows the orders API of a shop, deployed to Fly.io with `npm run deploy`, which
+runs the migrations against the production database. An error tracker or logs would live
+outside the repository: name any you use.
 
----
-
-❓ Q2 · How much the agent does on its own: Should it work in a session you watch, take a
+🧭 Q1 · How much the agent does on its own: Should it work in a session you watch, take a
 whole task and come back with a pull request, or run several tasks overnight with nobody
 watching?
 
-➡️ A whole task at a time, ending in a pull request you review.
+💡 A whole task at a time, ending in a pull request you review.
 
 ---
 
-❓ Q3 · When it may call you: Whenever it is unsure; only before something that cannot be
-undone, such as the deploy, or when it is stuck; or never while it works, only through
-the pull request it leaves?
+🧭 Q2 · What would hurt most: If a change broke something, what would cost you most: the
+orders data, which every deploy migrates in production; the front end that calls this
+API; or nothing serious yet?
 
-➡️ Only before something that cannot be undone, and when it is stuck, in the session.
+💡 The orders data: a migration runs against production on every deploy.
 ```
 
-Answer by number ("1 yes, 2 yes, 3 never while it works"). The next round follows from those answers: what would hurt most, which actions wait for you, who reviews, what the loops may spend. To be interviewed before you decide to set anything up, type `/sensorloop:interview`.
+Answer by number ("1 yes, 2 yes"). The next turn follows from those answers, and so do its options: with a whole task handed over, it does not offer to call you whenever it is unsure, only before something that cannot be undone, at agreed points, or through the pull request. To be interviewed before you decide to set anything up, type `/sensorloop:interview`.
 
 **When the project changes.** "We moved to Vitest and added a type check; make sure the agent's checks still work." It compares the loops with the project, and fixes the wiring that drifted.
 
@@ -90,6 +91,6 @@ Commit them all, except `.sensorloop/state/`, which it adds to `.gitignore`. The
 
 ## The loops it wires
 
-It wires six loops itself: [Run the tests first](/loops/run-tests-first/), [Red, then green](/loops/red-green-tdd/), [Type check and build](/loops/type-check-and-build/), [Lint with fix instructions](/loops/lint-with-fix-instructions/), [Ask before the irreversible](/loops/risky-action-gates/) and [Stall detector](/loops/stall-detector/).
+It wires every loop in the [catalog](/loops/) that your needs call for and your project can run, with no set number. Six of them have a tested wiring page in the plugin: [Run the tests first](/loops/run-tests-first/), [Red, then green](/loops/red-green-tdd/), [Type check and build](/loops/type-check-and-build/), [Lint with fix instructions](/loops/lint-with-fix-instructions/), [Ask before the irreversible](/loops/risky-action-gates/) and [Stall detector](/loops/stall-detector/). It wires any other loop from its card, with the tools it found in your project.
 
-Every other loop in the [catalog](/loops/) it proposes when your project calls for it, with what your project must provide, and records it in the registry as proposed. Which ones it proposes follows from what you told it in the interview.
+A loop that needs what only you can provide (an account, a paid service, a secret, a deploy target) it records in the registry as proposed, with what it needs. Which loops it takes follows from what you told it in the interview.

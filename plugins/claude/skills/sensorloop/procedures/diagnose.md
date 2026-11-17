@@ -33,5 +33,6 @@ If no loop fits, describe the sensor that would see the failure, and the tool th
 
 Give the person: the failure, the evidence, the phase that should catch it, and the change, from cheapest to dearest.
 A fix to an existing loop comes before a new loop. A mistake made twice by people or agents becomes a rule a sensor
-checks (a lint rule, a test, a hook), not a line of advice. Wire it if it is in [wiring/](../wiring/) and the person
-agrees; otherwise record it as `proposed` in the registry. Update `LOOPS.md` if anything active changed.
+checks (a lint rule, a test, a hook), not a line of advice. When the person agrees and the project can run it, wire
+it from its page in [wiring/](../wiring/) or from its card, prove it and report it ([setup.md](setup.md) steps 5 and
+7); otherwise record it as `proposed` in the registry, with what it needs. Update `LOOPS.md` if anything active changed.
