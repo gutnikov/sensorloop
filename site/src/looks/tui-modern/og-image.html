@@ -1,0 +1,338 @@
+<!doctype html>
+<!--
+  The image a link to sensorloop.dev shows where it is shared (og:image, set on every page by
+  src/components/LinkPreview.astro): public/og.png, 1200 x 630, the home page's first screen in the tui-modern look.
+  The headline is the first sentence of docs/metamodel.md, broken where the home page breaks it, and the gyroscope the
+  first frame of BrailleGyroscope.astro (the one shown under reduced motion). After a change to this file, render it
+  from site/ with Chrome or Chromium, then cut it to 256 colours with sharp (Astro's image library), 108 KB to 35:
+
+    chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 --window-size=1200,630 \
+      --screenshot=public/og.png "file://$PWD/src/looks/tui-modern/og-image.html"
+    node -e "require('sharp')('public/og.png').png({ palette: true, quality: 100, effort: 10 }).toBuffer()
+      .then((png) => require('fs').writeFileSync('public/og.png', png))"
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../../node_modules/@fontsource-variable/martian-mono/wdth.css" />
+    <style>
+      @font-face {
+        font-family: 'Iosevka';
+        font-weight: 400;
+        src: url('./fonts/iosevka-400.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Iosevka';
+        font-weight: 700;
+        src: url('./fonts/iosevka-700.woff2') format('woff2');
+      }
+
+      /* The look's colours (look.css). */
+      :root {
+        --bg: #191335;
+        --pane: #1e1740;
+        --pane-hi: #2a2257;
+        --well: #140f2c;
+        --line: #463c7a;
+        --line-soft: #342b66;
+        --text: #eceafb;
+        --dim: #9c95c8;
+        --pink: #ff6ac1;
+        --cyan: #6ae4ff;
+        --yellow: #ffd866;
+        --on-bright: #191335;
+        --grad: linear-gradient(90deg, var(--pink), var(--cyan));
+        --mono: 'Iosevka', ui-monospace, monospace;
+        --display: 'Martian Mono Variable', 'Iosevka', ui-monospace, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1200px;
+        height: 630px;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        position: relative;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--mono);
+        font-variant-ligatures: none;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      kbd {
+        font: inherit;
+        font-weight: 700;
+        color: var(--yellow);
+      }
+
+      .grad-text {
+        background: var(--grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      /* The tab bar. */
+      .topbar {
+        position: absolute;
+        inset: 0 0 auto;
+        display: flex;
+        align-items: stretch;
+        height: 52px;
+        padding: 0 32px;
+        border-bottom: 1px solid var(--line-soft);
+        font-size: 19px;
+        white-space: nowrap;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.6ch;
+        padding-right: 1.6ch;
+        font-weight: 700;
+        font-size: 23px;
+        letter-spacing: 0.02em;
+      }
+
+      .tabs {
+        display: flex;
+      }
+
+      .tabs span {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.8ch;
+        padding: 0 1.4ch;
+        color: var(--dim);
+      }
+
+      .tabs .current {
+        color: var(--text);
+        background: var(--pane-hi);
+        font-weight: 700;
+      }
+
+      .tabs .current::after {
+        content: '';
+        position: absolute;
+        inset: auto 0 0;
+        height: 3px;
+        background: var(--grad);
+      }
+
+      .repo {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+        color: var(--dim);
+      }
+
+      /* The hero pane, with the focus: the gradient border and its title set into it. */
+      .pane {
+        position: absolute;
+        inset: 84px 40px 70px;
+        border: 2px solid transparent;
+        border-radius: 12px;
+        background:
+          linear-gradient(var(--pane), var(--pane)) padding-box,
+          var(--grad) border-box;
+      }
+
+      .pane-title {
+        position: absolute;
+        top: 0;
+        left: 22px;
+        padding: 0 0.6ch;
+        translate: 0 -50%;
+        background: linear-gradient(var(--bg) 50%, var(--pane) 50%);
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 32px;
+        height: 100%;
+        padding: 20px 44px 20px 52px;
+      }
+
+      .headline {
+        margin: 0;
+        font-family: var(--display);
+        font-size: 64px;
+        font-weight: 800;
+        font-stretch: 112%;
+        line-height: 1.08;
+        letter-spacing: -0.035em;
+      }
+
+      /* The cursor, where the sentence ends. */
+      .headline::after {
+        content: '';
+        display: inline-block;
+        width: 0.55em;
+        height: 0.92em;
+        margin-left: 0.15em;
+        vertical-align: -0.1em;
+        background: var(--grad);
+      }
+
+      .url {
+        margin: 34px 0 0;
+        font-size: 38px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+
+      .url .prompt {
+        color: var(--pink);
+        margin-right: 0.6ch;
+      }
+
+      .gyroscope {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 15px;
+        line-height: 1;
+        white-space: pre;
+        color: var(--pink);
+      }
+
+      .gyroscope .g0 { color: #ff6ac1; }
+      .gyroscope .g1 { color: #f179c7; }
+      .gyroscope .g2 { color: #e088cf; }
+      .gyroscope .g3 { color: #cb98d9; }
+      .gyroscope .g4 { color: #b2a9e3; }
+      .gyroscope .g5 { color: #97bbed; }
+      .gyroscope .g6 { color: #7ecff6; }
+      .gyroscope .g7 { color: #6ae4ff; }
+
+      /* The status bar, powerline style. */
+      .statusbar {
+        position: absolute;
+        inset: auto 0 0;
+        display: flex;
+        height: 38px;
+        background: var(--well);
+        font-size: 17px;
+        line-height: 38px;
+        white-space: nowrap;
+      }
+
+      .seg {
+        --notch: 14px;
+        position: relative;
+        margin-right: calc(-1 * var(--notch) + 2px);
+        padding: 0 calc(var(--notch) + 1.25ch) 0 calc(var(--notch) + 1ch);
+        clip-path: polygon(0 0, calc(100% - var(--notch)) 0, 100% 50%, calc(100% - var(--notch)) 100%, 0 100%, var(--notch) 50%);
+      }
+
+      .seg-mode {
+        padding-left: 1.6ch;
+        clip-path: polygon(0 0, calc(100% - var(--notch)) 0, 100% 50%, calc(100% - var(--notch)) 100%, 0 100%);
+        background: var(--grad);
+        color: var(--on-bright);
+        font-weight: 700;
+        z-index: 3;
+      }
+
+      .seg-path {
+        background: var(--pane-hi);
+        z-index: 2;
+      }
+
+      .fill {
+        flex: 1;
+      }
+
+      .seg-key {
+        margin: 0 0 0 calc(-1 * var(--notch) + 2px);
+        padding: 0 calc(var(--notch) + 0.75ch) 0 calc(var(--notch) + 1.25ch);
+        clip-path: polygon(var(--notch) 0, 100% 0, calc(100% - var(--notch)) 50%, 100% 100%, var(--notch) 100%, 0 50%);
+        background: var(--pane-hi);
+        color: var(--dim);
+      }
+
+      .seg-key + .seg-key {
+        background: var(--line-soft);
+      }
+
+      .seg-last {
+        padding-right: 1.6ch;
+        clip-path: polygon(var(--notch) 0, 100% 0, 100% 100%, var(--notch) 100%, 0 50%);
+        background: var(--line);
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <span class="brand"><span class="grad-text">⣾</span>sensorloop</span>
+      <span class="tabs">
+        <span class="current"><kbd>1</kbd>Metamodel</span>
+        <span><kbd>2</kbd>Get started</span>
+        <span><kbd>3</kbd>Sensors</span>
+        <span><kbd>4</kbd>Tools</span>
+        <span><kbd>5</kbd>Loops</span>
+      </span>
+      <span class="repo">github</span>
+    </header>
+
+    <section class="pane">
+      <span class="pane-title"><kbd>[1]</kbd> Metamodel</span>
+      <div class="hero">
+        <div>
+          <p class="headline">Stop instructing<br />the agent:<br />give it a<br />feedback loop.</p>
+          <p class="url"><span class="prompt">❯</span><span class="grad-text">sensorloop.dev</span></p>
+        </div>
+        <pre class="gyroscope">             <span class="g4">⠠</span><span class="g5">⠖⠜</span><span class="g6">⠝⢿</span><span class="g7">⢶⣦⣄</span>
+             <span class="g1">⠁</span><span class="g0">⠁</span> <span class="g0">⠁</span><span class="g2">⠁</span><span class="g5">⠙⢽</span><span class="g7">⢿⣷⣄</span>
+            <span class="g0">⠁</span> <span class="g0">⠁</span> <span class="g0">⠁</span> <span class="g0">⠁</span><span class="g2">⠁</span><span class="g4">⠝</span><span class="g6">⢽</span><span class="g7">⢿⣷⡄</span>
+            <span class="g0">⠁</span>       <span class="g0">⠁</span><span class="g3">⠕</span><span class="g5">⢝</span><span class="g7">⢽⢿⣄</span>
+          <span class="g0">⠁</span> <span class="g0">⠁</span>       <span class="g0">⠁</span> <span class="g3">⠙</span><span class="g5">⢽</span><span class="g6">⢿</span><span class="g7">⣿⢆</span>
+          <span class="g0">⠁</span> <span class="g0">⠁</span>         <span class="g0">⠁</span><span class="g2">⠅</span><span class="g5">⢝</span><span class="g6">⢽</span><span class="g7">⢿⣄</span>
+          <span class="g0">⠁</span> <span class="g7">⣀⣀⣀⣀⣀⣀⣀⣀</span>    <span class="g3">⠕</span><span class="g5">⢽</span><span class="g6">⢿</span><span class="g7">⣽</span><span class="g6">⠄</span>
+     <span class="g7">⣀</span><span class="g6">⢤⢴⢶⢼⠟</span><span class="g5">⢽</span><span class="g6">⠟⠝⠝</span><span class="g5">⠽</span><span class="g6">⠝⠽⠝</span><span class="g5">⢽</span><span class="g6">⢟⢽⢷</span><span class="g7">⠆</span><span class="g1">⠁</span><span class="g3">⢕</span><span class="g5">⢽</span><span class="g6">⢽⢿</span>
+  <span class="g5">⢠</span><span class="g4">⢔</span><span class="g5">⠝</span><span class="g4">⠕</span><span class="g3">⠝</span><span class="g2">⠅</span><span class="g3">⠁⠁</span><span class="g2">⠁</span><span class="g5">⢀</span><span class="g3">⢁</span><span class="g4">⢀</span><span class="g2">⢁</span><span class="g3">⢀</span><span class="g0">⠁</span><span class="g4">⢀</span><span class="g2">⢁</span><span class="g5">⢀</span><span class="g1">⠁</span><span class="g2">⠁⠁</span><span class="g3">⠁</span><span class="g0">⠁</span><span class="g1">⠅</span><span class="g4">⢝</span><span class="g5">⢽</span><span class="g6">⢿⢥</span>
+ <span class="g4">⠜</span><span class="g3">⠑</span><span class="g2">⠁</span><span class="g1">⠁</span> <span class="g0">⠁</span><span class="g4">⢀</span><span class="g3">⢕</span><span class="g5">⠜</span><span class="g4">⠝</span><span class="g3">⠅⠁</span><span class="g2">⠁</span><span class="g0">⠁</span> <span class="g0">⠁</span> <span class="g2">⠁</span><span class="g3">⠁</span><span class="g4">⠙⠝</span><span class="g5">⢕</span><span class="g7">⢦</span><span class="g0">⠁</span> <span class="g2">⠕</span><span class="g4">⢝</span><span class="g5">⢝</span><span class="g6">⢽</span><span class="g5">⢕</span>
+<span class="g3">⠁</span> <span class="g0">⠁</span> <span class="g0">⠁</span>  <span class="g3">⠔</span><span class="g2">⠅⠁</span><span class="g0">⠁</span><span class="g2">⢄</span>        <span class="g0">⠁</span> <span class="g0">⠁</span><span class="g3">⠝</span><span class="g5">⢕</span><span class="g6">⠄</span><span class="g0">⠁</span><span class="g3">⢕</span><span class="g5">⢝⢽</span><span class="g6">⢧</span><span class="g3">⠝</span><span class="g5">⠄</span>
+<span class="g0">⠁</span> <span class="g0">⠁</span>   <span class="g2">⠔</span><span class="g1">⠅</span><span class="g0">⠁</span>  <span class="g3">⢕⠅</span><span class="g6">⢤</span><span class="g7">⢶⣿⣿⣶⣤</span>     <span class="g2">⠑</span><span class="g3">⢅</span><span class="g0">⠁</span><span class="g1">⠅</span><span class="g4">⢝</span><span class="g5">⢽⢽⠄</span><span class="g3">⠁</span>
+<span class="g0">⠁</span> <span class="g0">⠁</span>   <span class="g1">⠁</span><span class="g0">⠄⠁</span>  <span class="g3">⢕</span><span class="g4">⠑⢽</span><span class="g5">⢝</span><span class="g6">⢽⢿⢽⢿</span><span class="g5">⢅</span>    <span class="g0">⠁</span><span class="g1">⠅</span><span class="g0">⠁</span><span class="g1">⠁</span><span class="g3">⠕</span><span class="g4">⢵</span><span class="g5">⢝</span><span class="g6">⢅</span><span class="g1">⠁</span>
+  <span class="g0">⠁</span><span class="g1">⠁</span><span class="g3">⠄</span><span class="g6">⢀</span><span class="g0">⠁⠄</span><span class="g2">⠕</span>  <span class="g3">⢵⠅</span><span class="g1">⠅</span><span class="g3">⠕⠕</span><span class="g4">⠝⠕⠝</span><span class="g3">⠅</span>    <span class="g0">⠁</span><span class="g1">⠄</span>  <span class="g2">⠕</span><span class="g4">⢕⢝</span><span class="g5">⢵</span>
+  <span class="g0">⠁</span> <span class="g0">⠁</span><span class="g3">⠑</span><span class="g5">⠕</span> <span class="g2">⠑</span><span class="g4">⢵</span><span class="g6">⢄</span> <span class="g6">⢽⣄</span><span class="g0">⠁</span> <span class="g1">⠁</span> <span class="g0">⠁</span> <span class="g7">⢀</span><span class="g5">⣀</span><span class="g2">⠅</span><span class="g1">⠄</span><span class="g0">⠁</span><span class="g2">⠄⠁</span> <span class="g1">⠑</span><span class="g3">⢕</span><span class="g4">⢝</span><span class="g5">⢵</span>
+      <span class="g0">⠁</span><span class="g1">⠁</span><span class="g0">⠁</span><span class="g2">⠁</span><span class="g4">⠝</span><span class="g6">⢽</span><span class="g7">⢿⣽⣿⣿⣟⣽⢿⣿⣿⣷</span><span class="g6">⡥</span> <span class="g0">⠁</span> <span class="g0">⠁</span> <span class="g1">⠁</span><span class="g2">⢕</span><span class="g3">⢕</span><span class="g4">⢕⠄</span>
+          <span class="g0">⠁</span> <span class="g4">⠉</span><span class="g5">⢙</span><span class="g6">⣙</span><span class="g5">⠝⠝</span><span class="g4">⠝⠙</span><span class="g7">⠛⠛⠉</span>      <span class="g0">⠁</span><span class="g2">⠅</span><span class="g3">⠕</span><span class="g4">⢕⠅</span>
+             <span class="g4">⢹</span><span class="g7">⢿⣄</span>            <span class="g0">⠁</span><span class="g1">⠅</span><span class="g3">⠕⢕</span><span class="g4">⠅</span>
+              <span class="g6">⢹</span><span class="g7">⣿⡄</span>           <span class="g0">⠁</span><span class="g1">⠅</span><span class="g2">⠕</span><span class="g3">⢕⠅</span>
+               <span class="g6">⢽</span><span class="g7">⣿⡄</span>         <span class="g7">⣧</span><span class="g5">⣁</span><span class="g3">⡅</span><span class="g2">⠕</span><span class="g5">⣕</span>
+                <span class="g6">⢽</span><span class="g7">⣿⣄</span>       <span class="g7">⢀⣿⣿⣿⣿⡿</span>
+                <span class="g0">⠁</span><span class="g5">⠝</span><span class="g7">⢿⣦</span>      <span class="g7">⣼⣿⣿⣿⣿⠇</span>
+                  <span class="g4">⠙</span><span class="g5">⢽</span><span class="g6">⢿</span><span class="g5">⢤⢀</span>  <span class="g7">⢰⣿⣿⣿⣿⡟</span>
+                    <span class="g3">⠁</span><span class="g2">⠅⠕⠅</span><span class="g1">⠁</span><span class="g7">⠸⣿⣿⣿⠟</span>
+                      <span class="g0">⠁</span> <span class="g0">⠁</span> <span class="g0">⠁</span><span class="g7">⠉⠁</span></pre>
+      </div>
+    </section>
+
+    <footer class="statusbar">
+      <span class="seg seg-mode">home</span>
+      <span class="seg seg-path">docs/metamodel.md</span>
+      <span class="fill"></span>
+      <span class="seg seg-key"><kbd>/</kbd> find</span>
+      <span class="seg seg-key"><kbd>?</kbd> keys</span>
+      <span class="seg seg-key seg-last"><kbd>1-5</kbd> sections</span>
+    </footer>
+  </body>
+</html>

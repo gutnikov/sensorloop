@@ -1,0 +1,33 @@
+---
+// What a link to the page shows where it is shared (Slack, Telegram, X, LinkedIn and the like): Open Graph's tags and
+// Twitter's card, with the page's own title and description, its address, and the site's one image, public/og.png
+// (made from src/looks/tui-modern/og-image.html). The addresses are absolute, from `site` in astro.config.mjs. In the
+// head of every look's shell.
+export interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const url = new URL(Astro.url.pathname, Astro.site).href;
+const image = { url: new URL('/og.png', Astro.site).href, width: 1200, height: 630 };
+const alt =
+  'The headline of sensorloop.dev, "Stop instructing the agent: give it a feedback loop.", in a terminal-style ' +
+  'pane beside a gyroscope drawn in braille.';
+---
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="sensorloop" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={url} />
+<meta property="og:image" content={image.url} />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content={String(image.width)} />
+<meta property="og:image:height" content={String(image.height)} />
+<meta property="og:image:alt" content={alt} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={image.url} />
+<meta name="twitter:image:alt" content={alt} />
