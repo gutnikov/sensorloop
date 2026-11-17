@@ -52,7 +52,10 @@ The plugin's evals call a model, so they do not run in CI: run them in the sessi
 review. The trigger cases after any change to the skill's description; every case after a change to its procedures,
 wiring or scripts. Add `--no-publish` to keep the report local.
 
-Deploy (manual): `npm run build && cd site && npx wrangler@4 deploy`. The account is in `site/wrangler.jsonc`.
+Deploy: a merge to main is the release. Once `check` and `lighthouse` pass on the merged commit, the `deploy` workflow
+(`.github/workflows/deploy.yml`) builds it, deploys it to Cloudflare with the secret `CLOUDFLARE_API_TOKEN`, and
+audits sensorloop.dev. By hand, only as a fallback: `npm run build && cd site && npx wrangler@4 deploy`. The account
+is in `site/wrangler.jsonc`.
 
 ## Loops
 

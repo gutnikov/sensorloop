@@ -9,10 +9,12 @@ project:
     lint: null
     format: null
     plugin: npm run check:plugin    # the plugin's catalog is current; the plugin and the marketplace are valid
-  has: [ci, deploy, browser]        # GitHub Actions (check.yml); a manual deploy of the site to Cloudflare; Chrome here and on the CI runner
+  has: [ci, deploy, browser]        # GitHub Actions (check.yml; deploy.yml, to Cloudflare after each merge); Chrome here and in CI
   limits:
     - The person works with the agent in a session.
-    - Pushes and the site's deploy wait for the person (the skill's default; the person did not choose otherwise).
+    - Pushes and merges wait for the person. A merge to main is the release, and CI deploys the site after it once
+      check and lighthouse pass on the merged commit (the person, 2026-11-17).
+    - A deploy by hand is only a fallback, and it waits for the person too.
     - The plugin's evals call a model and cost money; they run by hand, never in CI.
     - The repository uses its own skill as it stands in the working tree (.claude/skills/sensorloop links to it).
 loops:
@@ -30,9 +32,9 @@ loops:
   - id: risky-action-gates
     status: active
     wiring: >-
-      `ask` rules in .claude/settings.json: git push, npx wrangler@4 deploy, npx wrangler deploy, wrangler deploy.
-      Seen to hold in bypassPermissions mode and inside `cd site && ...`.
-    proved: 2026-11-14
+      `ask` rules in .claude/settings.json: git push, gh pr merge (a merge to main deploys the site), npx wrangler@4
+      deploy, npx wrangler deploy, wrangler deploy. Seen to hold in bypassPermissions mode and inside `cd site && ...`.
+    proved: 2026-11-17
   - id: lighthouse-ci
     status: active
     wiring: >-
@@ -42,11 +44,13 @@ loops:
       and SEO at 1; at most 300 KB a page and 40 KB of scripts). CI: the `lighthouse` job in check.yml runs
       `npm run build && npm run lighthouse` on every pull request and push to main (3 to 4 minutes on this machine),
       and keeps the reports as the artifact `lighthouse`. In a session: an instruction in LOOPS.md after a change to
-      the site. After a deploy: a PostToolUse hook on Bash runs `npm run lighthouse:live` when the command matches
-      `wrangler deploy` (.sensorloop/hooks/after.sh, then check.sh live-audit): the same pages and minimums on
-      https://sensorloop.dev (site/scripts/lighthouse-live.mjs). A PreToolUse hook on Edit|Write|MultiEdit|NotebookEdit
-      refuses the agent's edits to site/lighthouserc.yml and site/scripts/lighthouse-live.mjs, by real path
-      (.sensorloop/hooks/protect.sh); a shell command that writes them is held only by LOOPS.md and the PR's review.
+      the site. After a deploy: deploy.yml runs `npm run lighthouse:live` right after it deploys a merge to main: the
+      same pages and minimums on https://sensorloop.dev (site/scripts/lighthouse-live.mjs), the reports kept as the
+      artifact `lighthouse-live`; a deploy by hand gets the same audit from a PostToolUse hook on Bash when the command
+      matches `wrangler deploy` (.sensorloop/hooks/after.sh, then check.sh live-audit). A PreToolUse hook on
+      Edit|Write|MultiEdit|NotebookEdit refuses the agent's edits to site/lighthouserc.yml and
+      site/scripts/lighthouse-live.mjs, by real path (.sensorloop/hooks/protect.sh); a shell command that writes them
+      is held only by LOOPS.md and the PR's review.
       `check` and `lighthouse` are required checks on main (branch protection, administrators included, no reviews).
     proved: 2026-11-14
   - id: llm-evals
@@ -63,5 +67,7 @@ loops:
     why: Pull requests are merged on the agent's report; the evals judge the skill, not the cards' text or the loader.
   - id: preview-environments
     status: proposed
-    needs: A Cloudflare preview of the site for each pull request.
-    why: A change to the site is seen only after the manual deploy.
+    needs: >-
+      A Cloudflare preview of the site for each pull request: preview_urls on in site/wrangler.jsonc, and a job that
+      uploads a version per pull request with the token CI already has for the deploy.
+    why: A change to the site is seen on sensorloop.dev only after it is merged, and so released.
