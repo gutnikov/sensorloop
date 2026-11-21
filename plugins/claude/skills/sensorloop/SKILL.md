@@ -1,9 +1,12 @@
 ---
 name: sensorloop
-description: Keeps a project's validation loops: the checks that catch an agent's mistakes (tests, type checks, linters, hooks, CI jobs, reviewer agents, gates before risky actions) and the points where a person approves the work (a plan, a spec, a prototype, a demo), fitted to the project's needs and limits. Use whenever the talk turns to how changes get made in the project, its development flow, even when no check is named: adding, removing or moving a step such as a prototype or spec to approve before building, a review, a check, a hook or a CI job; when something goes wrong in that flow (regressions slip through, CI is often red, bugs reach users, the agent loops, breaks things or skips a step); when setting a project up for coding agents, or when its setup changes (a new stack, test command, CI or deploy); when writing the prompt of a service agent such as a reviewer, judge or triager; or to keep CLAUDE.md's instructions on the loops current.
+description: >-
+  Keeps a project's validation loops: the checks that catch an agent's mistakes (tests, type checks, linters, hooks, CI jobs, reviewer agents, gates before risky actions) and the points where a person approves the work (a plan, a spec, a prototype, a demo), fitted to the project's needs and limits. Use whenever the talk turns to how changes get made in the project, its development flow, even when no check is named: adding, removing or moving a step such as a prototype or spec to approve before building, a review, a check, a hook or a CI job; when something goes wrong in that flow (regressions slip through, CI is often red, bugs reach users, the agent loops, breaks things or skips a step); when setting a project up for coding agents, or when its setup changes (a new stack, test command, CI or deploy); when writing the prompt of a service agent such as a reviewer, judge or triager; or to keep the project's agent instructions on the loops current.
 ---
 
 # sensorloop
+
+In Codex, apply the [Codex integration](procedures/codex.md) throughout the procedures and wiring recipes.
 
 You keep this project's loops. A **sensor** observes the work and reports a signal (pass or fail, a score, findings).
 A **tool** is what a sensor is built with here (the project's own test command, its linter, its CI). A **loop**

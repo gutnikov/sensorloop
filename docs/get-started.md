@@ -1,8 +1,23 @@
 # Get started
 
-sensorloop is a plugin for Claude Code. It keeps your project's validation loops: it finds the tools your project already has, interviews you about what you need, sets up the checks that catch an agent's mistakes, fitted to what your project has and what you told it, keeps them in step as the project changes, and finds the loop that should have caught a problem.
+sensorloop is a plugin for Codex and Claude Code. It keeps your project's validation loops: it finds the tools your project already has, interviews you about what you need, sets up the checks that catch an agent's mistakes, fitted to what your project has and what you told it, keeps them in step as the project changes, and finds the loop that should have caught a problem.
 
 ## Install
+
+### Codex
+
+From a local Sensorloop checkout, register the marketplace and install the plugin:
+
+```bash
+codex plugin marketplace add .
+codex plugin add sensorloop@sensorloop
+```
+
+Open a new Codex session in the project you want to configure. Ask “Set this project up with Sensorloop”, or invoke `$sensorloop`. Use `$interview` to start with the requirements alone. Once the Codex manifests are on GitHub, you can use `gutnikov/sensorloop` in place of the local checkout path.
+
+Codex reads the project's `AGENTS.md`, which points it to `.sensorloop/LOOPS.md`. The registry and catalog are shared across runtimes. The Claude hook recipes below are specific to Claude Code. In Codex, Sensorloop records which checks run through project commands, CI or verified Codex hooks.
+
+### Claude Code
 
 In a Claude Code session:
 
@@ -83,9 +98,10 @@ At the end of each of these, it names at most three loops, sensors or tools that
 |---|---|
 | `.sensorloop/loops.yaml` | The registry: the project's commands, what it has, what you want from the loops and your limits, and every loop with its status and wiring |
 | `.sensorloop/LOOPS.md` | What an agent working here must know about the loops, written from the registry |
-| `CLAUDE.md` | One line, `@.sensorloop/LOOPS.md`, so every session reads it |
+| `AGENTS.md` (Codex) | An instruction to read `.sensorloop/LOOPS.md` |
+| `CLAUDE.md` (Claude Code) | One line, `@.sensorloop/LOOPS.md`, so every session reads it |
 | `.sensorloop/hooks/` | The scripts the hooks run |
-| `.claude/settings.json` | The hooks, and the actions that ask a person first |
+| `.claude/settings.json` (Claude Code) | The hooks, and the actions that ask a person first |
 
 Commit them all, except `.sensorloop/state/`, which it adds to `.gitignore`. The loops live in the project, not in the plugin: teammates without the plugin, and CI, run them the same way. The plugin is what keeps them current.
 

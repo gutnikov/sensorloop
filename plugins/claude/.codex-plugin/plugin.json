@@ -1,0 +1,9 @@
+{
+  "name": "sensorloop",
+  "version": "0.2.0",
+  "description": "Set up, maintain and diagnose a project's validation loops with its existing tools.",
+  "author": { "name": "gutnikov" },
+  "homepage": "https://sensorloop.dev",
+  "license": "MIT",
+  "skills": "./skills/"
+}
