@@ -1,9 +1,12 @@
 ---
 name: interview
-description: Interviews the person about what they need from their project's validation loops before any are set up or changed. It starts by finding the tools the project already has and showing them. Then it asks one or two questions a turn, for at most five turns, the ones that change the setup most first: how much the agent does on its own, what would hurt if a change broke it, what the loops may cost; then when the agent may call the person, which actions wait for them, where they approve the work. Each question offers only the options the earlier answers leave open. It looks facts up in the project instead of asking, and ends with needs the person confirms. Use when the sensorloop skill sets a project up or the project's needs change, or when the person asks to be interviewed or questioned about their needs, requirements or limits before the agent's checks are set up.
+description: >-
+  Interviews the person about what they need from their project's validation loops before any are set up or changed. It starts by finding the tools the project already has and showing them. Then it asks one or two questions a turn, for at most five turns, the ones that change the setup most first: how much the agent does on its own, what would hurt if a change broke it, what the loops may cost; then when the agent may call the person, which actions wait for them, where they approve the work. Each question offers only the options the earlier answers leave open. It looks facts up in the project instead of asking, and ends with needs the person confirms. Use when the sensorloop skill sets a project up or the project's needs change, or when the person asks to be interviewed or questioned about their needs, requirements or limits before the agent's checks are set up.
 ---
 
 # Interview
+
+In Codex, apply the [Codex integration](../sensorloop/procedures/codex.md) throughout the procedures and wiring recipes.
 
 Before anything is set up, find out what the person needs from the project's loops, and get their word that you
 understood. Loops chosen without it fit the catalog, not the project: they gate the wrong actions, spend what the

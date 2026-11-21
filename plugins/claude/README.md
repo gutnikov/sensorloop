@@ -1,4 +1,4 @@
-# sensorloop for Claude Code
+# sensorloop for Codex and Claude Code
 
 The `sensorloop` skill keeps a project's validation loops: the checks that catch a coding agent's mistakes, fitted to
 what the project has and what its people need. It sets the loops up, keeps them in step with the project, diagnoses
@@ -11,6 +11,15 @@ in the project instead of asked. After the setup, the skill proves each loop it 
 checked.
 
 ## Install
+
+For Codex, run these commands from the root of a Sensorloop checkout:
+
+```bash
+codex plugin marketplace add .
+codex plugin add sensorloop@sensorloop
+```
+
+For Claude Code, run these commands in a session:
 
 ```
 /plugin marketplace add gutnikov/sensorloop
